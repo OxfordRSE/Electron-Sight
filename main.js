@@ -1,17 +1,29 @@
 const {
   app,
   BrowserWindow,
-  Menu
+  Menu,
+  dialog
 } = require('electron');
 
 let win = null;
+
+let mystring = 'test'
+
+openFile = (file) => {
+
+}
 
 const menu_template = [{
   label: 'File',
   submenu: [{
       label: 'Open',
       click: () => {
-        console.log('Open Clicked');
+        dialog.showOpenDialog({
+          properties: ['openFile']
+        }, (file) => {
+          console.log(`main.js opening ${file}`)
+          win.webContents.send('openFile', file)
+        })
       }
     },
     {
