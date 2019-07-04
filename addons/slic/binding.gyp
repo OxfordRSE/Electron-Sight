@@ -1,11 +1,12 @@
 {
   'targets': [
     {
-        "target_name": "sight-vlfeat",
+        "target_name": "slic",
         "cflags!": [ "-fno-exceptions" ],
         "cflags_cc!": [ "-fno-exceptions" ],
         "sources": [
-            "sight-vlfeat.cpp"
+            "slicReturnExtendedFeatures.c",
+            "slic.cpp"
         ],
         'include_dirs': [
             "<!@(node -p \"require('node-addon-api').include\")"
@@ -19,10 +20,10 @@
     {
       "target_name": "action_after_build",
       "type": "none",
-      "dependencies": [ "sight-vlfeat" ],
+      "dependencies": [ "slic" ],
       "copies": [
         {
-          "files": [ "<(PRODUCT_DIR)/sight-vlfeat.node" ],
+          "files": [ "<(PRODUCT_DIR)/slic.node" ],
           "destination": "."
         }
       ]
