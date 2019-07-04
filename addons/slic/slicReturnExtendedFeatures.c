@@ -379,7 +379,7 @@ void EnforceConnectivity(int* labels, int width, int height, int numSuperpixels,
 
 void slicReturnExtendedFeatures(unsigned char* imgbytes, int width, int height,
     int nchannels, int numSuperpixels, int compactness, int** outlabels,
-    int** outputNumSuperpixels, double** outLABMeanintensities, int** outPixelCounts,
+    int* outputNumSuperpixels, double** outLABMeanintensities, int** outPixelCounts,
     int** outseedsXY, double** outLABVariances, double** outCollectedFeatures)
 {
 
@@ -422,6 +422,17 @@ void slicReturnExtendedFeatures(unsigned char* imgbytes, int width, int height,
   int* twoStepneighbouringLabelsStoreCounter;
   double* collectedFeatures;
   int finalNumberOfLabels;
+
+
+  int *_outlabels;
+  double *_outLABMeanintensities;
+  int *_outPixelCounts;
+  int *_outseedsXY;
+  double *_outLABVariances;
+  double *_outCollectedFeatures;
+
+
+
   //---------------------------
   sz = width * height;
   //---------------------------
@@ -435,29 +446,29 @@ void slicReturnExtendedFeatures(unsigned char* imgbytes, int width, int height,
   // lvec    = malloc( sizeof(double)      * sz ) ;
   // avec    = malloc( sizeof(double)      * sz ) ;
   // bvec    = malloc( sizeof(double)      * sz ) ;
-  lvec = mxCalloc(sz, sizeof(double));
-  avec = mxCalloc(sz, sizeof(double));
-  bvec = mxCalloc(sz, sizeof(double));
+  lvec = calloc(sz, sizeof(double));
+  avec = calloc(sz, sizeof(double));
+  bvec = calloc(sz, sizeof(double));
   klabels = malloc(sizeof(int) * sz); // original k-means labels
   clabels = malloc(sizeof(int) * sz); // corrected labels after enforcing connectivity
   seedIndices = malloc(sizeof(int) * sz);
-  LABMeanintensities = mxCalloc(sz * 3, sizeof(double));
-  PixelCounts = mxCalloc(sz, sizeof(int));
-  SumXVector = mxCalloc(
+  LABMeanintensities = calloc(sz * 3, sizeof(double));
+  PixelCounts = calloc(sz, sizeof(int));
+  SumXVector = calloc(
       sz * 3, sizeof(double)); // Used to store sum[ x_i - K ]for calculating variance
   SumSqrXVector
-      = mxCalloc(sz * 3, sizeof(double)); // Used to store sum of squares sum[ (x_i -
+      = calloc(sz * 3, sizeof(double)); // Used to store sum of squares sum[ (x_i -
                                           // K)^2 ] for calculating variance
   KVector = malloc(sizeof(double) * sz
       * 3); // Used to store constant K for calculating variance with shift in location
             // to avoid catastrophic cancellation
 
-  superpixelMinX = mxCalloc(sz, sizeof(int));
-  superpixelMinY = mxCalloc(sz, sizeof(int));
-  superpixelMaxX = mxCalloc(sz, sizeof(int));
-  superpixelMaxY = mxCalloc(sz, sizeof(int));
+  superpixelMinX = calloc(sz, sizeof(int));
+  superpixelMinY = calloc(sz, sizeof(int));
+  superpixelMaxX = calloc(sz, sizeof(int));
+  superpixelMaxY = calloc(sz, sizeof(int));
 
-  superpixelPerimeter = mxCalloc(sz, sizeof(int));
+  superpixelPerimeter = calloc(sz, sizeof(int));
 
   //---------------------------
   // Perform color conversion
@@ -501,7 +512,7 @@ void slicReturnExtendedFeatures(unsigned char* imgbytes, int width, int height,
     for (y = 0; y < height; y++) {
       i = y * width + x;
       if (PixelCounts[i] != 0) {
-        mexPrintf("Panic!");
+        printf("Panic!");
       }
     }
   }
@@ -541,17 +552,18 @@ void slicReturnExtendedFeatures(unsigned char* imgbytes, int width, int height,
   // plhs[0] = mxCreateNumericMatrix(height,width,mxINT32_CLASS,mxREAL);
   // outlabels = mxGetData(plhs[0]);
   *outlabels = (int*)malloc(height * width * sizeof(int));
+  _outlabels = *outlabels;
 
   // preparation for storing superpixel neighbours array, up to 30 per superpixel, and
   // two step neighbours, up to 80 per superpixel
   int neighbouringLabelsStoreWidth = 30;
   neighbouringLabelsStore
-      = mxCalloc(finalNumberOfLabels * neighbouringLabelsStoreWidth, sizeof(int));
-  neighbouringLabelsStoreCounter = mxCalloc(finalNumberOfLabels, sizeof(int));
+      = calloc(finalNumberOfLabels * neighbouringLabelsStoreWidth, sizeof(int));
+  neighbouringLabelsStoreCounter = calloc(finalNumberOfLabels, sizeof(int));
   int twoStepneighbouringLabelsStoreWidth = 80;
-  twoStepneighbouringLabelsStore = mxCalloc(
+  twoStepneighbouringLabelsStore = calloc(
       finalNumberOfLabels * twoStepneighbouringLabelsStoreWidth, sizeof(int));
-  twoStepneighbouringLabelsStoreCounter = mxCalloc(finalNumberOfLabels, sizeof(int));
+  twoStepneighbouringLabelsStoreCounter = calloc(finalNumberOfLabels, sizeof(int));
 
   const int dx4[4] = { -1, 0, 1, 0 };
   const int dy4[4] = { 0, -1, 0, 1 };
@@ -561,7 +573,7 @@ void slicReturnExtendedFeatures(unsigned char* imgbytes, int width, int height,
   {
     for (y = 0; y < height; y++) {
       i = y * width + x;
-      outlabels[ii] = clabels[i];
+      _outlabels[ii] = clabels[i];
 
       //------------------------------------------------------------
       // As this is the last time we loop over all pixels, once the
@@ -571,16 +583,16 @@ void slicReturnExtendedFeatures(unsigned char* imgbytes, int width, int height,
       // j,k run over width and height
       // index = width*k + j
 
-      LABMeanintensities[3 * outlabels[ii]] += lvec[i];
-      LABMeanintensities[3 * outlabels[ii] + 1] += avec[i];
-      LABMeanintensities[3 * outlabels[ii] + 2] += bvec[i];
+      LABMeanintensities[3 * _outlabels[ii]] += lvec[i];
+      LABMeanintensities[3 * _outlabels[ii] + 1] += avec[i];
+      LABMeanintensities[3 * _outlabels[ii] + 2] += bvec[i];
 
       // Calculate variances for LAB
       // If entry is the first for pixel, set K to be the value for first entry
       if (PixelCounts[clabels[i]] + 1 == 1) {
-        KVector[3 * outlabels[ii]] = lvec[i];
-        KVector[3 * outlabels[ii] + 1] = avec[i];
-        KVector[3 * outlabels[ii] + 2] = bvec[i];
+        KVector[3 * _outlabels[ii]] = lvec[i];
+        KVector[3 * _outlabels[ii] + 1] = avec[i];
+        KVector[3 * _outlabels[ii] + 2] = bvec[i];
 
         // Also set initial min and max X and Y for superpixel
         superpixelMinX[clabels[i]] = x;
@@ -591,19 +603,19 @@ void slicReturnExtendedFeatures(unsigned char* imgbytes, int width, int height,
         superpixelPerimeter[clabels[i]] = 0;
       }
 
-      SumXVector[3 * outlabels[ii]]
-          += (lvec[i] - KVector[3 * outlabels[ii]]); // Used to store sum[ x_i - K ]for
+      SumXVector[3 * _outlabels[ii]]
+          += (lvec[i] - KVector[3 * _outlabels[ii]]); // Used to store sum[ x_i - K ]for
                                                      // calculating variance
-      SumXVector[3 * outlabels[ii] + 1] += (avec[i] - KVector[3 * outlabels[ii] + 1]);
-      SumXVector[3 * outlabels[ii] + 2] += (bvec[i] - KVector[3 * outlabels[ii] + 2]);
-      SumSqrXVector[3 * outlabels[ii]] += ((lvec[i] - KVector[3 * outlabels[ii]])
-          * (lvec[i] - KVector[3 * outlabels[ii]]));
-      SumSqrXVector[3 * outlabels[ii] + 1]
-          += ((avec[i] - KVector[3 * outlabels[ii] + 1])
-              * (avec[i] - KVector[3 * outlabels[ii] + 1]));
-      SumSqrXVector[3 * outlabels[ii] + 2]
-          += ((bvec[i] - KVector[3 * outlabels[ii] + 2])
-              * (bvec[i] - KVector[3 * outlabels[ii] + 2]));
+      SumXVector[3 * _outlabels[ii] + 1] += (avec[i] - KVector[3 * _outlabels[ii] + 1]);
+      SumXVector[3 * _outlabels[ii] + 2] += (bvec[i] - KVector[3 * _outlabels[ii] + 2]);
+      SumSqrXVector[3 * _outlabels[ii]] += ((lvec[i] - KVector[3 * _outlabels[ii]])
+          * (lvec[i] - KVector[3 * _outlabels[ii]]));
+      SumSqrXVector[3 * _outlabels[ii] + 1]
+          += ((avec[i] - KVector[3 * _outlabels[ii] + 1])
+              * (avec[i] - KVector[3 * _outlabels[ii] + 1]));
+      SumSqrXVector[3 * _outlabels[ii] + 2]
+          += ((bvec[i] - KVector[3 * _outlabels[ii] + 2])
+              * (bvec[i] - KVector[3 * _outlabels[ii] + 2]));
 
       // While we're here, we also populate the neighbouring labels list
       int mylabel = clabels[i];
@@ -711,41 +723,46 @@ void slicReturnExtendedFeatures(unsigned char* imgbytes, int width, int height,
   // plhs[2] = mxCreateNumericMatrix(3,finalNumberOfLabels,mxDOUBLE_CLASS,mxREAL);
   // outLABMeanintensities = mxGetData(plhs[2]);
   *outLABMeanintensities = (double*)malloc(3 * finalNumberOfLabels * sizeof(double));
+  _outLABMeanintensities = *outLABMeanintensities;
 
   // plhs[3] = mxCreateNumericMatrix(1,finalNumberOfLabels,mxINT32_CLASS,mxREAL);
   // outPixelCounts = mxGetData(plhs[3]);
   *outPixelCounts = (int*)malloc(finalNumberOfLabels * sizeof(int));
+  _outPixelCounts = *outPixelCounts;
 
   // plhs[4] = mxCreateNumericMatrix(2,finalNumberOfLabels,mxINT32_CLASS,mxREAL);
   // outseedsXY = mxGetData(plhs[4]);
   *outseedsXY = (int*)malloc(2 * finalNumberOfLabels * sizeof(int));
+  _outseedsXY = *outseedsXY;
 
   // plhs[5] = mxCreateNumericMatrix(3,finalNumberOfLabels,mxDOUBLE_CLASS,mxREAL);
   // outLABVariances = mxGetData(plhs[5]);
   *outLABVariances = (double*)malloc(3 * finalNumberOfLabels * sizeof(double));
+  _outLABVariances = *outLABVariances;
 
   // plhs[6] = mxCreateNumericMatrix(26,finalNumberOfLabels,mxDOUBLE_CLASS,mxREAL);
   // outCollectedFeatures = mxGetData(plhs[6]);
   *outCollectedFeatures = (double*)malloc(26 * finalNumberOfLabels * sizeof(double));
+  _outCollectedFeatures = *outCollectedFeatures;
 
   for (k = 0; k < finalNumberOfLabels; k++) {
-    // outseedsXY[k] = seedIndices[k];
+    // _outseedsXY[k] = seedIndices[k];
     kk = k * 2;
     kkk = k * 3;
-    outseedsXY[kk] = kseedsx[k];
-    outseedsXY[kk + 1] = kseedsy[k];
-    outLABMeanintensities[kkk] = LABMeanintensities[kkk] / PixelCounts[k];
-    outLABMeanintensities[kkk + 1] = LABMeanintensities[kkk + 1] / PixelCounts[k];
-    outLABMeanintensities[kkk + 2] = LABMeanintensities[kkk + 2] / PixelCounts[k];
-    outPixelCounts[k] = PixelCounts[k];
-    outLABVariances[kkk]
+    _outseedsXY[kk] = kseedsx[k];
+    _outseedsXY[kk + 1] = kseedsy[k];
+    _outLABMeanintensities[kkk] = LABMeanintensities[kkk] / PixelCounts[k];
+    _outLABMeanintensities[kkk + 1] = LABMeanintensities[kkk + 1] / PixelCounts[k];
+    _outLABMeanintensities[kkk + 2] = LABMeanintensities[kkk + 2] / PixelCounts[k];
+    _outPixelCounts[k] = PixelCounts[k];
+    _outLABVariances[kkk]
         = (SumSqrXVector[kkk] - (SumXVector[kkk] * SumXVector[kkk] / PixelCounts[k]))
         / PixelCounts[k];
-    outLABVariances[kkk + 1]
+    _outLABVariances[kkk + 1]
         = (SumSqrXVector[kkk + 1]
               - (SumXVector[kkk + 1] * SumXVector[kkk + 1] / PixelCounts[k]))
         / PixelCounts[k];
-    outLABVariances[kkk + 2]
+    _outLABVariances[kkk + 2]
         = (SumSqrXVector[kkk + 2]
               - (SumXVector[kkk + 2] * SumXVector[kkk + 2] / PixelCounts[k]))
         / PixelCounts[k];
@@ -798,23 +815,23 @@ void slicReturnExtendedFeatures(unsigned char* imgbytes, int width, int height,
   // 19-20 = superpixel width and height
   // 21 = superpixel aspect ratio (width/height)
   // 22 = number of pixels within superpixel
-  collectedFeatures = mxCalloc(26 * finalNumberOfLabels, sizeof(double));
+  collectedFeatures = calloc(26 * finalNumberOfLabels, sizeof(double));
   for (k = 0; k < finalNumberOfLabels; k++) {
     int featuresStartIndex = 26 * k;
     int meansAndVariancesStartIndex = 3 * k;
     collectedFeatures[featuresStartIndex]
-        = outLABMeanintensities[meansAndVariancesStartIndex];
+        = _outLABMeanintensities[meansAndVariancesStartIndex];
     collectedFeatures[featuresStartIndex + 1]
-        = outLABMeanintensities[meansAndVariancesStartIndex + 1];
+        = _outLABMeanintensities[meansAndVariancesStartIndex + 1];
     collectedFeatures[featuresStartIndex + 2]
-        = outLABMeanintensities[meansAndVariancesStartIndex + 2];
+        = _outLABMeanintensities[meansAndVariancesStartIndex + 2];
     // Variances
     collectedFeatures[featuresStartIndex + 3]
-        = outLABVariances[meansAndVariancesStartIndex];
+        = _outLABVariances[meansAndVariancesStartIndex];
     collectedFeatures[featuresStartIndex + 4]
-        = outLABVariances[meansAndVariancesStartIndex + 1];
+        = _outLABVariances[meansAndVariancesStartIndex + 1];
     collectedFeatures[featuresStartIndex + 5]
-        = outLABVariances[meansAndVariancesStartIndex + 2];
+        = _outLABVariances[meansAndVariancesStartIndex + 2];
 
     int nlsStartIndex = k * neighbouringLabelsStoreWidth;
     for (int colourChannel = 0; colourChannel < 3; colourChannel++) {
@@ -826,10 +843,10 @@ void slicReturnExtendedFeatures(unsigned char* imgbytes, int width, int height,
         // Add the neighbour to the output store
         int neighbourLabel = neighbouringLabelsStore[nlsStartIndex + counter];
         int neighbourMeansAndVariancesStartIndex = 3 * neighbourLabel;
-        neighbourMeansSum += outLABMeanintensities[neighbourMeansAndVariancesStartIndex
+        neighbourMeansSum += _outLABMeanintensities[neighbourMeansAndVariancesStartIndex
             + colourChannel];
         neighbourVariancesSum
-            += outLABVariances[neighbourMeansAndVariancesStartIndex + colourChannel];
+            += _outLABVariances[neighbourMeansAndVariancesStartIndex + colourChannel];
       }
       double neighbourMeansAverage
           = neighbourMeansSum / neighbouringLabelsStoreCounter[k];
@@ -853,10 +870,10 @@ void slicReturnExtendedFeatures(unsigned char* imgbytes, int width, int height,
         int neighbourLabel
             = twoStepneighbouringLabelsStore[nlsStartIndex_twoStep + counter];
         int neighbourMeansAndVariancesStartIndex = 3 * neighbourLabel;
-        neighbourMeansSum += outLABMeanintensities[neighbourMeansAndVariancesStartIndex
+        neighbourMeansSum += _outLABMeanintensities[neighbourMeansAndVariancesStartIndex
             + colourChannel];
         neighbourVariancesSum
-            += outLABVariances[neighbourMeansAndVariancesStartIndex + colourChannel];
+            += _outLABVariances[neighbourMeansAndVariancesStartIndex + colourChannel];
       }
       double neighbourMeansAverage
           = neighbourMeansSum / twoStepneighbouringLabelsStoreCounter[k];
@@ -892,7 +909,7 @@ void slicReturnExtendedFeatures(unsigned char* imgbytes, int width, int height,
     // Now that we've sorted the collected features for this label, we update the output
     // list
     for (int featureCounter = 0; featureCounter < 26; featureCounter++) {
-      outCollectedFeatures[featuresStartIndex + featureCounter]
+      _outCollectedFeatures[featuresStartIndex + featureCounter]
           = collectedFeatures[featuresStartIndex + featureCounter];
     }
   }
