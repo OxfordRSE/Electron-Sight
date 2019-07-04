@@ -31,15 +31,16 @@
  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include<mex.h>
 #include <stdio.h>
+#include <stdlib.h> 
 #include <math.h>
 #include <float.h>
 #include <assert.h>
+#include <stdbool.h>
 
 void rgbtolab(int* rin, int* gin, int* bin, int sz, double* lvec, double* avec, double* bvec)
 {
-    int i; int sR, sG, sB;
+    int sR, sG, sB;
     double R,G,B;
     double X,Y,Z;
     double r, g, b;
@@ -154,14 +155,14 @@ void PerformSuperpixelSLIC(double* lvec, double* avec, double* bvec, double* kse
 	const int numk = numseeds;
 	int offset = STEP;
 
-    double* clustersize = mxMalloc(sizeof(double)*numk);
-    double* inv         = mxMalloc(sizeof(double)*numk);
-    double* sigmal      = mxMalloc(sizeof(double)*numk);
-    double* sigmaa      = mxMalloc(sizeof(double)*numk);
-    double* sigmab      = mxMalloc(sizeof(double)*numk);
-    double* sigmax      = mxMalloc(sizeof(double)*numk);
-    double* sigmay      = mxMalloc(sizeof(double)*numk);
-    double* distvec     = mxMalloc(sizeof(double)*sz);
+    double* clustersize = malloc(sizeof(double)*numk);
+    double* inv         = malloc(sizeof(double)*numk);
+    double* sigmal      = malloc(sizeof(double)*numk);
+    double* sigmaa      = malloc(sizeof(double)*numk);
+    double* sigmab      = malloc(sizeof(double)*numk);
+    double* sigmax      = malloc(sizeof(double)*numk);
+    double* sigmay      = malloc(sizeof(double)*numk);
+    double* distvec     = malloc(sizeof(double)*sz);
 	double invwt = 1.0/((STEP/compactness)*(STEP/compactness));
 
 	for( itr = 0; itr < 10; itr++ )
@@ -247,14 +248,14 @@ void PerformSuperpixelSLIC(double* lvec, double* avec, double* bvec, double* kse
 			kseedsy[k] = sigmay[k]*inv[k];
 		}}
 	}
-    mxFree(sigmal);
-    mxFree(sigmaa);
-    mxFree(sigmab);
-    mxFree(sigmax);
-    mxFree(sigmay);
-    mxFree(clustersize);
-    mxFree(inv);
-    mxFree(distvec);
+    free(sigmal);
+    free(sigmaa);
+    free(sigmab);
+    free(sigmax);
+    free(sigmay);
+    free(clustersize);
+    free(inv);
+    free(distvec);
 }
 
 void EnforceConnectivity(int* labels, int width, int height, int numSuperpixels,int* nlabels, int* finalNumberOfLabels)
@@ -267,8 +268,8 @@ void EnforceConnectivity(int* labels, int width, int height, int numSuperpixels,
     const int dx4[4] = {-1,  0,  1,  0};
 	const int dy4[4] = { 0, -1,  0,  1};
     const int sz = width*height;
-    int* xvec = mxMalloc(sizeof(int)*sz);
-	int* yvec = mxMalloc(sizeof(int)*sz);
+    int* xvec = malloc(sizeof(int)*sz);
+	int* yvec = malloc(sizeof(int)*sz);
 	const int SUPSZ = sz/numSuperpixels;
 	for( i = 0; i < sz; i++ ) nlabels[i] = -1;
 	int oindex = 0;
@@ -345,28 +346,17 @@ void EnforceConnectivity(int* labels, int width, int height, int numSuperpixels,
 	}
 	*finalNumberOfLabels = label;
 
-	mxFree(xvec);
-	mxFree(yvec);
+	free(xvec);
+	free(yvec);
 }
 
-void mexFunction(int nlhs, mxArray *plhs[],
-                 int nrhs, const mxArray *prhs[])
+void slicReturnExtendedFeatures(unsigned char* imgbytes, int width, int height, int nchannels, int numSuperpixels, int compactness,
+    int** outlabels, int** outputNumSuperpixels, double** outLABMeanintensities, int** outPixelCounts, int** outseedsXY, double** outLABVariances, double** outCollectedFeatures)
 {
-    if (nrhs < 2) {
-        mexErrMsgTxt("At least one argument is required.") ;
-    } else if(nrhs > 3) {
-        mexErrMsgTxt("Too many input arguments.");
-    }
-    if(nlhs!=7) {
-        mexErrMsgIdAndTxt("SLIC:nlhs","Two outputs required, a labels and the number of labels, i.e superpixels.");
-    }
+    
     //---------------------------
     // Variable declarations
     //---------------------------
-    int numSuperpixels = 200;//default value
-    double compactness = 10;//default value
-    int width;
-    int height;
     int sz;
     int i, ii;
     int x, y, n;
@@ -382,57 +372,38 @@ void mexFunction(int nlhs, mxArray *plhs[],
     double* LABMeanintensities; int* PixelCounts;
     double* SumXVector; double* SumSqrXVector; double* KVector;
     int k, kk, kkk;
-    const mwSize* dims;//int* dims;
-    int* outputNumSuperpixels;
-    int* outlabels;
-    double* outLABMeanintensities; double* outLABVariances;
-    int* outPixelCounts;
     int* superpixelMinX; int* superpixelMaxX; int* superpixelMinY; int* superpixelMaxY;
     int* superpixelPerimeter;
-    int* outseedsXY;
     int* neighbouringLabelsStore;
-//    int* outneighbouringLabelsStore;
     int* neighbouringLabelsStoreCounter;
-//    int* outneighbouringLabelsStoreCounter;
     int* twoStepneighbouringLabelsStore;
-//    int* outtwoStepneighbouringLabelsStore;
     int* twoStepneighbouringLabelsStoreCounter;
-//    int* outtwoStepneighbouringLabelsStoreCounter;
     double* collectedFeatures;
-    double* outCollectedFeatures;
     int finalNumberOfLabels;
-    unsigned char* imgbytes;
     //---------------------------
-    int numelements   = mxGetNumberOfElements(prhs[0]) ;
-    int numdims = mxGetNumberOfDimensions(prhs[0]) ;
-    dims  = (int*)mxGetDimensions(prhs[0]) ;
-    imgbytes  = (unsigned char*)mxGetData(prhs[0]) ;//mxGetData returns a void pointer, so cast it
-    width = dims[1]; height = dims[0];//Note: first dimension provided is height and second is width
     sz = width*height;
     //---------------------------
-    numSuperpixels  = mxGetScalar(prhs[1]);
-    compactness     = mxGetScalar(prhs[2]);
 
     //---------------------------
     // Allocate memory
     //---------------------------
-    rin    = mxMalloc( sizeof(int)      * sz ) ;
-    gin    = mxMalloc( sizeof(int)      * sz ) ;
-    bin    = mxMalloc( sizeof(int)      * sz ) ;
-    //lvec    = mxMalloc( sizeof(double)      * sz ) ;
-    //avec    = mxMalloc( sizeof(double)      * sz ) ;
-    //bvec    = mxMalloc( sizeof(double)      * sz ) ;
+    rin    = malloc( sizeof(int)      * sz ) ;
+    gin    = malloc( sizeof(int)      * sz ) ;
+    bin    = malloc( sizeof(int)      * sz ) ;
+    //lvec    = malloc( sizeof(double)      * sz ) ;
+    //avec    = malloc( sizeof(double)      * sz ) ;
+    //bvec    = malloc( sizeof(double)      * sz ) ;
     lvec    = mxCalloc( sz, sizeof(double) ) ;
     avec    = mxCalloc( sz, sizeof(double) ) ;
     bvec    = mxCalloc( sz, sizeof(double) ) ;
-    klabels = mxMalloc( sizeof(int)         * sz );//original k-means labels
-    clabels = mxMalloc( sizeof(int)         * sz );//corrected labels after enforcing connectivity
-    seedIndices = mxMalloc( sizeof(int)     * sz );
+    klabels = malloc( sizeof(int)         * sz );//original k-means labels
+    clabels = malloc( sizeof(int)         * sz );//corrected labels after enforcing connectivity
+    seedIndices = malloc( sizeof(int)     * sz );
     LABMeanintensities = mxCalloc( sz * 3,sizeof(double));
     PixelCounts = mxCalloc( sz ,sizeof(int) );
     SumXVector = mxCalloc( sz * 3,sizeof(double) ); // Used to store sum[ x_i - K ]for calculating variance
     SumSqrXVector = mxCalloc( sz * 3,sizeof(double) ); // Used to store sum of squares sum[ (x_i - K)^2 ] for calculating variance
-    KVector = mxMalloc( sizeof(double)     * sz * 3); // Used to store constant K for calculating variance with shift in location to avoid catastrophic cancellation
+    KVector = malloc( sizeof(double)     * sz * 3); // Used to store constant K for calculating variance with shift in location to avoid catastrophic cancellation
 
     superpixelMinX = mxCalloc( sz ,sizeof(int));
     superpixelMinY = mxCalloc( sz ,sizeof(int));
@@ -445,8 +416,7 @@ void mexFunction(int nlhs, mxArray *plhs[],
     //---------------------------
     // Perform color conversion
     //---------------------------
-    //if(2 == numdims)
-    if(numelements/sz == 1)//if it is a grayscale image, copy the values directly into the lab vectors
+    if(nchannels == 1)//if it is a grayscale image, copy the values directly into the lab vectors
     {
         for(x = 0, ii = 0; x < width; x++)//reading data from column-major MATLAB matrics to row-major C matrices (i.e perform transpose)
         {
@@ -496,11 +466,11 @@ void mexFunction(int nlhs, mxArray *plhs[],
     step = sqrt((double)(sz)/(double)(numSuperpixels))+0.5;
     getLABXYSeeds(step,width,height,seedIndices,&numseeds);
 
-    kseedsx    = mxMalloc( sizeof(double)      * numseeds ) ;
-    kseedsy    = mxMalloc( sizeof(double)      * numseeds ) ;
-    kseedsl    = mxMalloc( sizeof(double)      * numseeds ) ;
-    kseedsa    = mxMalloc( sizeof(double)      * numseeds ) ;
-    kseedsb    = mxMalloc( sizeof(double)      * numseeds ) ;
+    kseedsx    = malloc( sizeof(double)      * numseeds ) ;
+    kseedsy    = malloc( sizeof(double)      * numseeds ) ;
+    kseedsl    = malloc( sizeof(double)      * numseeds ) ;
+    kseedsa    = malloc( sizeof(double)      * numseeds ) ;
+    kseedsb    = malloc( sizeof(double)      * numseeds ) ;
     for(k = 0; k < numseeds; k++)
     {
         kseedsx[k] = seedIndices[k]%width;
@@ -521,8 +491,9 @@ void mexFunction(int nlhs, mxArray *plhs[],
     //---------------------------
     // Assign output labels
     //---------------------------
-    plhs[0] = mxCreateNumericMatrix(height,width,mxINT32_CLASS,mxREAL);
-    outlabels = mxGetData(plhs[0]);
+    //plhs[0] = mxCreateNumericMatrix(height,width,mxINT32_CLASS,mxREAL);
+    //outlabels = mxGetData(plhs[0]);
+    *outlabels = (int *)malloc(height*width*sizeof(int)); 
 
     // preparation for storing superpixel neighbours array, up to 30 per superpixel, and two step neighbours, up to 80 per superpixel
     int neighbouringLabelsStoreWidth = 30;
@@ -686,29 +657,32 @@ void mexFunction(int nlhs, mxArray *plhs[],
     //---------------------------
     // Assign number of labels/seeds
     //---------------------------
-    plhs[1] = mxCreateNumericMatrix(1,1,mxINT32_CLASS,mxREAL);
-    outputNumSuperpixels = (int*)mxGetData(plhs[1]);//gives a void*, cast it to int*
+    //plhs[1] = mxCreateNumericMatrix(1,1,mxINT32_CLASS,mxREAL);
+    //outputNumSuperpixels = (int*)mxGetData(plhs[1]);//gives a void*, cast it to int*
     *outputNumSuperpixels = finalNumberOfLabels;
 
     //---------------------------
     // Match each superpixel with its average colour intensity for output
     //---------------------------
-    plhs[2] = mxCreateNumericMatrix(3,finalNumberOfLabels,mxDOUBLE_CLASS,mxREAL);
-	outLABMeanintensities = mxGetData(plhs[2]);
+    //plhs[2] = mxCreateNumericMatrix(3,finalNumberOfLabels,mxDOUBLE_CLASS,mxREAL);
+	  //outLABMeanintensities = mxGetData(plhs[2]);
+    *outLABMeanintensities = (double *)malloc(3*finalNumberOfLabels*sizeof(double));
 
-	plhs[3] = mxCreateNumericMatrix(1,finalNumberOfLabels,mxINT32_CLASS,mxREAL);
-	outPixelCounts = mxGetData(plhs[3]);
+	//plhs[3] = mxCreateNumericMatrix(1,finalNumberOfLabels,mxINT32_CLASS,mxREAL);
+	//outPixelCounts = mxGetData(plhs[3]);
+    *outPixelCounts = (int *)malloc(finalNumberOfLabels*sizeof(int));
 
-    plhs[4] = mxCreateNumericMatrix(2,finalNumberOfLabels,mxINT32_CLASS,mxREAL);
-	outseedsXY = mxGetData(plhs[4]);
+    //plhs[4] = mxCreateNumericMatrix(2,finalNumberOfLabels,mxINT32_CLASS,mxREAL);
+	  //outseedsXY = mxGetData(plhs[4]);
+    *outseedsXY = (int *)malloc(2*finalNumberOfLabels*sizeof(int));
 
-    plhs[5] = mxCreateNumericMatrix(3,finalNumberOfLabels,mxDOUBLE_CLASS,mxREAL);
-	outLABVariances = mxGetData(plhs[5]);
+    //plhs[5] = mxCreateNumericMatrix(3,finalNumberOfLabels,mxDOUBLE_CLASS,mxREAL);
+	  //outLABVariances = mxGetData(plhs[5]);
+    *outLABVariances = (double *)malloc(3*finalNumberOfLabels*sizeof(double));
 
-	plhs[6] = mxCreateNumericMatrix(26,finalNumberOfLabels,mxDOUBLE_CLASS,mxREAL);
-	outCollectedFeatures = mxGetData(plhs[6]);
-
-
+	  //plhs[6] = mxCreateNumericMatrix(26,finalNumberOfLabels,mxDOUBLE_CLASS,mxREAL);
+	  //outCollectedFeatures = mxGetData(plhs[6]);
+    *outCollectedFeatures = (double *)malloc(26*finalNumberOfLabels*sizeof(double));
 
 
 	for(k = 0; k < finalNumberOfLabels; k++)
@@ -859,35 +833,35 @@ void mexFunction(int nlhs, mxArray *plhs[],
     //---------------------------
     // Deallocate memory
     //---------------------------
-    mxFree(rin);
-    mxFree(gin);
-    mxFree(bin);
-    mxFree(lvec);
-    mxFree(avec);
-    mxFree(bvec);
-    mxFree(klabels);
-    mxFree(clabels);
-    mxFree(seedIndices);
-    mxFree(PixelCounts);
-    mxFree(LABMeanintensities);
-    mxFree(kseedsx);
-    mxFree(kseedsy);
-    mxFree(kseedsl);
-    mxFree(kseedsa);
-    mxFree(kseedsb);
-    mxFree(SumXVector);
-    mxFree(SumSqrXVector);
-    mxFree(KVector);
-    mxFree(neighbouringLabelsStore);
-    mxFree(neighbouringLabelsStoreCounter);
-    mxFree(twoStepneighbouringLabelsStore);
-    mxFree(twoStepneighbouringLabelsStoreCounter);
-    mxFree(collectedFeatures);
-    mxFree(superpixelMinX);
-    mxFree(superpixelMinY);
-    mxFree(superpixelMaxX);
-    mxFree(superpixelMaxY);
-    mxFree(superpixelPerimeter);
+    free(rin);
+    free(gin);
+    free(bin);
+    free(lvec);
+    free(avec);
+    free(bvec);
+    free(klabels);
+    free(clabels);
+    free(seedIndices);
+    free(PixelCounts);
+    free(LABMeanintensities);
+    free(kseedsx);
+    free(kseedsy);
+    free(kseedsl);
+    free(kseedsa);
+    free(kseedsb);
+    free(SumXVector);
+    free(SumSqrXVector);
+    free(KVector);
+    free(neighbouringLabelsStore);
+    free(neighbouringLabelsStoreCounter);
+    free(twoStepneighbouringLabelsStore);
+    free(twoStepneighbouringLabelsStoreCounter);
+    free(collectedFeatures);
+    free(superpixelMinX);
+    free(superpixelMinY);
+    free(superpixelMaxX);
+    free(superpixelMaxY);
+    free(superpixelPerimeter);
 }
 
 //PixelCounts
