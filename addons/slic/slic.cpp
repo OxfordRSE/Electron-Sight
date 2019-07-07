@@ -47,9 +47,9 @@ Napi::Array slic::SlicWrapped(const Napi::CallbackInfo& info)
       &outPixelCounts, &outseedsXY, &outLABVariances, &outCollectedFeatures);
 
   auto buf_outlabels = Napi::ArrayBuffer::New(
-      env, static_cast<void*>(outlabels), sizeof(int) * outputNumSuperpixels);
+      env, static_cast<void*>(outlabels), sizeof(int) * width*height);
   auto array_outlabels
-      = Napi::TypedArrayOf<int>::New(env, outputNumSuperpixels, buf_outlabels, 0);
+      = Napi::TypedArrayOf<int>::New(env, width*height, buf_outlabels, 0);
 
   auto buf_outLABMeanintensities = Napi::ArrayBuffer::New(env,
       static_cast<void*>(outLABMeanintensities), sizeof(double) * outputNumSuperpixels);

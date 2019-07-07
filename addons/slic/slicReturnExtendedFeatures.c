@@ -383,6 +383,10 @@ void slicReturnExtendedFeatures(unsigned char* imgbytes, int width, int height,
     int** outseedsXY, double** outLABVariances, double** outCollectedFeatures)
 {
 
+  printf("performing slicReturnExtendedFeatures on (%d, %d) image with %d channels, "
+         "trying to obtain %d superpixels with %d compactness\n",
+      width, height, nchannels, numSuperpixels, compactness);
+
   //---------------------------
   // Variable declarations
   //---------------------------
@@ -423,15 +427,12 @@ void slicReturnExtendedFeatures(unsigned char* imgbytes, int width, int height,
   double* collectedFeatures;
   int finalNumberOfLabels;
 
-
-  int *_outlabels;
-  double *_outLABMeanintensities;
-  int *_outPixelCounts;
-  int *_outseedsXY;
-  double *_outLABVariances;
-  double *_outCollectedFeatures;
-
-
+  int* _outlabels;
+  double* _outLABMeanintensities;
+  int* _outPixelCounts;
+  int* _outseedsXY;
+  double* _outLABVariances;
+  double* _outCollectedFeatures;
 
   //---------------------------
   sz = width * height;
@@ -458,7 +459,7 @@ void slicReturnExtendedFeatures(unsigned char* imgbytes, int width, int height,
       sz * 3, sizeof(double)); // Used to store sum[ x_i - K ]for calculating variance
   SumSqrXVector
       = calloc(sz * 3, sizeof(double)); // Used to store sum of squares sum[ (x_i -
-                                          // K)^2 ] for calculating variance
+                                        // K)^2 ] for calculating variance
   KVector = malloc(sizeof(double) * sz
       * 3); // Used to store constant K for calculating variance with shift in location
             // to avoid catastrophic cancellation
@@ -476,11 +477,10 @@ void slicReturnExtendedFeatures(unsigned char* imgbytes, int width, int height,
   if (nchannels
       == 1) // if it is a grayscale image, copy the values directly into the lab vectors
   {
-    for (x = 0, ii = 0; x < width;
-         x++) // reading data from column-major MATLAB matrics to row-major C matrices
-              // (i.e perform transpose)
+    for (y = 0, ii = 0; y < height;
+         y++) // reading data from row-major RGBA matrics to row-major C matrices
     {
-      for (y = 0; y < height; y++) {
+      for (x = 0; x < width; x++) {
         i = y * width + x;
         lvec[i] = imgbytes[ii];
         avec[i] = imgbytes[ii];
@@ -490,26 +490,23 @@ void slicReturnExtendedFeatures(unsigned char* imgbytes, int width, int height,
     }
   } else // else covert from rgb to lab
   {
-    for (x = 0, ii = 0; x < width;
-         x++) // reading data from column-major MATLAB matrics to row-major C matrices
-              // (i.e perform transpose)
+    for (y = 0, ii = 0; y < height;
+         y++) // reading data from row-major RGBA matrics to row-major C matrices
     {
-      for (y = 0; y < height; y++) {
+      for (x = 0; x < width; x++) {
         i = y * width + x;
         rin[i] = imgbytes[ii];
-        gin[i] = imgbytes[ii + sz];
-        bin[i] = imgbytes[ii + sz + sz];
-        ii++;
+        gin[i] = imgbytes[ii + 1];
+        bin[i] = imgbytes[ii + 2];
+        ii += nchannels;
         PixelCounts[i] = 0;
       }
     }
     rgbtolab(rin, gin, bin, sz, lvec, avec, bvec);
   }
 
-  for (x = 0; x < width; x++) // reading data from column-major MATLAB matrics to
-                              // row-major C matrices (i.e perform transpose)
-  {
-    for (y = 0; y < height; y++) {
+  for (y = 0; y < height; y++) {
+    for (x = 0; x < width; x++) {
       i = y * width + x;
       if (PixelCounts[i] != 0) {
         printf("Panic!");
@@ -546,6 +543,7 @@ void slicReturnExtendedFeatures(unsigned char* imgbytes, int width, int height,
   //---------------------------
   EnforceConnectivity(
       klabels, width, height, numSuperpixels, clabels, &finalNumberOfLabels);
+  printf("found %d final labels after connectivity\n", finalNumberOfLabels);
   //---------------------------
   // Assign output labels
   //---------------------------
@@ -556,13 +554,13 @@ void slicReturnExtendedFeatures(unsigned char* imgbytes, int width, int height,
 
   // preparation for storing superpixel neighbours array, up to 30 per superpixel, and
   // two step neighbours, up to 80 per superpixel
-  int neighbouringLabelsStoreWidth = 30;
+  int neighbouringLabelsStoreWidth = 40;
   neighbouringLabelsStore
       = calloc(finalNumberOfLabels * neighbouringLabelsStoreWidth, sizeof(int));
   neighbouringLabelsStoreCounter = calloc(finalNumberOfLabels, sizeof(int));
-  int twoStepneighbouringLabelsStoreWidth = 80;
-  twoStepneighbouringLabelsStore = calloc(
-      finalNumberOfLabels * twoStepneighbouringLabelsStoreWidth, sizeof(int));
+  int twoStepneighbouringLabelsStoreWidth = 90;
+  twoStepneighbouringLabelsStore
+      = calloc(finalNumberOfLabels * twoStepneighbouringLabelsStoreWidth, sizeof(int));
   twoStepneighbouringLabelsStoreCounter = calloc(finalNumberOfLabels, sizeof(int));
 
   const int dx4[4] = { -1, 0, 1, 0 };
@@ -605,7 +603,7 @@ void slicReturnExtendedFeatures(unsigned char* imgbytes, int width, int height,
 
       SumXVector[3 * _outlabels[ii]]
           += (lvec[i] - KVector[3 * _outlabels[ii]]); // Used to store sum[ x_i - K ]for
-                                                     // calculating variance
+                                                      // calculating variance
       SumXVector[3 * _outlabels[ii] + 1] += (avec[i] - KVector[3 * _outlabels[ii] + 1]);
       SumXVector[3 * _outlabels[ii] + 2] += (bvec[i] - KVector[3 * _outlabels[ii] + 2]);
       SumSqrXVector[3 * _outlabels[ii]] += ((lvec[i] - KVector[3 * _outlabels[ii]])
