@@ -31,6 +31,40 @@ function getImageData(img) {
   return ctx.getImageData(0, 0, canvas.width, canvas.height)
 }
 
+function createTileOverlay(id, image, overlay) {
+  const canvas = document.createElement("canvas");
+  canvas.width = image.width; 
+  canvas.height = image.height;
+  canvas.id = id;
+  const ctx = canvas.getContext('2d');
+  const imageData = ctx.createImageData(image);
+
+  console.log(`creating an overlay (${imageData.width}x${imageData.height})`)
+  var max = 0
+  for (let i = 0; i < imageData.width * imageData.height; i++) {
+    if (overlay[i] > max) {
+      max = overlay[i]
+    }
+  }
+  console.log(max)
+  // Iterate through every pixel
+  for (let i = 0; i < imageData.width * imageData.height; i++) {
+    // Modify pixel data, convert to RGBA
+    imageData.data[4 * i] = 0; // R value
+    imageData.data[4 * i + 1] = Math.floor(overlay[i]*255.0/max); // G value
+    imageData.data[4 * i + 2] = 0; // B value
+    imageData.data[4 * i + 3] = 55; // A value
+  }
+  console.log(overlay)
+  console.log(imageData.data)
+
+  // Draw image data to the canvas
+  ctx.putImageData(imageData, 0, 0);
+  return canvas;
+}
+
+overlays = {};
+
 viewer.addHandler("tile-loaded", function(data) {
   console.log("tile-loaded")
   console.log(`\tlevel=${data.tile.level}`)
@@ -48,10 +82,19 @@ viewer.addHandler("tile-loaded", function(data) {
     outLABVariances, outCollectedFeatures
   ] = slic.slic(img_data.data, img_data.width, img_data.height)
 
+  // create overlay
+  viewer.addOverlay({
+    element: createTileOverlay(data.tile.cacheKey, img_data, outlabels),
+    location: data.tile.bounds
+  });
+
 });
 
 viewer.addHandler("tile-unloaded", function(data) {
   console.log("tile-unloaded")
+
+  // clean up overlay
+  viewer.removeOverlay(data.tile.cacheKey);
 });
 
 

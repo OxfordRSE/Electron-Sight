@@ -565,11 +565,8 @@ void slicReturnExtendedFeatures(unsigned char* imgbytes, int width, int height,
 
   const int dx4[4] = { -1, 0, 1, 0 };
   const int dy4[4] = { 0, -1, 0, 1 };
-  for (x = 0, ii = 0; x < width;
-       x++) // copying data from row-major C matrix to column-major MATLAB matrix (i.e.
-            // perform transpose)
-  {
-    for (y = 0; y < height; y++) {
+  for (y = 0; y < height; y++) {
+    for (x = 0, ii = 0; x < width; x++) {
       i = y * width + x;
       _outlabels[ii] = clabels[i];
 
