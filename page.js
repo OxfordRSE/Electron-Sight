@@ -1,4 +1,6 @@
 let OpenSeadragon = require('openseadragon');
+let palette = require('google-palette');
+let Color = require('color');
 let slic = require('./slic');
 
 viewer = OpenSeadragon({
@@ -40,22 +42,25 @@ function createTileOverlay(id, image, overlay) {
   const imageData = ctx.createImageData(image);
 
   console.log(`creating an overlay (${imageData.width}x${imageData.height})`)
-  var max = 0
-  for (let i = 0; i < imageData.width * imageData.height; i++) {
-    if (overlay[i] > max) {
-      max = overlay[i]
-    }
-  }
-  console.log(max)
+  var max = Math.max(...overlay)
+  var min = Math.min(...overlay)
+  var uniqueSuperPixels = new Set(overlay)
+  console.log("superpixels", uniqueSuperPixels.size)
+  console.log("maxOverlay", max)
+  console.log("minOverlay", min)
+  var colors = palette('tol-dv', uniqueSuperPixels.size).map(x => Color('#' + x))
+  var superpixelsColorMap = new Map(Array.from(uniqueSuperPixels).map(function (e, i) {
+      return [e, colors[i]];
+  }));
   // Iterate through every pixel
   for (let i = 0; i < imageData.width * imageData.height; i++) {
     // Modify pixel data, convert to RGBA
-    imageData.data[4 * i] = 0; // R value
-    imageData.data[4 * i + 1] = Math.floor(overlay[i]*255.0/max); // G value
-    imageData.data[4 * i + 2] = 0; // B value
-    imageData.data[4 * i + 3] = 55; // A value
+    imageData.data[4 * i] =  superpixelsColorMap.get(overlay[i]).red();
+    imageData.data[4 * i + 1] = superpixelsColorMap.get(overlay[i]).green();
+    imageData.data[4 * i + 2] = superpixelsColorMap.get(overlay[i]).blue();
+    imageData.data[4 * i + 3] = 20; // A value
   }
-  console.log(overlay)
+  console.log("overlay", overlay)
   console.log(imageData.data)
 
   // Draw image data to the canvas
