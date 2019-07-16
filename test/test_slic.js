@@ -1,6 +1,7 @@
 let slic = require('../slic')
 let chai = require('chai')
 let sharp = require('sharp')
+let fs = require('fs')
 const expect = chai.expect
 const assert = chai.assert
 
@@ -19,9 +20,11 @@ it('slic on test image (bee)', function(done) {
             info.width, info.height,
             544) // superpixelSize parameter, this makes the number of superpixels 500
                  // as in the MATLAB code from the authors
-        
-        assert.equal(outlabels.length, info.width * info.height)
-        expect(outlabels).to.eql(labels)
+        var outlabels_arr = Array.from(outlabels)
+        fs.writeFile('./bee_slic_outlabels_actual.json', JSON.stringify(outlabels_arr),
+            function (err) {if (err) {console.error('error saving outlabels file');}});
+        assert.equal(outlabels_arr.length, info.width * info.height)
+        expect(outlabels_arr).to.eql(labels)
         done();
     });
 });
