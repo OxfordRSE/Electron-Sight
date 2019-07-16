@@ -24,13 +24,16 @@ Napi::Array slic::SlicWrapped(const Napi::CallbackInfo& info)
     Napi::TypeError::New(env, "Number expected for arg 3").ThrowAsJavaScriptException();
   }
 
+  int desiredSuperpixelSize = 30;
+  if (info[3].IsNumber())
+    desiredSuperpixelSize = info[3].As<Napi::Number>().Int64Value();
+
   auto data = info[0].As<Napi::TypedArrayOf<uint8_t>>().Data();
   auto width = info[1].As<Napi::Number>().Int64Value();
   auto height = info[2].As<Napi::Number>().Int64Value();
 
   // image in RGBA format
   const int nchannels = 4;
-  const int desiredSuperpixelSize = 30;
   const int numSuperpixels = std::round(width * height / desiredSuperpixelSize);
   const int compactness = 20;
 
