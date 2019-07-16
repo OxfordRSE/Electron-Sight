@@ -8,14 +8,18 @@
     "start": "electron .",
     "build": "node-gyp rebuild",
     "clean": "node-gyp clean",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "mocha"
   },
   "author": "Graham J Lee",
   "license": "AGPL-3.0",
   "devDependencies": {
+    "chai": "^4.2.0",
     "electron": "^5.0.3",
     "electron-rebuild": "^1.8.5",
-    "node-gyp": "^3.7.0"
+    "mocha": "^6.1.4",
+    "node-gyp": "^3.7.0",
+    "sharp": "^0.22.1",
+    "underscore": "^1.9.1"
   },
   "dependencies": {
     "openseadragon": "^2.4.0",
