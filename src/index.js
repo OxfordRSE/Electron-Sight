@@ -15,6 +15,10 @@ const createWindow = async () => {
   mainWindow = new BrowserWindow({
     width: 800,
     height: 600,
+    webPreferences: {
+      nodeIntegration: true,
+      preload: __dirname + '/preload.js'
+    }
   });
 
   // and load the index.html of the app.
