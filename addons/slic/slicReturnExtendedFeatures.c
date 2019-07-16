@@ -474,12 +474,10 @@ void slicReturnExtendedFeatures(unsigned char* imgbytes, int width, int height,
   //---------------------------
   // Perform color conversion
   //---------------------------
-  if (nchannels
-      == 1) // if it is a grayscale image, copy the values directly into the lab vectors
-  {
-    for (y = 0, ii = 0; y < height;
-         y++) // reading data from row-major RGBA matrics to row-major C matrices
-    {
+  // if it is a grayscale image, copy the values directly into the lab vectors
+  if (nchannels == 1) {
+    // reading data from row-major RGBA matrics to row-major C matrices
+    for (y = 0, ii = 0; y < height; y++) {
       for (x = 0; x < width; x++) {
         i = y * width + x;
         lvec[i] = imgbytes[ii];
@@ -488,11 +486,10 @@ void slicReturnExtendedFeatures(unsigned char* imgbytes, int width, int height,
         ii++;
       }
     }
-  } else // else covert from rgb to lab
+  } else // else covert from rgba to lab
   {
-    for (y = 0, ii = 0; y < height;
-         y++) // reading data from row-major RGBA matrics to row-major C matrices
-    {
+    // reading data from row-major RGBA matrics to row-major C matrices
+    for (y = 0, ii = 0; y < height; y++) {
       for (x = 0; x < width; x++) {
         i = y * width + x;
         rin[i] = imgbytes[ii];
@@ -565,8 +562,8 @@ void slicReturnExtendedFeatures(unsigned char* imgbytes, int width, int height,
 
   const int dx4[4] = { -1, 0, 1, 0 };
   const int dy4[4] = { 0, -1, 0, 1 };
-  for (y = 0; y < height; y++) {
-    for (x = 0, ii = 0; x < width; x++) {
+  for (y = 0, ii = 0; y < height; y++) {
+    for (x = 0; x < width; x++) {
       i = y * width + x;
       _outlabels[ii] = clabels[i];
 

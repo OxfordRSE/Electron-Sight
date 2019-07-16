@@ -35,7 +35,7 @@ function getImageData(img) {
 
 function createTileOverlay(id, image, overlay) {
   const canvas = document.createElement("canvas");
-  canvas.width = image.width; 
+  canvas.width = image.width;
   canvas.height = image.height;
   canvas.id = id;
   const ctx = canvas.getContext('2d');
@@ -49,16 +49,20 @@ function createTileOverlay(id, image, overlay) {
   console.log("maxOverlay", max)
   console.log("minOverlay", min)
   var colors = palette('tol-dv', uniqueSuperPixels.size).map(x => Color('#' + x))
-  var superpixelsColorMap = new Map(Array.from(uniqueSuperPixels).map(function (e, i) {
-      return [e, colors[i]];
+  var superpixelsColorMap = new Map(Array.from(uniqueSuperPixels).map(function(e, i) {
+    return [e, colors[i]];
   }));
   // Iterate through every pixel
   for (let i = 0; i < imageData.width * imageData.height; i++) {
     // Modify pixel data, convert to RGBA
-    imageData.data[4 * i] =  superpixelsColorMap.get(overlay[i]).red();
+    imageData.data[4 * i] = superpixelsColorMap.get(overlay[i]).red();
     imageData.data[4 * i + 1] = superpixelsColorMap.get(overlay[i]).green();
     imageData.data[4 * i + 2] = superpixelsColorMap.get(overlay[i]).blue();
-    imageData.data[4 * i + 3] = 20; // A value
+    if (overlay[i] == 100) {
+      imageData.data[4 * i + 3] = 200; // A value
+    } else {
+      imageData.data[4 * i + 3] = 0; // A value
+    }
   }
   console.log("overlay", overlay)
   console.log(imageData.data)
