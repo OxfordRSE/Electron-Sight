@@ -14,7 +14,7 @@ class Viewer extends React.Component {
     document.body.appendChild(script);
   }
   render() {
-    return (<div id="Viewer" style={{width: '790px', height: '550px'}}>
+    return (<div className="viewer" id="Viewer">
     </div>);
   }
 }
