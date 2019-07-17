@@ -6,7 +6,6 @@ Currently not much to it, just a demo of a slide viewer.
 
     $ git clone ...
     $ npm install
-    $ npm run-script build
     $ npm start
 
 ## Packaging
