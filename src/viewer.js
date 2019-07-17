@@ -1,5 +1,6 @@
 let OpenSeadragon = require('openseadragon');
 let palette = require('google-palette');
+let _ = require('underscore')
 let Color = require('color');
 let slic = require('../addons/slic/slic');
 
@@ -48,7 +49,7 @@ function createTileOverlay(id, image, overlay) {
   console.log("superpixels", uniqueSuperPixels.size)
   console.log("maxOverlay", max)
   console.log("minOverlay", min)
-  var colors = palette('tol-dv', uniqueSuperPixels.size).map(x => Color('#' + x))
+  var colors = _.shuffle(palette('tol-dv', uniqueSuperPixels.size)).map(x => Color('#' + x))
   var superpixelsColorMap = new Map(Array.from(uniqueSuperPixels).map(function(e, i) {
     return [e, colors[i]];
   }));
@@ -58,11 +59,7 @@ function createTileOverlay(id, image, overlay) {
     imageData.data[4 * i] = superpixelsColorMap.get(overlay[i]).red();
     imageData.data[4 * i + 1] = superpixelsColorMap.get(overlay[i]).green();
     imageData.data[4 * i + 2] = superpixelsColorMap.get(overlay[i]).blue();
-    if (overlay[i] == 100) {
-      imageData.data[4 * i + 3] = 200; // A value
-    } else {
-      imageData.data[4 * i + 3] = 0; // A value
-    }
+    imageData.data[4 * i + 3] = 25; // A value
   }
   console.log("overlay", overlay)
   console.log(imageData.data)
