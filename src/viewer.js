@@ -4,7 +4,7 @@ let Color = require('color');
 let slic = require('../addons/slic/slic');
 
 let viewer = OpenSeadragon({
-  id: "App",
+  id: "Viewer",
   prefixUrl: "../node_modules/openseadragon/build/openseadragon/images/",
   animationTime: 0.5,
   blendTime: 0.1,
@@ -104,7 +104,6 @@ viewer.addHandler("tile-unloaded", function(data) {
   // clean up overlay
   viewer.removeOverlay(data.tile.cacheKey);
 });
-
 
 
 let ipcRenderer = require('electron').ipcRenderer;

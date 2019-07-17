@@ -1,6 +1,33 @@
-import { app, BrowserWindow } from 'electron';
+import { app, BrowserWindow, Menu, dialog } from 'electron';
 import installExtension, { REACT_DEVELOPER_TOOLS } from 'electron-devtools-installer';
 import { enableLiveReload } from 'electron-compile';
+
+const menu_template = [{
+  label: 'File',
+  submenu: [{
+      label: 'Open',
+      click: () => {
+        dialog.showOpenDialog({
+          properties: ['openFile']
+        }, (file) => {
+          console.log(`opening ${file}`)
+          mainWindow.webContents.send('openFile', file)
+        })
+      }
+    },
+    {
+      type: 'separator'
+    },
+    {
+      label: 'Quit',
+      click: () => {
+        app.quit();
+      }
+    }
+  ]
+}];
+
+
 
 // Keep a global reference of the window object, if you don't, the window will
 // be closed automatically when the JavaScript object is garbage collected.
@@ -29,6 +56,9 @@ const createWindow = async () => {
     await installExtension(REACT_DEVELOPER_TOOLS);
     mainWindow.webContents.openDevTools();
   }
+
+  const menu = Menu.buildFromTemplate(menu_template);
+  Menu.setApplicationMenu(menu);
 
   // Emitted when the window is closed.
   mainWindow.on('closed', () => {

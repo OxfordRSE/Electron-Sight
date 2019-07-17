@@ -1,6 +1,10 @@
 import React from 'react';
+const electron = window.require('electron');
+const fs = electron.remote.require('fs');
 
-export default class Viewer extends React.Component {
+
+
+class Viewer extends React.Component {
   componentDidMount() {
     const script = document.createElement("script");
 
@@ -10,34 +14,17 @@ export default class Viewer extends React.Component {
     document.body.appendChild(script);
   }
   render() {
-    return (<div>
+    return (<div id="Viewer" style={{width: '790px', height: '550px'}}>
     </div>);
   }
 }
 
-class FileOpen extends React.Component {
-  componentDidMount() {
-    window.electron.ipcRenderer.on('openFile', function(event, file) {
-      console.log('openFile event for file:://' + file)
-      viewer.open('file://' + file)
-
-    })
-  }
-
-  handleClick() {
-    window.electron.dialog.showOpenDialog({
-      properties: ['openFile']
-    }, (file) => {
-      console.log(`opening ${file}`)
-      mainWindow.webContents.send('openFile', file)
-    })
-  }
-
+export default class App extends React.Component {
   render() {
     return (
-      <button onClick={this.handleClick}>
-        'Open File' 
-      </button>
+      <div className="app">
+        <Viewer />
+      </div>
     );
   }
 }
