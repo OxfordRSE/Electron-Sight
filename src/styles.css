@@ -1,9 +1,7 @@
 
 
-#LeftPane {
+#Menu{
   opacity: 0.7;
-  width: 200px;
-  height: 100%;
   position: absolute;
   top: 0;
   left: 0;

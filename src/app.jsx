@@ -1,6 +1,14 @@
 import React, {PureComponent} from 'react';
 const electron = window.require('electron');
-import {Treebeard} from 'react-treebeard';
+import {
+    Tree,
+    ButtonGroup, 
+    ITreeNode,
+    Button,
+    Position,
+    Popover,
+    Drawer,
+} from "@blueprintjs/core";
 const remote = electron.remote
 const fs = remote.require('fs');
 
@@ -10,20 +18,20 @@ class FileTree extends React.Component {
         super(props);
         var path = props.path;
         this.state = {data: FileTree.readDir(path)};
+        console.log(this.state.data)
     }
 
     static readDir(path) {
-        var data = {
-          name: 'Click on a file to open',
-          toggled: true,
-          children: []
-        };
+        var i = 0;
+        var data = [];
 
         fs.readdirSync(path).forEach(file => {
+            i += 1;
+
             var fileInfo = {
-              name: file,
+              id: i,
+              label: file,
               path: `${path}/${file}`,
-              children: []
             };
 
             var stat = fs.statSync(fileInfo.path);
@@ -32,22 +40,22 @@ class FileTree extends React.Component {
                 //fileInfo.items = FileTree.readDir(fileInfo.path);
             }
 
-            data.children.push(fileInfo)
+            data.push(fileInfo)
         });
 
         return data;
     }
 
-    onToggle(node, toggled){
-        viewer.open('file://' + node.path)
+    handleNodeClick (nodeData: ITreeNode, _nodePath: number[], e: React.MouseEvent<HTMLElement>) {
+      viewer.open('file://' + nodeData.path)
     }
-
+     
     render() {
         const {data} = this.state;
         return (
-            <Treebeard
-                data={data}
-                onToggle={this.onToggle}
+            <Tree
+                contents={data}
+                onNodeClick={this.handleNodeClick}
             />
         );
     }
@@ -76,25 +84,26 @@ class Viewer extends React.Component {
 }
 
 
-class Panels extends React.Component {
+class Menu extends React.Component {
   render() {
     const directory = fs.realpathSync('.');
-    //const directory = '.';
-
     return (
-        <div id="LeftPane">
-          <FileTree path={directory} />
-      </div>
+        <ButtonGroup id="Menu" vertical={true}>
+            <Popover content={<FileTree path={directory}/>} position={Position.RIGHT_TOP}>
+              <Button icon="document" rightIcon={"caret-right"}>File</Button>
+            </Popover>
+        </ButtonGroup>
     );
   }
 }
 
 export default class App extends React.Component {
+
   render() {
     return (
       <div>
       <Viewer />
-      <Panels />
+      <Menu />
       </div>
     );
   }
