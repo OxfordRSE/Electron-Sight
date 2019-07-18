@@ -7,7 +7,6 @@ let slic = require('../addons/slic/slic');
 var viewer = OpenSeadragon({
   id: "Viewer",
   prefixUrl: "../node_modules/openseadragon/build/openseadragon/images/",
-  tileSources: "../CMU-1.dzi",
   showNavigator: true,
   navigatorPosition: "BOTTOM_RIGHT",
   autoResize: true,
