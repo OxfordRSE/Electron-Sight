@@ -40,13 +40,14 @@ if (isDevMode) enableLiveReload({ strategy: 'react-hmr' });
 const createWindow = async () => {
   // Create the browser window.
   mainWindow = new BrowserWindow({
-    width: 800,
-    height: 600,
+    show: false,
     webPreferences: {
       nodeIntegration: true,
       preload: __dirname + '/preload.js'
     }
   });
+  mainWindow.maximize();
+  mainWindow.show();
 
   // and load the index.html of the app.
   mainWindow.loadURL(`file://${__dirname}/index.html`);
