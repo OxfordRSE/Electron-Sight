@@ -1,6 +1,7 @@
 import React from 'react';
 const electron = window.require('electron');
-const fs = electron.remote.require('fs');
+const remote = electron.remote
+const fs = remote.require('fs');
 
 
 
@@ -14,7 +15,13 @@ class Viewer extends React.Component {
     document.body.appendChild(script);
   }
   render() {
-    return (<div className="viewer" id="Viewer">
+    const size = electron.remote.getCurrentWindow().getBounds();
+    console.log(size)
+    const style = {
+      width: size.width,
+      height: size.height
+    };
+    return (<div className="viewer" id="Viewer" style={style}>
     </div>);
   }
 }
@@ -22,7 +29,9 @@ class Viewer extends React.Component {
 export default class App extends React.Component {
   render() {
     return (
-      <Viewer />
+      <div className="app" id="App">
+        <Viewer />
+      </div>
     );
   }
 }

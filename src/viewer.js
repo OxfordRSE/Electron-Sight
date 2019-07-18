@@ -4,9 +4,13 @@ let _ = require('underscore')
 let Color = require('color');
 let slic = require('../addons/slic/slic');
 
-let viewer = OpenSeadragon({
+var viewer = OpenSeadragon({
   id: "Viewer",
   prefixUrl: "../node_modules/openseadragon/build/openseadragon/images/",
+  tileSources: "../CMU-1.dzi",
+  showNavigator: true,
+  navigatorPosition: "BOTTOM_RIGHT",
+  autoResize: true,
   animationTime: 0.5,
   blendTime: 0.1,
   constrainDuringPan: true,
@@ -49,7 +53,8 @@ function createTileOverlay(id, image, overlay) {
   console.log("superpixels", uniqueSuperPixels.size)
   console.log("maxOverlay", max)
   console.log("minOverlay", min)
-  var colors = _.shuffle(palette('tol-dv', uniqueSuperPixels.size)).map(x => Color('#' + x))
+  var colors = _.shuffle(palette('tol-dv', uniqueSuperPixels.size)).map(x => Color('#' +
+    x))
   var superpixelsColorMap = new Map(Array.from(uniqueSuperPixels).map(function(e, i) {
     return [e, colors[i]];
   }));
@@ -69,6 +74,7 @@ function createTileOverlay(id, image, overlay) {
   return canvas;
 }
 
+let calculate_superpixels = false;
 
 viewer.addHandler("tile-loaded", function(data) {
   console.log("tile-loaded")
@@ -81,17 +87,19 @@ viewer.addHandler("tile-loaded", function(data) {
   var img_data = getImageData(data.image)
   console.log(`\tdata type=${typeof data}`)
 
-  const [
-    outlabels, outLABMeanintensities,
-    outPixelCounts, outseedsXY,
-    outLABVariances, outCollectedFeatures
-  ] = slic.slic(img_data.data, img_data.width, img_data.height)
+  if (calculate_superpixels) {
+    const [
+      outlabels, outLABMeanintensities,
+      outPixelCounts, outseedsXY,
+      outLABVariances, outCollectedFeatures
+    ] = slic.slic(img_data.data, img_data.width, img_data.height)
 
-  // create overlay
-  viewer.addOverlay({
-    element: createTileOverlay(data.tile.cacheKey, img_data, outlabels),
-    location: data.tile.bounds
-  });
+    // create overlay
+    viewer.addOverlay({
+      element: createTileOverlay(data.tile.cacheKey, img_data, outlabels),
+      location: data.tile.bounds
+    });
+  }
 
 });
 
