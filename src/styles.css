@@ -1,6 +1,21 @@
-.app {
+
+
+#LeftPane {
+  opacity: 0.5;
+  width: 200px;
+  height: 100%;
+  position: absolute;
+  top: 0;
+  left: 0;
+  background-color: white;
 }
 
-.viewer {
+
+#Viewer {
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  top: 0;
+  left: 0;
 }
 
