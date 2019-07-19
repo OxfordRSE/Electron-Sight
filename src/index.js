@@ -58,8 +58,8 @@ const createWindow = async () => {
     mainWindow.webContents.openDevTools();
   }
 
-  const menu = Menu.buildFromTemplate(menu_template);
-  Menu.setApplicationMenu(menu);
+  //const menu = Menu.buildFromTemplate(menu_template);
+  //Menu.setApplicationMenu(menu);
 
   // Emitted when the window is closed.
   mainWindow.on('closed', () => {
