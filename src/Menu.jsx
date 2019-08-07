@@ -87,6 +87,8 @@ class Menu extends React.Component {
               <Button icon="document" rightIcon={"caret-right"}>File</Button>
             </Popover>
             <Button icon="annotation" active={this.state.annotation_active} onClick={this.animClick.bind(this)}>Annotation</Button>
+            <Button icon="flash">Brightness</Button>
+            <Button icon="contrast">Contrast</Button>
         </ButtonGroup>
     );
   }
