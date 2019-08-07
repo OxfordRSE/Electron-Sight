@@ -3,6 +3,8 @@ let palette = require('google-palette');
 let _ = require('underscore')
 let Color = require('color');
 let slic = require('../addons/slic/slic');
+import React from 'react';
+import Annotations from './Annotations'
 
 var viewer = OpenSeadragon({
   id: "Viewer",
@@ -19,6 +21,14 @@ var viewer = OpenSeadragon({
   visibilityRatio: 1,
   zoomPerScroll: 2
 });
+
+
+const homeBounds = viewer.viewport.getHomeBounds();
+viewer.addOverlay({
+      element: React.createElement(Annotations, {}, null),
+      location: new OpenSeadragon.Rect(0, 0, homeBounds.width, homeBounds.height)
+    });
+
 
 viewer.addHandler("update-tile", function(data) {
   console.log("update-tile")
