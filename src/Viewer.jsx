@@ -1,6 +1,8 @@
 import OpenSeadragon from 'openseadragon';
 import React from 'react';
 const electron = window.require('electron');
+const getStyle = (brightness, contrast) => ("brightness(" +
+        +brightness + ") contrast(" + +contrast + ")");
 
 class Viewer extends React.Component {
   constructor(props){
@@ -31,14 +33,10 @@ class Viewer extends React.Component {
     viewer.gestureSettingsByDeviceType("mouse").clickToZoom = false;
     
   }
-  getStyle(brightness, contrast) {
-       return ("brightness(" + +brightness +
-              ") contrast(" + +contrast + ")");
-  }
 
   render() {
     const size = electron.remote.getCurrentWindow().getBounds();
-    let filterString = this.getStyle(this.state.brightness, this.state.contrast);
+    let filterString = getStyle(this.state.brightness, this.state.contrast);
     const style = {
       width: size.width,
       height: size.height,
