@@ -85,16 +85,12 @@ class Menu extends React.Component {
     }
   }
 
-  brightness() {
-      this.setState(state => ({
-          brightness_active: !state.brightness_active,
-      }))
-  }
-
-  contrast() {
-      this.setState(state => ({
-          contrast_active: !state.contrast_active,
-      }))
+  toggle(key) {
+      return () => {
+          this.setState(state => ({
+              [key + "_active"]: !state[key + "_active"],
+          }))
+      }
   }
 
   changeHandler(key) {
@@ -110,13 +106,14 @@ class Menu extends React.Component {
               <Button icon="document" rightIcon={"caret-right"}>File</Button>
             </Popover>
             <Button icon="annotation" active={this.state.annotation_active} onClick={this.animClick.bind(this)}>Annotation</Button>
-            <Button icon="flash" active={this.state.brightness_active} onClick={this.brightness.bind(this)}>Brightness</Button>
+            <Button icon="flash" active={this.state.brightness_active}
+                onClick={this.toggle("brightness")}>Brightness</Button>
             {this.state.brightness_active &&
                 <Slider min={0} max={2} stepSize={0.1}
                     onChange={this.changeHandler("brightness")}
                     value={this.state.brightness} />}
             <Button icon="contrast" active={this.state.contrast_active}
-                onClick={this.contrast.bind(this)}>Contrast</Button>
+                onClick={this.toggle("contrast")}>Contrast</Button>
             {this.state.contrast_active &&
                 <Slider min={0} max={2} stepSize={0.1}
                     onChange={this.changeHandler("contrast")}
