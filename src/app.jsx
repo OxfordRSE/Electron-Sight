@@ -32,9 +32,10 @@ export default class App extends React.Component {
         }}
       />
       <Viewer 
-        onOpen={this.onOpen.bind(this)}
+        onOpen={this.onOpen.bind(this)} ref={
+        viewer => {this.viewer = viewer;}}
       />
-      <Menu openseadragon={openseadragon} annotations={this.annotations}/>
+      <Menu openseadragon={openseadragon} annotations={this.annotations} viewer={this.viewer} />
       </div>
     );
   }

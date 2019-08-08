@@ -5,6 +5,7 @@ import {
     ITreeNode,
     Button,
     Position,
+    Slider,
     Popover,
     Drawer,
 } from "@blueprintjs/core";
@@ -66,7 +67,11 @@ class Menu extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-      annotation_active: false
+      annotation_active: false,
+      brightness_active: false,
+      contrast_active: false,
+      brightness: 1,
+      contrast: 1
     };
   }
 
@@ -79,14 +84,40 @@ class Menu extends React.Component {
       this.setState({annotation_active: true});
     }
   }
+
+  toggle(key) {
+      return () => {
+          this.setState(state => ({
+              [key + "_active"]: !state[key + "_active"],
+          }))
+      }
+  }
+
+  changeHandler(key) {
+     return value => {this.props.viewer.setState({ [key]: value });
+         this.setState({[key]: value});}
+  }
+
   render() {
     const directory = fs.realpathSync('.');
     return (
-        <ButtonGroup id="Menu" vertical={true}>
+        <ButtonGroup id="Menu" vertical={true} alignText="left">
             <Popover content={<FileTree path={directory} openseadragon={this.props.openseadragon}/>} position={Position.RIGHT_TOP}>
               <Button icon="document" rightIcon={"caret-right"}>File</Button>
             </Popover>
             <Button icon="annotation" active={this.state.annotation_active} onClick={this.animClick.bind(this)}>Annotation</Button>
+            <Button icon="flash" active={this.state.brightness_active}
+                onClick={this.toggle("brightness")}>Brightness</Button>
+            {this.state.brightness_active &&
+                <Slider min={0} max={2} stepSize={0.1}
+                    onChange={this.changeHandler("brightness")}
+                    value={this.state.brightness} />}
+            <Button icon="contrast" active={this.state.contrast_active}
+                onClick={this.toggle("contrast")}>Contrast</Button>
+            {this.state.contrast_active &&
+                <Slider min={0} max={2} stepSize={0.1}
+                    onChange={this.changeHandler("contrast")}
+                    value={this.state.contrast} />}
         </ButtonGroup>
     );
   }
