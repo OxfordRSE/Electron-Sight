@@ -44,7 +44,6 @@ class Viewer extends React.Component {
       height: size.height,
       filter: filterString
     };
-    console.log("filter", filterString);
     return (<div id="Viewer" style={style}></div>);
   }
 }

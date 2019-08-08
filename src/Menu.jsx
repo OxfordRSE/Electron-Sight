@@ -105,7 +105,7 @@ class Menu extends React.Component {
             <Button icon="annotation" active={this.state.annotation_active} onClick={this.animClick.bind(this)}>Annotation</Button>
             <Button icon="flash" active={this.state.brightness_active} onClick={this.brightness.bind(this)}>Brightness</Button>
             {this.state.brightness_active &&
-                <Slider min={1} max={5} stepSize={0.1}
+                <Slider min={0} max={2} stepSize={0.1}
                     onChange={this.changeHandler("brightness")}
                     value={this.state.brightness} />}
 
