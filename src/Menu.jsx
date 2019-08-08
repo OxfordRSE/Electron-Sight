@@ -69,6 +69,7 @@ class Menu extends React.Component {
     this.state = {
       annotation_active: false,
       brightness_active: false,
+      contrast_active: false,
       brightness: 1,
       contrast: 1
     };
@@ -90,6 +91,12 @@ class Menu extends React.Component {
       }))
   }
 
+  contrast() {
+      this.setState(state => ({
+          contrast_active: !state.contrast_active,
+      }))
+  }
+
   changeHandler(key) {
      return value => {this.props.viewer.setState({ [key]: value });
          this.setState({[key]: value});}
@@ -108,8 +115,12 @@ class Menu extends React.Component {
                 <Slider min={0} max={2} stepSize={0.1}
                     onChange={this.changeHandler("brightness")}
                     value={this.state.brightness} />}
-
-            <Button icon="contrast">Contrast</Button>
+            <Button icon="contrast" active={this.state.contrast_active}
+                onClick={this.contrast.bind(this)}>Contrast</Button>
+            {this.state.contrast_active &&
+                <Slider min={0} max={2} stepSize={0.1}
+                    onChange={this.changeHandler("contrast")}
+                    value={this.state.contrast} />}
         </ButtonGroup>
     );
   }
