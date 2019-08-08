@@ -5,6 +5,7 @@ import {
     ITreeNode,
     Button,
     Position,
+    Slider,
     Popover,
     Drawer,
 } from "@blueprintjs/core";
@@ -66,7 +67,10 @@ class Menu extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-      annotation_active: false
+      annotation_active: false,
+      brightness_active: false,
+      brightness: 1,
+      contrast: 1
     };
   }
 
@@ -79,6 +83,18 @@ class Menu extends React.Component {
       this.setState({annotation_active: true});
     }
   }
+
+  brightness() {
+      this.setState(state => ({
+          brightness_active: !state.brightness_active,
+      }))
+  }
+
+  changeHandler(key) {
+     return value => {this.props.viewer.setState({ [key]: value });
+         this.setState({[key]: value});}
+  }
+
   render() {
     const directory = fs.realpathSync('.');
     return (
@@ -87,7 +103,12 @@ class Menu extends React.Component {
               <Button icon="document" rightIcon={"caret-right"}>File</Button>
             </Popover>
             <Button icon="annotation" active={this.state.annotation_active} onClick={this.animClick.bind(this)}>Annotation</Button>
-            <Button icon="flash">Brightness</Button>
+            <Button icon="flash" active={this.state.brightness_active} onClick={this.brightness.bind(this)}>Brightness</Button>
+            {this.state.brightness_active &&
+                <Slider min={1} max={5} stepSize={0.1}
+                    onChange={this.changeHandler("brightness")}
+                    value={this.state.brightness} />}
+
             <Button icon="contrast">Contrast</Button>
         </ButtonGroup>
     );

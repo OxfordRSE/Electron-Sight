@@ -5,7 +5,7 @@ const electron = window.require('electron');
 class Viewer extends React.Component {
   constructor(props){
       super(props)
-      this.state = {openseadragon: null}
+      this.state = {openseadragon: null, brightness: 1, contrast: 1}
   }
   componentDidMount() {
 
@@ -31,14 +31,21 @@ class Viewer extends React.Component {
     viewer.gestureSettingsByDeviceType("mouse").clickToZoom = false;
     
   }
+  getStyle(brightness, contrast) {
+       return ("brightness(" + +brightness +
+              ") contrast(" + +contrast + ")");
+  }
+
   render() {
     const size = electron.remote.getCurrentWindow().getBounds();
+    let filterString = this.getStyle(this.state.brightness, this.state.contrast);
     const style = {
       width: size.width,
       height: size.height,
+      filter: filterString
     };
-    return (<div id="Viewer" style={style}>
-    </div>);
+    console.log("filter", filterString);
+    return (<div id="Viewer" style={style}></div>);
   }
 }
 
