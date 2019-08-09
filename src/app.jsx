@@ -2,6 +2,7 @@ import React, {PureComponent} from 'react';
 import Annotations from './Annotations'
 import Viewer from './Viewer'
 import Menu from './Menu'
+import Scalebar from './Scalebar'
 const electron = window.require('electron');
 
 const remote = electron.remote
@@ -36,6 +37,7 @@ export default class App extends React.Component {
         viewer => {this.viewer = viewer;}}
       />
       <Menu openseadragon={openseadragon} annotations={this.annotations} viewer={this.viewer} />
+      <Scalebar viewer={this.viewer} />
       </div>
     );
   }

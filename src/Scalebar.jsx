@@ -5,26 +5,34 @@ class Scalebar extends React.Component {
   constructor(props) {
     super(props)
     this.state = {
-      zoomLevel: 1,
+      zoom: 1,
       type: "microscopy",
       openseadragon: null,
     };
   }
+  onOpen(openseadragon) {
+    this.setState({
+      openseadragon: openseadragon
+    });
+    openseadragon.addHandler('open', this.update);
+    openseadragon.addHandler('animation', this.update);
+  }
+
   update() {
-      var viewport = this.viewer.viewport;
+      var viewport = this.props.viewer.viewport;
 
       // we only have one image, so world[0]
-      var tiledImage = this.viewer.world.getItemAt(0);
+      var tiledImage = this.props.viewer.world.getItemAt(0);
       var zoom = tiledImageViewportToImageZoom(tiledImage,
               viewport.getZoom(true));
-      var currentPPM = zoom * this.props.pixelsPerMeter;
-      var props = getScalebarSizeAndTextForMetric(currentPPM, this.props.minWidth || "150px");
       this.setState({
           size: props.size,
           text: props.text
       })
   }
   render() {
+      var currentPPM = this.state.zoom * this.props.pixelsPerMeter;
+      var zoom = getScalebarSizeAndTextForMetric(currentPPM, this.props.minWidth || "150px");
       const style = {
           fontSize: this.props.fontSize,
           fontFamily: this.props.fontFamily,
@@ -33,9 +41,9 @@ class Scalebar extends React.Component {
           borderBottom: +this.props.barThickness +
              "px solid " + this.props.color,
           backgroundColor: this.props.backgroundColor,
-          width: +this.state.size + "px"
+          width: +zoom.size + "px"
       }
-      return (<div id="Scalebar" style={style}>{this.state.text}</div>)
+      return (<div id="Scalebar" style={style}>{zoom.text}</div>)
   }
 }
 
@@ -116,3 +124,5 @@ function getWithUnit(value, unitSuffix) {
     }
     return value + " " + unitSuffix;
 }
+
+export default Scalebar;
