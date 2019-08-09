@@ -26,17 +26,25 @@ class Scalebar extends React.Component {
   }
   render() {
       const style = {
-          fontSize: this.props.fontSize || "10pt",
-          fontFamily: this.props.fontFamily || "sans",
-          textAlign: this.props.textAlign || "center",
-          border: "none",
-          borderBottom: (this.props.barThickness || 2) +
-             "px solid" + (this.props.color || "black"),
-          backgroundColor: this.props.backgroundColor || "white",
-          width: this.state.size + "px"
+          fontSize: this.props.fontSize,
+          fontFamily: this.props.fontFamily,
+          textAlign: this.props.textAlign,
+          border: this.props.border,
+          borderBottom: +this.props.barThickness +
+             "px solid " + this.props.color,
+          backgroundColor: this.props.backgroundColor,
+          width: +this.state.size + "px"
       }
       return (<div id="Scalebar" style={style}>{this.state.text}</div>)
   }
+}
+
+Scalebar.defaultProps = {
+    backgroundColor: "white",
+    border: "none",
+    textAlign: "center",
+    fontFamily: "sans-serif",
+    fontSize: "10pt"
 }
 
 // Missing TiledImage.viewportToImageZoom function in OSD 2.0.0
