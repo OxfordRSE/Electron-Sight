@@ -8,8 +8,10 @@ class Scalebar extends React.Component {
       zoom: 1,
       type: "microscopy",
       openseadragon: null,
+      pixelsPerMeter: 100000
     };
     this.update = this.update.bind(this);
+    this.render = this.render.bind(this);
   }
   onOpen(openseadragon) {
     this.setState({
@@ -20,8 +22,6 @@ class Scalebar extends React.Component {
   }
 
   update() {
-      console.log('Scalebar.update called');
-      console.log(this.state);
       var viewport = this.state.openseadragon.viewport;
 
       // we only have one image, so world[0]
@@ -33,8 +33,8 @@ class Scalebar extends React.Component {
       })
   }
   render() {
-      var currentPPM = this.state.zoom * this.props.pixelsPerMeter;
-      var zoom = getScalebarSizeAndTextForMetric(currentPPM, this.props.minWidth || "150px");
+      var currentPPM = this.state.zoom * this.state.pixelsPerMeter;
+      var zoom = getScalebarSizeAndTextForMetric(currentPPM, 150);
       const style = {
           fontSize: this.props.fontSize,
           fontFamily: this.props.fontFamily,
@@ -43,7 +43,8 @@ class Scalebar extends React.Component {
           borderBottom: +this.props.barThickness +
              "px solid " + this.props.color,
           backgroundColor: this.props.backgroundColor,
-          width: +zoom.size + "px"
+          width: +zoom.size + "px",
+          zIndex: 5
       }
       return (<div id="Scalebar" style={style}>{zoom.text}</div>)
   }
