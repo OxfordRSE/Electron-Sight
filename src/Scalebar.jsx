@@ -35,13 +35,16 @@ class Scalebar extends React.Component {
   render() {
       var currentPPM = this.state.zoom * this.state.pixelsPerMeter;
       var zoom = getScalebarSizeAndTextForMetric(currentPPM, 150);
+      var borderStyle = +this.props.barThickness + "px solid " + this.props.color;
+      console.log(borderStyle)
       const style = {
           fontSize: this.props.fontSize,
           fontFamily: this.props.fontFamily,
           textAlign: this.props.textAlign,
           border: this.props.border,
-          borderBottom: +this.props.barThickness +
-             "px solid " + this.props.color,
+          borderBottom: borderStyle,
+          borderLeft: borderStyle,
+          borderRight: borderStyle,
           backgroundColor: this.props.backgroundColor,
           width: +zoom.size + "px",
           position: "absolute",
