@@ -55,7 +55,9 @@ Scalebar.defaultProps = {
     border: "none",
     textAlign: "center",
     fontFamily: "sans-serif",
-    fontSize: "10pt"
+    barThickness: 2,
+    fontSize: "10pt",
+    color: "black"
 }
 
 // Missing TiledImage.viewportToImageZoom function in OSD 2.0.0
