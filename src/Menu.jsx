@@ -101,7 +101,7 @@ class Menu extends React.Component {
   render() {
     const directory = fs.realpathSync('.');
     return (
-        <ButtonGroup id="Menu" vertical={true} alignText="left" style={{marginTop: "20px"}}>
+        <ButtonGroup id="Menu" vertical={true} alignText="left">
             <Popover content={<FileTree path={directory} openseadragon={this.props.openseadragon}/>} position={Position.RIGHT_TOP}>
               <Button icon="document" rightIcon={"caret-right"}>File</Button>
             </Popover>
