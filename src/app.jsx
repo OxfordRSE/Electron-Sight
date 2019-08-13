@@ -19,7 +19,10 @@ export default class App extends React.Component {
 
   onOpen(openseadragon) {
     this.setState({ openseadragon: openseadragon });
+    console.log(this.annotations)
     this.annotations.onOpen(openseadragon);
+    console.log(this.scalebar)
+    this.scalebar.onOpen(openseadragon);
   }
 
   render() {
@@ -32,12 +35,12 @@ export default class App extends React.Component {
           this.annotations = annotations;
         }}
       />
+      <Scalebar ref={scalebar => {this.scalebar = scalebar;}} />
       <Viewer 
         onOpen={this.onOpen.bind(this)} ref={
         viewer => {this.viewer = viewer;}}
       />
       <Menu openseadragon={openseadragon} annotations={this.annotations} viewer={this.viewer} />
-      <Scalebar viewer={this.viewer} />
       </div>
     );
   }
