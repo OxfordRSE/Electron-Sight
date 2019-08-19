@@ -95,13 +95,14 @@ class Classifier extends React.Component {
     super(props)
     this.state = {
       building: false,
+      building_zoom: 1,
       openseadragon: null,
       selected_tiles: {},
     };
   }
 
   onClick(data) {
-    if (this.state.building) {
+    if (this.state.building && data.quick) {
       const viewer = this.state.openseadragon;
       const viewport = this.state.openseadragon.viewport;
       const zoom_level = viewport.getZoom();
@@ -112,7 +113,8 @@ class Classifier extends React.Component {
       const point = viewport.pointFromPixel(data.position);
 
       tiled_image.lastDrawn.forEach(function(tile) {
-        if (tile.bounds.containsPoint(point)) {
+        if (tile.level == this.state.building_zoom && tile.bounds.containsPoint(point)) {
+          console.log(`found tile at level ${tile.level}`);
           found_tile = tile;
           pixel_in_tile.x = Math.floor((point.x - tile.bounds.x) *
             tile.sourceBounds.width /
@@ -129,7 +131,7 @@ class Classifier extends React.Component {
         pixel_in_tile.x;
 
 
-      const classification = 1;
+      const classification = data.shift ? -1 : 1;
       if (tile.cacheKey in this.state.selected_tiles) {
         var tile_overlay = this.state.selected_tiles[tile.cacheKey];
 
@@ -181,11 +183,16 @@ class Classifier extends React.Component {
     viewer.removeOverlay(data.tile.cacheKey);
   }
 
-  startBuilding() {
+  startBuilding(zoom) {
     const viewer = this.state.openseadragon;
     const viewport = this.state.openseadragon.viewport;
-    const max_zoom = viewport.getMaxZoom();
-    viewport.zoomTo(max_zoom);
+    const tiled_image = this.state.openseadragon.world.getItemAt(0);
+    console.log(`zoom is ${zoom}`);
+
+    const tile_source = this.state.openseadragon.world.getItemAt(0).source;
+    const max_zoom = tile_source.maxLevel;
+    const min_zoom = tile_source.minLevel;
+    viewport.zoomTo(viewport.imageToViewportZoom((zoom+1)/(max_zoom)));
     viewer.gestureSettingsByDeviceType("mouse").scrollToZoom = false;
 
     viewer.addHandler('canvas-click', this.onClick.bind(this));
@@ -193,8 +200,14 @@ class Classifier extends React.Component {
     console.log('Classifier start:' + viewport.getZoom().toString());
     this.setState({
       building: true,
+      building_zoom: zoom,
       selected_tiles: {}
     });
+  }
+
+  changeZoom(zoom) {
+    this.endBuilding();
+    this.startBuilding(zoom);
   }
 
   endBuilding() {
@@ -202,7 +215,7 @@ class Classifier extends React.Component {
     const viewport = this.state.openseadragon.viewport;
     console.log('Classifier end:' + viewport.getZoom().toString());
     viewer.gestureSettingsByDeviceType("mouse").scrollToZoom = true;
-    viewer.removeHandler('canvas-click', this.onClick(data).bind(this));
+    viewer.removeHandler('canvas-click', this.onClick.bind(this));
     viewer.clearOverlays();
     this.setState({
       building: false

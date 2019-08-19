@@ -10,6 +10,8 @@ import {
   Slider,
   Popover,
   Drawer,
+  HTMLSelect,
+  FormGroup,
 } from "@blueprintjs/core";
 
 const electron = window.require('electron');
@@ -50,10 +52,7 @@ class FileTree extends React.Component {
     return data;
   }
 
-  handleNodeClick(nodeData: ITreeNode, _nodePath: number[], e: React.MouseEvent <
-    HTMLElement > ) {
-    this.props.openseadragon.open('file://' + nodeData.path)
-  }
+  
 
   render() {
     const {
@@ -62,23 +61,24 @@ class FileTree extends React.Component {
     return (
       <Tree
                 contents={data}
-                onNodeClick={this.handleNodeClick.bind(this)}
+                onNodeClick={this.props.open_file_callback}
             />
     );
   }
 }
 
 const Modes = {
-    VIEW: 0,
-    ANNOTATE: 1,
-    BUILD_CLASSIFIER: 2
-  };
+  DISABLED: 0,
+  VIEW: 1,
+  ANNOTATE: 2,
+  BUILD_CLASSIFIER: 3
+};
 
 class Menu extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-      mode: Modes.VIEW,
+      mode: Modes.DISABLED,
       brightness_active: false,
       contrast_active: false,
       brightness: 1,
@@ -86,11 +86,19 @@ class Menu extends React.Component {
     };
   }
 
+  openFile(nodeData: ITreeNode, _nodePath: number[], e: React.MouseEvent <
+    HTMLElement > ) {
+    this.props.openseadragon.open('file://' + nodeData.path)
+    this.setState({
+      mode: Modes.View
+    });
+  }
+
   animClick() {
     if (this.state.mode == Modes.ANNOTATE) {
       this.props.annotations.endDrawing();
       this.setState({
-        mode: Modes.VIEW 
+        mode: Modes.VIEW
       });
     } else {
       if (this.state.mode == Modes.BUILD_CLASSIFIER) {
@@ -98,7 +106,7 @@ class Menu extends React.Component {
       }
       this.props.annotations.startDrawing();
       this.setState({
-        mode: Modes.ANNOTATE 
+        mode: Modes.ANNOTATE
       });
     }
   }
@@ -107,17 +115,24 @@ class Menu extends React.Component {
     if (this.state.mode == Modes.BUILD_CLASSIFIER) {
       this.props.classifier.endBuilding();
       this.setState({
-        mode: Modes.VIEW 
+        mode: Modes.VIEW
       });
-    } else {
+    } else if (this.state.mode != Modes.DISABLED) {
       if (this.state.mode == Modes.ANNOTATE) {
         this.props.annotations.endDrawing();
       }
-      this.props.classifier.startBuilding();
+      const tile_source = this.props.openseadragon.world.getItemAt(0).source;
+      const max_zoom = tile_source.maxLevel;
+      this.props.classifier.startBuilding(max_zoom);
       this.setState({
         mode: Modes.BUILD_CLASSIFIER
       });
     }
+  }
+
+  buildChangeZoom(event) {
+    const value = event.currentTarget.value;
+    this.props.classifier.changeZoom(value);
   }
 
   toggle(key) {
@@ -141,26 +156,105 @@ class Menu extends React.Component {
 
   render() {
     const directory = fs.realpathSync('.');
+    let file_tree = (
+      <FileTree path={directory} 
+        open_file_callback = {this.openFile.bind(this)}
+        openseadragon={this.props.openseadragon}/>
+    );
+
+    let file = (
+      <Popover 
+        content={file_tree}
+        position = {Position.RIGHT_TOP} 
+      >
+        <Button icon="document" rightIcon={"caret-right"}>File</Button> 
+      </Popover>
+    );
+
+    let annotation = (
+      <Button 
+            icon="polygon-filter" 
+            active={this.state.mode == Modes.ANNOTATE} 
+            onClick={this.animClick.bind(this)}
+            disabled = {this.state.mode == Modes.DISABLED}
+      >
+        Annotation
+      </Button>
+    );
+
+    var zoom_levels = [];
+    if (this.state.mode != Modes.DISABLED ) {
+      if (this.props.openseadragon.world.getItemAt(0)) {
+        const tile_source = this.props.openseadragon.world.getItemAt(0).source;
+        const max_zoom = tile_source.maxLevel;
+        const min_zoom = tile_source.minLevel;
+        const number_of_zoom_levels = 5;
+        const zoom_increment = Math.floor(max_zoom/number_of_zoom_levels);
+        zoom_levels = [...Array(max_zoom-min_zoom).keys()].map(x => x + min_zoom).reverse();
+      }
+    }
+  
+    let classifier = (
+        <Button 
+            icon="build" 
+            active={this.state.mode == Modes.BUILD_CLASSIFIER} 
+            onClick={this.buildClick.bind(this)}
+            disabled = {this.state.mode == Modes.DISABLED}
+        >
+          Build Classifier
+        </Button>
+    );
+
+    let classifier_popdown = (
+      <FormGroup
+          label="Zoom level"
+          labelFor="classifier-zoom-level"
+          inline = {true}
+      >
+          <HTMLSelect 
+              id="classifier-zoom-level"
+              options={zoom_levels} 
+              onChange={this.buildChangeZoom.bind(this)}
+          />
+      </FormGroup>
+    );
+
+    let brightness = (
+      <Button icon="flash" active={this.state.brightness_active}
+              disabled = {this.state.mode == Modes.DISABLED}
+              onClick={this.toggle("brightness")}>Brightness</Button>
+    );
+
+    let brightness_popdown = (
+        <Slider min={0} max={2} stepSize={0.1}
+                onChange={this.changeHandler("brightness")}
+                disabled = {this.state.mode == Modes.DISABLED}
+                value={this.state.brightness} />
+    );
+      
+    let contrast = (
+      <Button icon="contrast" active={this.state.contrast_active}
+              disabled = {this.state.mode == Modes.DISABLED}
+              onClick={this.toggle("contrast")}>Contrast</Button> 
+    );
+
+    let contrast_popdown = (
+      <Slider min={0} max={2} stepSize={0.1}
+                  onChange={this.changeHandler("contrast")}
+                  value={this.state.contrast} />
+    );
+      
     return (
       <ButtonGroup id="Menu" vertical={true} alignText="left">
-            <Popover content={<FileTree path={directory} openseadragon={this.props.openseadragon}/>} position={Position.RIGHT_TOP}>
-              <Button icon="document" rightIcon={"caret-right"}>File</Button>
-            </Popover>
-            <Button icon="polygon-filter" active={this.state.mode == Modes.ANNOTATE} onClick={this.animClick.bind(this)}>Annotation</Button>
-            <Button icon="build" active={this.state.mode == Modes.BUILD_CLASSIFIER} onClick={this.buildClick.bind(this)}>Build Classifier</Button>
-            <Button icon="flash" active={this.state.brightness_active}
-                onClick={this.toggle("brightness")}>Brightness</Button>
-            {this.state.brightness_active &&
-                <Slider min={0} max={2} stepSize={0.1}
-                    onChange={this.changeHandler("brightness")}
-                    value={this.state.brightness} />}
-            <Button icon="contrast" active={this.state.contrast_active}
-                onClick={this.toggle("contrast")}>Contrast</Button>
-            {this.state.contrast_active &&
-                <Slider min={0} max={2} stepSize={0.1}
-                    onChange={this.changeHandler("contrast")}
-                    value={this.state.contrast} />}
-        </ButtonGroup>
+        {file}
+        {annotation}
+        {classifier}
+        {this.state.mode == Modes.BUILD_CLASSIFIER && classifier_popdown}
+        {brightness}
+        {this.state.brightness_active && brightness_popdown}
+        {contrast}
+        {this.state.contrast_active && contrast_popdown}
+      </ButtonGroup>
     );
   }
 }
