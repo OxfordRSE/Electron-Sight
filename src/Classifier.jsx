@@ -3,6 +3,16 @@ let slic = require('../addons/slic/slic');
 let palette = require('google-palette');
 let _ = require('underscore')
 let Color = require('color');
+let SVM = require('libsvm-js/asm');
+
+
+import {
+  H5,
+  Card,
+  Elevation,
+  Callout,
+} from "@blueprintjs/core";
+
 
 const electron = window.require('electron');
 
@@ -67,13 +77,19 @@ class TileOverlay {
   }
 
   get_train_data() {
-    var train_data = [];
+    var features = [];
+    var classification = [];
     for (let i of this.positive_superpixels) {
-      train_data.push(generate_train_data(this.positive_superpixels[i], 1));
+      const [new_features, new_classification] = this.generate_train_data(i, 1)
+      features.push(new_features);
+      classification.push(new_classification);
     }
     for (let i of this.negative_superpixels) {
-      train_data.push(generate_train_data(this.negative_superpixels[i], 0));
+      const [new_features, new_classification] = this.generate_train_data(i, 1)
+      features.push(new_features);
+      classification.push(new_classification);
     }
+    return [features, classification];
   }
 
   redraw() {
@@ -110,8 +126,10 @@ class Classifier extends React.Component {
       superpixel_size: 30,
       openseadragon: null,
       selected_tiles: {},
+      classifiers: []
     };
   }
+
 
   onClick(data) {
     if (this.state.building && data.quick) {
@@ -242,21 +260,45 @@ class Classifier extends React.Component {
     });
   }
 
+  buildClassifier() {
+    const svm = new SVM({
+        kernel: SVM.KERNEL_TYPES.RBF, // The type of kernel I want to use
+        type: SVM.SVM_TYPES.C_SVC,    // The type of SVM I want to run
+        gamma: 1,                     // RBF kernel gamma parameter
+        cost: 1                       // C_SVC cost parameter
+    });
+
+    let features = [];
+    let classification = [];
+    for (const [id, tile] of Object.entries(this.state.selected_tiles)) {
+      const [tile_features, tile_classification] = tile.get_train_data();
+      features = features.concat(tile_features);
+      classification = classification.concat(tile_classification);
+    }
+    svm.train(features, classification);  // train the model
+    const name = "ets";
+    this.setState(prevState => ({
+      classifiers: [...prevState.classifiers, {"name": name, "svm": svm}]
+    }))
+  }
+
   onOpen(openseadragon) {
     this.setState({
       openseadragon: openseadragon
     });
-
-
   }
 
   render() {
-    const openseadragon = this.state.openseadragon;
+    let classifiers = []
+    for (const c of this.state.classifiers) {
+      classifiers.push(<p>{c.name}</p>);
+    }
     return (
-      <div id="Classifier">
-      
-      </div>
-    )
+      <Card id="Classifier" interactive={true} elevation={Elevation.Two}>
+        <H5>Classifiers</H5>
+        {classifiers}
+      </Card>
+    );
   }
 }
 

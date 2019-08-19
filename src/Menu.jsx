@@ -4,6 +4,8 @@ import React, {
 import {
   Card,
   Elevation,
+  Callout,
+  InputGroup,
   Tree,
   ButtonGroup,
   ITreeNode,
@@ -204,7 +206,7 @@ class Menu extends React.Component {
             onClick={this.buildClick.bind(this)}
             disabled = {this.state.mode == Modes.DISABLED}
         >
-          Build Classifier
+          New classifier
         </Button>
     );
 
@@ -212,6 +214,12 @@ class Menu extends React.Component {
     if (this.state.mode == Modes.BUILD_CLASSIFIER) {
       classifier_popdown = (
         <div className="MenuDropdown" >
+        <Callout
+            intent="primary"
+        >
+        <p>Click to label regions of interest (green)</p>
+        <p>Shift-click to label regions of non-interest (red)</p>
+        </Callout>       
         <FormGroup
             label="Zoom level"
             labelFor="classifier-zoom-level"
@@ -224,6 +232,7 @@ class Menu extends React.Component {
                 //value={this.props.classifier.state.zoom_level}
             />
         </FormGroup>
+        
         <FormGroup
             label="Superpixel size"
             labelFor="superpixel-size"
@@ -234,6 +243,18 @@ class Menu extends React.Component {
                   value={this.state.superpixel_size} 
           />
         </FormGroup>
+        <FormGroup
+            label="Name"
+            labelFor="classifier-name"
+        >
+          <InputGroup id="classifier-name" placeholder="Classifier"/>
+        </FormGroup>
+        <Button 
+            fill={false}
+            onClick={this.props.classifier.buildClassifier.bind(this.props.classifier)}
+        >
+          Build new classifier...
+        </Button>
         </div>
       );
     }
