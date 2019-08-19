@@ -13,9 +13,15 @@
   position: absolute;
   top: 0;
   left: 0;
-  background-color: gray;
+  background-color: white;
   z-index: 2;
-  margin-top: 20px;
+  margin-top: 30px;
+}
+
+
+.MenuDropdown {
+  margin-top: 10px;
+  margin-bottom: 5px;
 }
 
 

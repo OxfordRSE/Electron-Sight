@@ -2,6 +2,8 @@ import React, {
   PureComponent
 } from 'react';
 import {
+  Card,
+  Elevation,
   Tree,
   ButtonGroup,
   ITreeNode,
@@ -79,6 +81,7 @@ class Menu extends React.Component {
     super(props);
     this.state = {
       mode: Modes.DISABLED,
+      superpixel_size: 100,
       brightness_active: false,
       contrast_active: false,
       brightness: 1,
@@ -123,7 +126,7 @@ class Menu extends React.Component {
       }
       const tile_source = this.props.openseadragon.world.getItemAt(0).source;
       const max_zoom = tile_source.maxLevel;
-      this.props.classifier.startBuilding(max_zoom);
+      this.props.classifier.startBuilding(max_zoom, this.state.superpixel_size);
       this.setState({
         mode: Modes.BUILD_CLASSIFIER
       });
@@ -205,19 +208,35 @@ class Menu extends React.Component {
         </Button>
     );
 
-    let classifier_popdown = (
-      <FormGroup
-          label="Zoom level"
-          labelFor="classifier-zoom-level"
-          inline = {true}
-      >
-          <HTMLSelect 
-              id="classifier-zoom-level"
-              options={zoom_levels} 
-              onChange={this.buildChangeZoom.bind(this)}
+    let classifier_popdown;
+    if (this.state.mode == Modes.BUILD_CLASSIFIER) {
+      classifier_popdown = (
+        <div className="MenuDropdown" >
+        <FormGroup
+            label="Zoom level"
+            labelFor="classifier-zoom-level"
+            inline = {true}
+        >
+            <HTMLSelect 
+                id="classifier-zoom-level"
+                options={zoom_levels} 
+                onChange={this.props.classifier.setZoomLevel.bind(this.props.classifier)}
+                //value={this.props.classifier.state.zoom_level}
+            />
+        </FormGroup>
+        <FormGroup
+            label="Superpixel size"
+            labelFor="superpixel-size"
+        >
+          <Slider min={10} max={500} stepSize={10} labelStepSize = {490}
+                  onRelease={this.props.classifier.setSuperpixelSize.bind(this.props.classifier)}
+                  onChange={this.changeHandler("superpixel_size")}
+                  value={this.state.superpixel_size} 
           />
-      </FormGroup>
-    );
+        </FormGroup>
+        </div>
+      );
+    }
 
     let brightness = (
       <Button icon="flash" active={this.state.brightness_active}
@@ -226,9 +245,8 @@ class Menu extends React.Component {
     );
 
     let brightness_popdown = (
-        <Slider min={0} max={2} stepSize={0.1}
+        <Slider className="MenuDropdown" min={0} max={2} stepSize={0.1}
                 onChange={this.changeHandler("brightness")}
-                disabled = {this.state.mode == Modes.DISABLED}
                 value={this.state.brightness} />
     );
       
@@ -239,22 +257,24 @@ class Menu extends React.Component {
     );
 
     let contrast_popdown = (
-      <Slider min={0} max={2} stepSize={0.1}
+      <Slider className="MenuDropdown" min={0} max={2} stepSize={0.1}
                   onChange={this.changeHandler("contrast")}
                   value={this.state.contrast} />
     );
       
     return (
-      <ButtonGroup id="Menu" vertical={true} alignText="left">
+    <Card id="Menu" interactive={true} elevation={Elevation.TWO}>
+      <ButtonGroup vertical={true} alignText="left">
         {file}
         {annotation}
         {classifier}
-        {this.state.mode == Modes.BUILD_CLASSIFIER && classifier_popdown}
+        {classifier_popdown}
         {brightness}
         {this.state.brightness_active && brightness_popdown}
         {contrast}
         {this.state.contrast_active && contrast_popdown}
       </ButtonGroup>
+    </Card>
     );
   }
 }

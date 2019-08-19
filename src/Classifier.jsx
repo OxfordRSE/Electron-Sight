@@ -23,23 +23,33 @@ class TileOverlay {
     this.canvas.width = tile.sourceBounds.width;
     this.canvas.height = tile.sourceBounds.height;
     this.canvas.id = this.id;
-    this.pixel_classification = new Uint8Array(tile.sourceBounds.width * tile.sourceBounds.height);
+    this.pixel_classification = new Int8Array(tile.sourceBounds.width * tile
+      .sourceBounds.height);
     this.positive_superpixels = new Set();
     this.negative_superpixels = new Set();
   }
 
   update_classification(selected_superpixel, classification) {
-    for (let i = 0; i < this.pixel_classification.length; i++) {
-      if (this.labels[i] == selected_superpixel) {
-        this.pixel_classification[i] = classification;
-      }
-    }
     if (classification > 0) {
-      this.positive_superpixels.add(selected_superpixel);
+      if (selected_superpixel in this.positive_superpixels) {
+        this.positive_superpixels.delete(selected_superpixel);
+      } else {
+        this.positive_superpixels.add(selected_superpixel);
+      }
       this.negative_superpixels.delete(selected_superpixel);
     } else if (classification < 0) {
-      this.negative_superpixels.add(selected_superpixel);
+      if (selected_superpixel in this.negative_superpixels) {
+        this.negative_superpixels.delete(selected_superpixel);
+      } else {
+        this.negative_superpixels.add(selected_superpixel);
+      }
       this.positive_superpixels.delete(selected_superpixel);
+    }
+    for (let i = 0; i < this.pixel_classification.length; i++) {
+      if (this.labels[i] == selected_superpixel) {
+        this.pixel_classification[i] = this.pixel_classification[i] ==
+          classification ? 0 : classification;
+      }
     }
   }
 
@@ -68,16 +78,17 @@ class TileOverlay {
 
   redraw() {
     // default for createImageData is transparent black
-    const imageData = this.context.createImageData(this.canvas.width, this.canvas.height);
+    const imageData = this.context.createImageData(this.canvas.width, this.canvas
+      .height);
 
     // Iterate through every pixel
     // pixel_classification is [1 = green, -1 = red, 0 = transparent]
     for (let i = 0; i < imageData.width * imageData.height; i++) {
-      if (this.pixel_classification[i] === 1) {
+      if (this.pixel_classification[i] > 0) {
         // green
         imageData.data[4 * i + 1] = 255;
         imageData.data[4 * i + 3] = 100;
-      } else if (this.pixel_classification[i] === -1) {
+      } else if (this.pixel_classification[i] < 0) {
         // red
         imageData.data[4 * i + 0] = 255;
         imageData.data[4 * i + 3] = 100;
@@ -96,6 +107,7 @@ class Classifier extends React.Component {
     this.state = {
       building: false,
       building_zoom: 1,
+      superpixel_size: 30,
       openseadragon: null,
       selected_tiles: {},
     };
@@ -113,11 +125,8 @@ class Classifier extends React.Component {
       const point = viewport.pointFromPixel(data.position);
 
       tiled_image.lastDrawn.forEach((tile) => {
-        if (tile.bounds.containsPoint(point)) {
-          console.log(`level found is ${tile.level}`);
-        }
-        if (tile.level == this.state.building_zoom && tile.bounds.containsPoint(point)) {
-          console.log(`found tile at level ${tile.level}`);
+        if (tile.level == this.state.building_zoom && tile.bounds.containsPoint(
+            point)) {
           found_tile = tile;
           pixel_in_tile.x = Math.floor((point.x - tile.bounds.x) *
             tile.sourceBounds.width /
@@ -130,52 +139,55 @@ class Classifier extends React.Component {
 
       const tile = found_tile;
 
-      const selected_tile_index = pixel_in_tile.y * tile.sourceBounds.width +
-        pixel_in_tile.x;
+      if (tile) {
+        const selected_tile_index = pixel_in_tile.y * tile.sourceBounds.width +
+          pixel_in_tile.x;
 
+        const classification = data.shift ? -1 : 1;
+        if (tile.cacheKey in this.state.selected_tiles) {
+          var tile_overlay = this.state.selected_tiles[tile.cacheKey];
 
-      const classification = data.shift ? -1 : 1;
-      if (tile.cacheKey in this.state.selected_tiles) {
-        var tile_overlay = this.state.selected_tiles[tile.cacheKey];
+          // find superpixel user has selected
+          const selected_superpixel = tile_overlay.labels[selected_tile_index];
 
-        // find superpixel user has selected
-        const selected_superpixel = tile_overlay.labels[selected_tile_index];
+          // update classification and redraw overlay
+          tile_overlay.update_classification(selected_superpixel, classification);
+          tile_overlay.redraw();
 
-        // update classification and redraw overlay
-        tile_overlay.update_classification(selected_superpixel, classification);
-        tile_overlay.redraw();
+        } else {
+          var rendered = tile.context2D || tile.cacheImageRecord
+            .getRenderedContext();
+          var img_data = rendered.getImageData(tile.sourceBounds.x, tile
+            .sourceBounds
+            .y, tile.sourceBounds.width, tile.sourceBounds.height);
 
-      } else {
-        var rendered = tile.context2D || tile.cacheImageRecord
-          .getRenderedContext();
-        var img_data = rendered.getImageData(tile.sourceBounds.x, tile
-          .sourceBounds
-          .y, tile.sourceBounds.width, tile.sourceBounds.height);
+          const [
+            outlabels, outLABMeanintensities,
+            outPixelCounts, outseedsXY,
+            outLABVariances, outCollectedFeatures
+          ] = slic.slic(img_data.data, img_data.width, img_data.height, this.state
+            .superpixel_size);
 
-        const [
-          outlabels, outLABMeanintensities,
-          outPixelCounts, outseedsXY,
-          outLABVariances, outCollectedFeatures
-        ] = slic.slic(img_data.data, img_data.width, img_data.height);
+          // create overlay
+          const tile_overlay = new TileOverlay(tile, outlabels,
+            outCollectedFeatures);
 
-        // create overlay
-        const tile_overlay = new TileOverlay(tile, outlabels, outCollectedFeatures);
+          // find superpixel user has selected
+          const selected_superpixel = outlabels[selected_tile_index];
 
-        // find superpixel user has selected
-        const selected_superpixel = outlabels[selected_tile_index];
+          // update and redraw overlay
+          tile_overlay.update_classification(selected_superpixel, classification);
+          tile_overlay.redraw();
 
-        // update and redraw overlay
-        tile_overlay.update_classification(selected_superpixel, classification);
-        tile_overlay.redraw();
+          // add overlay to openseadragon
+          viewer.addOverlay({
+            element: tile_overlay.canvas,
+            location: tile.bounds
+          });
 
-        // add overlay to openseadragon
-        viewer.addOverlay({
-          element: tile_overlay.canvas,
-          location: tile.bounds
-        });
-
-        // add to set of selected tiles
-        this.state.selected_tiles[tile_overlay.id] = tile_overlay;
+          // add to set of selected tiles
+          this.state.selected_tiles[tile_overlay.id] = tile_overlay;
+        }
       }
     }
   }
@@ -186,7 +198,7 @@ class Classifier extends React.Component {
     viewer.removeOverlay(data.tile.cacheKey);
   }
 
-  startBuilding(zoom) {
+  startBuilding(zoom, superpixel_size) {
     const viewer = this.state.openseadragon;
     const viewport = this.state.openseadragon.viewport;
     const tiled_image = this.state.openseadragon.world.getItemAt(0);
@@ -195,29 +207,33 @@ class Classifier extends React.Component {
     const max_level = tile_source.maxLevel;
     const max_zoom = viewport.getMaxZoom();
     const min_zoom = viewport.getMinZoom();
-    console.log(`zoom is ${zoom}. viewport zoom is ${min_zoom} - ${max_zoom}`);
     viewport.zoomTo(viewport.imageToViewportZoom(tile_source.getLevelScale(zoom)));
     viewer.gestureSettingsByDeviceType("mouse").scrollToZoom = false;
 
     viewer.addHandler('canvas-click', this.onClick.bind(this));
 
-    console.log('Classifier start:' + viewport.getZoom().toString());
     this.setState({
       building: true,
       building_zoom: zoom,
+      superpixel_size: superpixel_size,
       selected_tiles: {}
     });
   }
 
-  changeZoom(zoom) {
+  setZoomLevel(event) {
+    const zoom = event.currentTarget.value;
     this.endBuilding();
-    this.startBuilding(zoom);
+    this.startBuilding(zoom, this.state.superpixel_size);
+  }
+
+  setSuperpixelSize(size) {
+    this.endBuilding();
+    this.startBuilding(this.state.building_zoom, size);
   }
 
   endBuilding() {
     const viewer = this.state.openseadragon;
     const viewport = this.state.openseadragon.viewport;
-    console.log('Classifier end:' + viewport.getZoom().toString());
     viewer.gestureSettingsByDeviceType("mouse").scrollToZoom = true;
     viewer.removeHandler('canvas-click', this.onClick.bind(this));
     viewer.clearOverlays();
