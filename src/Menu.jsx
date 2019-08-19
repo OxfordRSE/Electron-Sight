@@ -190,7 +190,7 @@ class Menu extends React.Component {
         const min_zoom = tile_source.minLevel;
         const number_of_zoom_levels = 5;
         const zoom_increment = Math.floor(max_zoom/number_of_zoom_levels);
-        zoom_levels = [...Array(max_zoom-min_zoom).keys()].map(x => x + min_zoom).reverse();
+        zoom_levels = [...Array(max_zoom-min_zoom).keys()].map(x => x + min_zoom + 1).reverse();
       }
     }
   

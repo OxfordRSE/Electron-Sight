@@ -112,7 +112,10 @@ class Classifier extends React.Component {
       var pixel_in_tile = new OpenSeadragon.Point();
       const point = viewport.pointFromPixel(data.position);
 
-      tiled_image.lastDrawn.forEach(function(tile) {
+      tiled_image.lastDrawn.forEach((tile) => {
+        if (tile.bounds.containsPoint(point)) {
+          console.log(`level found is ${tile.level}`);
+        }
         if (tile.level == this.state.building_zoom && tile.bounds.containsPoint(point)) {
           console.log(`found tile at level ${tile.level}`);
           found_tile = tile;
@@ -187,12 +190,13 @@ class Classifier extends React.Component {
     const viewer = this.state.openseadragon;
     const viewport = this.state.openseadragon.viewport;
     const tiled_image = this.state.openseadragon.world.getItemAt(0);
-    console.log(`zoom is ${zoom}`);
 
     const tile_source = this.state.openseadragon.world.getItemAt(0).source;
-    const max_zoom = tile_source.maxLevel;
-    const min_zoom = tile_source.minLevel;
-    viewport.zoomTo(viewport.imageToViewportZoom((zoom+1)/(max_zoom)));
+    const max_level = tile_source.maxLevel;
+    const max_zoom = viewport.getMaxZoom();
+    const min_zoom = viewport.getMinZoom();
+    console.log(`zoom is ${zoom}. viewport zoom is ${min_zoom} - ${max_zoom}`);
+    viewport.zoomTo(viewport.imageToViewportZoom(tile_source.getLevelScale(zoom)));
     viewer.gestureSettingsByDeviceType("mouse").scrollToZoom = false;
 
     viewer.addHandler('canvas-click', this.onClick.bind(this));
