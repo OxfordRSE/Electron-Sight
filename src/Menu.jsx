@@ -86,6 +86,7 @@ class Menu extends React.Component {
       superpixel_size: 100,
       brightness_active: false,
       contrast_active: false,
+      classifier_name: "Classifier",
       brightness: 1,
       contrast: 1
     };
@@ -135,9 +136,9 @@ class Menu extends React.Component {
     }
   }
 
-  buildChangeZoom(event) {
-    const value = event.currentTarget.value;
-    this.props.classifier.changeZoom(value);
+
+  buildClassifier() {
+    this.props.classifier.buildClassifier(this.state.classifier_name);
   }
 
   toggle(key) {
@@ -148,8 +149,18 @@ class Menu extends React.Component {
     }
   }
 
+
+  inputGroupChangeHandler(key) {
+    return event => {
+      this.setState({
+        [key]: event.target.value
+      });
+    }
+  }
+
   changeHandler(key) {
     return value => {
+      console.log(`changeHandler ${key}:${value}`);
       this.props.viewer.setState({
         [key]: value
       });
@@ -247,11 +258,13 @@ class Menu extends React.Component {
             label="Name"
             labelFor="classifier-name"
         >
-          <InputGroup id="classifier-name" placeholder="Classifier"/>
+          <InputGroup id="classifier-name" placeholder={this.state.classifier_name}
+                  onChange={this.inputGroupChangeHandler("classifier_name")}         
+          />
         </FormGroup>
         <Button 
             fill={false}
-            onClick={this.props.classifier.buildClassifier.bind(this.props.classifier)}
+            onClick={this.buildClassifier.bind(this)}
         >
           Build new classifier...
         </Button>

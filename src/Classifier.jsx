@@ -85,7 +85,7 @@ class TileOverlay {
       classification.push(new_classification);
     }
     for (let i of this.negative_superpixels) {
-      const [new_features, new_classification] = this.generate_train_data(i, 1)
+      const [new_features, new_classification] = this.generate_train_data(i, 0)
       features.push(new_features);
       classification.push(new_classification);
     }
@@ -126,7 +126,7 @@ class Classifier extends React.Component {
       superpixel_size: 30,
       openseadragon: null,
       selected_tiles: {},
-      classifiers: []
+      classifiers: {}
     };
   }
 
@@ -260,7 +260,8 @@ class Classifier extends React.Component {
     });
   }
 
-  buildClassifier() {
+  buildClassifier(name) {
+    console.log(`building classifier ${name}`);
     const svm = new SVM({
         kernel: SVM.KERNEL_TYPES.RBF, // The type of kernel I want to use
         type: SVM.SVM_TYPES.C_SVC,    // The type of SVM I want to run
@@ -276,10 +277,9 @@ class Classifier extends React.Component {
       classification = classification.concat(tile_classification);
     }
     svm.train(features, classification);  // train the model
-    const name = "ets";
     this.setState(prevState => ({
-      classifiers: [...prevState.classifiers, {"name": name, "svm": svm}]
-    }))
+      classifiers: Object.assign(prevState.classifiers, {[name]: svm})
+    }));
   }
 
   onOpen(openseadragon) {
@@ -290,8 +290,8 @@ class Classifier extends React.Component {
 
   render() {
     let classifiers = []
-    for (const c of this.state.classifiers) {
-      classifiers.push(<p>{c.name}</p>);
+    for (const [name, svm] of Object.entries(this.state.classifiers)) {
+      classifiers.push(<p>{name}</p>);
     }
     return (
       <Card id="Classifier" interactive={true} elevation={Elevation.Two}>
