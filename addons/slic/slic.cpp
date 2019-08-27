@@ -50,9 +50,9 @@ Napi::Array slic::SlicWrapped(const Napi::CallbackInfo& info)
       &outPixelCounts, &outseedsXY, &outLABVariances, &outCollectedFeatures);
 
   auto buf_outlabels = Napi::ArrayBuffer::New(
-      env, static_cast<void*>(outlabels), sizeof(int) * width*height);
+      env, static_cast<void*>(outlabels), sizeof(int) * width * height);
   auto array_outlabels
-      = Napi::TypedArrayOf<int>::New(env, width*height, buf_outlabels, 0);
+      = Napi::TypedArrayOf<int>::New(env, width * height, buf_outlabels, 0);
 
   auto buf_outLABMeanintensities = Napi::ArrayBuffer::New(env,
       static_cast<void*>(outLABMeanintensities), sizeof(double) * outputNumSuperpixels);
@@ -65,17 +65,18 @@ Napi::Array slic::SlicWrapped(const Napi::CallbackInfo& info)
       env, outputNumSuperpixels, buf_outPixelCounts, 0);
 
   auto buf_outseedsXY = Napi::ArrayBuffer::New(
-      env, static_cast<void*>(outseedsXY), sizeof(int) * outputNumSuperpixels);
+      env, static_cast<void*>(outseedsXY), sizeof(int) * 2 * outputNumSuperpixels);
   auto array_outseedsXY
       = Napi::TypedArrayOf<int>::New(env, outputNumSuperpixels, buf_outseedsXY, 0);
 
-  auto buf_outLABVariances = Napi::ArrayBuffer::New(
-      env, static_cast<void*>(outLABVariances), sizeof(double) * outputNumSuperpixels);
+  auto buf_outLABVariances = Napi::ArrayBuffer::New(env,
+      static_cast<void*>(outLABVariances), sizeof(double) * 3 * outputNumSuperpixels);
   auto array_outLABVariances = Napi::TypedArrayOf<double>::New(
       env, outputNumSuperpixels, buf_outLABVariances, 0);
 
-  auto buf_outCollectedFeatures = Napi::ArrayBuffer::New(env,
-      static_cast<void*>(outCollectedFeatures), sizeof(double) * outputNumSuperpixels);
+  auto buf_outCollectedFeatures
+      = Napi::ArrayBuffer::New(env, static_cast<void*>(outCollectedFeatures),
+          sizeof(double) * 26 * outputNumSuperpixels);
   auto array_outCollectedFeatures = Napi::TypedArrayOf<double>::New(
       env, outputNumSuperpixels, buf_outCollectedFeatures, 0);
 

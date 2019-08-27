@@ -1,6 +1,7 @@
 import React, {PureComponent} from 'react';
 import Annotations from './Annotations'
 import Viewer from './Viewer'
+import Classifier from './Classifier'
 import Menu from './Menu'
 import Scalebar from './Scalebar'
 const electron = window.require('electron');
@@ -20,6 +21,7 @@ export default class App extends React.Component {
   onOpen(openseadragon) {
     this.setState({ openseadragon: openseadragon });
     this.annotations.onOpen(openseadragon);
+    this.classifier.onOpen(openseadragon);
     this.scalebar.onOpen(openseadragon);
   }
 
@@ -33,12 +35,22 @@ export default class App extends React.Component {
           this.annotations = annotations;
         }}
       />
+      <Classifier
+        ref={classifier => {
+          this.classifier = classifier;
+        }}
+      />
       <Scalebar ref={scalebar => {this.scalebar = scalebar;}} />
       <Viewer 
         onOpen={this.onOpen.bind(this)} ref={
         viewer => {this.viewer = viewer;}}
       />
-      <Menu openseadragon={openseadragon} annotations={this.annotations} viewer={this.viewer} />
+      <Menu 
+        openseadragon={openseadragon} 
+        annotations={this.annotations} 
+        classifier={this.classifier} 
+        viewer={this.viewer} 
+      />
       </div>
     );
   }
