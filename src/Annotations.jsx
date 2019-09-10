@@ -19,11 +19,16 @@ class Annotations extends React.Component {
   }
 
   startDrawing() {
-    this.setState({drawing: true, polygon: []});
+    this.setState({
+      drawing: true,
+      polygon: []
+    });
   }
 
- endDrawing() {
-    this.setState({drawing: false});
+  endDrawing() {
+    this.setState({
+      drawing: false
+    });
   }
 
   onOpen(openseadragon) {
@@ -69,7 +74,7 @@ class Annotations extends React.Component {
 
     let path_str = '';
     const pixel_points = polygon.map(p => openseadragon.viewport
-        .imageToWindowCoordinates(p));
+      .imageToWindowCoordinates(p));
     const first_pt = pixel_points[0];
     if (polygon.length > 0) {
       const path_array = pixel_points.map(p => `L ${p.x} ${p.y}`);
