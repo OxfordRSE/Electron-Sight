@@ -56,7 +56,7 @@ class FileTree extends React.Component {
     return data;
   }
 
-  
+
 
   render() {
     const {
@@ -160,7 +160,6 @@ class Menu extends React.Component {
 
   changeHandler(key) {
     return value => {
-      console.log(`changeHandler ${key}:${value}`);
       this.props.viewer.setState({
         [key]: value
       });
@@ -199,19 +198,20 @@ class Menu extends React.Component {
     );
 
     var zoom_levels = [];
-    if (this.state.mode != Modes.DISABLED ) {
+    if (this.state.mode != Modes.DISABLED) {
       if (this.props.openseadragon.world.getItemAt(0)) {
         const tile_source = this.props.openseadragon.world.getItemAt(0).source;
         const max_zoom = tile_source.maxLevel;
         const min_zoom = tile_source.minLevel;
         const number_of_zoom_levels = 5;
-        const zoom_increment = Math.floor(max_zoom/number_of_zoom_levels);
-        zoom_levels = [...Array(max_zoom-min_zoom).keys()].map(x => x + min_zoom + 1).reverse();
+        const zoom_increment = Math.floor(max_zoom / number_of_zoom_levels);
+        zoom_levels = [...Array(max_zoom - min_zoom).keys()].map(x => x + min_zoom +
+          1).reverse();
       }
     }
-  
+
     let classifier = (
-        <Button 
+      <Button 
             icon="build" 
             active={this.state.mode == Modes.BUILD_CLASSIFIER} 
             onClick={this.buildClick.bind(this)}
@@ -279,15 +279,15 @@ class Menu extends React.Component {
     );
 
     let brightness_popdown = (
-        <Slider className="MenuDropdown" min={0} max={2} stepSize={0.1}
+      <Slider className="MenuDropdown" min={0} max={2} stepSize={0.1}
                 onChange={this.changeHandler("brightness")}
                 value={this.state.brightness} />
     );
-      
+
     let contrast = (
       <Button icon="contrast" active={this.state.contrast_active}
               disabled = {this.state.mode == Modes.DISABLED}
-              onClick={this.toggle("contrast")}>Contrast</Button> 
+              onClick={this.toggle("contrast")}>Contrast</Button>
     );
 
     let contrast_popdown = (
@@ -295,9 +295,9 @@ class Menu extends React.Component {
                   onChange={this.changeHandler("contrast")}
                   value={this.state.contrast} />
     );
-      
+
     return (
-    <Card id="Menu" interactive={true} elevation={Elevation.TWO}>
+      <Card id="Menu" interactive={true} elevation={Elevation.TWO}>
       <ButtonGroup vertical={true} alignText="left">
         {file}
         {annotation}
