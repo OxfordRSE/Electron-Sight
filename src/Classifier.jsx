@@ -226,6 +226,7 @@ class Classifier extends React.Component {
     const max_zoom = viewport.getMaxZoom();
     const min_zoom = viewport.getMinZoom();
     viewport.zoomTo(viewport.imageToViewportZoom(tile_source.getLevelScale(zoom)));
+    viewer.forceRedraw();
     viewer.gestureSettingsByDeviceType("mouse").scrollToZoom = false;
 
     viewer.addHandler('canvas-click', this.onClick.bind(this));
