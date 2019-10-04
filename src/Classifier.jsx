@@ -141,7 +141,6 @@ class Classifier extends React.Component {
       var found_tile = null;
       var pixel_in_tile = new OpenSeadragon.Point();
       const point = viewport.pointFromPixel(data.position);
-
       tiled_image.lastDrawn.forEach((tile) => {
         if (tile.level == this.state.building_zoom && tile.bounds.containsPoint(
             point)) {
@@ -242,6 +241,9 @@ class Classifier extends React.Component {
   setZoomLevel(event) {
     const zoom = event.currentTarget.value;
     this.endBuilding();
+    this.startBuilding(zoom, this.state.superpixel_size);
+    // not sure why we need a second startBuilding, but without this
+    // the overlays do not appear until superpixel size is changed.
     this.startBuilding(zoom, this.state.superpixel_size);
   }
 
