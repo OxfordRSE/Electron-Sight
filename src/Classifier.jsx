@@ -11,6 +11,7 @@ import {
   Card,
   Elevation,
   Callout,
+  Button,
 } from "@blueprintjs/core";
 
 
@@ -291,10 +292,14 @@ class Classifier extends React.Component {
     });
   }
 
+  setClassifier(cls) {
+  }
+
   render() {
     let classifiers = []
     for (const [name, svm] of Object.entries(this.state.classifiers)) {
-      classifiers.push(<p>{name}</p>);
+      classifiers.push(<Button key={name} active={name == this.state.classifier_active}
+          onClick={this.setClassifier.bind(this)}>{name}</Button>);
     }
     return (
       <Card id="Classifier" interactive={true} elevation={Elevation.Two}>
