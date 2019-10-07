@@ -12,6 +12,7 @@ import {
   Elevation,
   Callout,
   Button,
+  ButtonGroup,
 } from "@blueprintjs/core";
 
 
@@ -292,19 +293,23 @@ class Classifier extends React.Component {
     });
   }
 
-  setClassifier(cls) {
+  setClassifier(evt) {
+    var selected = evt.target.attributes.getNamedItem('data-key').value;
+    this.setState({classifier_active: selected});
   }
 
   render() {
     let classifiers = []
     for (const [name, svm] of Object.entries(this.state.classifiers)) {
-      classifiers.push(<Button key={name} active={name == this.state.classifier_active}
-          onClick={this.setClassifier.bind(this)}>{name}</Button>);
+      classifiers.push(<Button data-key={name} key={name}
+          active={name == this.state.classifier_active}>{name}</Button>);
     }
     return (
       <Card id="Classifier" interactive={true} elevation={Elevation.Two}>
         <H5>Classifiers</H5>
+        <ButtonGroup onClick={this.setClassifier.bind(this)}>
         {classifiers}
+        </ButtonGroup>
       </Card>
     );
   }
