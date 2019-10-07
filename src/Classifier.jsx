@@ -12,7 +12,8 @@ import {
   Elevation,
   Callout,
   Button,
-  ButtonGroup,
+  Radio,
+  RadioGroup,
 } from "@blueprintjs/core";
 
 
@@ -294,22 +295,23 @@ class Classifier extends React.Component {
   }
 
   setClassifier(evt) {
-    var selected = evt.target.attributes.getNamedItem('data-key').value;
-    this.setState({classifier_active: selected});
+    this.setState({classifier_active: evt.currentTarget.value});
   }
 
   render() {
     let classifiers = []
     for (const [name, svm] of Object.entries(this.state.classifiers)) {
-      classifiers.push(<Button data-key={name} key={name}
-          active={name == this.state.classifier_active}>{name}</Button>);
+      classifiers.push(<Radio label={name} value={name} key={name} />);
     }
     return (
       <Card id="Classifier" interactive={true} elevation={Elevation.Two}>
         <H5>Classifiers</H5>
-        <ButtonGroup onClick={this.setClassifier.bind(this)}>
+		<RadioGroup label=""
+            onChange={this.setClassifier.bind(this)}
+            selectedValue={this.state.classifier_active}
+        >
         {classifiers}
-        </ButtonGroup>
+        </RadioGroup>
       </Card>
     );
   }
