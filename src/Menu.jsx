@@ -133,7 +133,6 @@ class Menu extends React.Component {
         mode: Modes.PREDICT
       });
     }
-
   }
 
   buildClick() {

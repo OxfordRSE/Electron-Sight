@@ -40,6 +40,7 @@ class TileOverlay {
       .sourceBounds.height);
     this.positive_superpixels = new Set();
     this.negative_superpixels = new Set();
+    this.predict_superpixels = new Set();
   }
 
   update_classification(selected_superpixel, classification) {
@@ -72,27 +73,40 @@ class TileOverlay {
   //    [[1, 0], 1],
   //    [[1, 1], 0]
   //];
-  generate_train_data(chosen_superpixel, classification) {
+  generate_data(chosen_superpixel, classification) {
     const features_index = this.nfeatures * chosen_superpixel;
     const features = Array.from(this.features.slice(features_index, features_index +
       this.nfeatures));
-    return [features, classification];
+    if(typeof classification === 'undefined') {
+        return features;
+    }
+    else {
+        return [features, classification];
+    }
   }
 
   get_train_data() {
     var features = [];
     var classification = [];
     for (let i of this.positive_superpixels) {
-      const [new_features, new_classification] = this.generate_train_data(i, 1)
+      const [new_features, new_classification] = this.generate_data(i, 1)
       features.push(new_features);
       classification.push(new_classification);
     }
     for (let i of this.negative_superpixels) {
-      const [new_features, new_classification] = this.generate_train_data(i, 0)
+      const [new_features, new_classification] = this.generate_data(i, 0)
       features.push(new_features);
       classification.push(new_classification);
     }
     return [features, classification];
+  }
+
+  get_test_data() {
+    var features = [];
+    for (let i of this.predict_superpixels) {
+        features.push(this.generate_data(i));
+    }
+    return features;
   }
 
   redraw() {
