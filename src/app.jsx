@@ -4,6 +4,7 @@ import Viewer from './Viewer'
 import Classifier from './Classifier'
 import Menu from './Menu'
 import Scalebar from './Scalebar'
+import Predict from './Predict'
 const electron = window.require('electron');
 
 const remote = electron.remote
@@ -21,6 +22,7 @@ export default class App extends React.Component {
   onOpen(openseadragon) {
     this.setState({ openseadragon: openseadragon });
     this.annotations.onOpen(openseadragon);
+    this.predict.onOpen(openseadragon);
     this.classifier.onOpen(openseadragon);
     this.scalebar.onOpen(openseadragon);
   }
@@ -35,6 +37,12 @@ export default class App extends React.Component {
           this.annotations = annotations;
         }}
       />
+      <Predict
+        ref={predict => {
+          this.predict = predict;
+        }}
+      />
+
       <Classifier
         ref={classifier => {
           this.classifier = classifier;
@@ -48,6 +56,7 @@ export default class App extends React.Component {
       <Menu 
         openseadragon={openseadragon} 
         annotations={this.annotations} 
+        predict={this.predict}
         classifier={this.classifier} 
         viewer={this.viewer} 
       />

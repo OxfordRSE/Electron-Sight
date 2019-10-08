@@ -296,8 +296,8 @@ class Menu extends React.Component {
 
     let predict = (
       <Button 
-            icon="circle" 
-            active={this.state.mode == Modes.PREDICT} 
+            icon="circle"
+            active={this.state.mode == Modes.PREDICT}
             onClick={this.predict.bind(this)}
             disabled = {this.state.mode == Modes.DISABLED}
       >
