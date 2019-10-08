@@ -75,7 +75,8 @@ const Modes = {
   DISABLED: 0,
   VIEW: 1,
   ANNOTATE: 2,
-  BUILD_CLASSIFIER: 3
+  BUILD_CLASSIFIER: 3,
+  PREDICT: 4
 };
 
 class Menu extends React.Component {
@@ -115,6 +116,9 @@ class Menu extends React.Component {
         mode: Modes.ANNOTATE
       });
     }
+  }
+
+  predict() {
   }
 
   buildClick() {
@@ -290,6 +294,17 @@ class Menu extends React.Component {
               onClick={this.toggle("contrast")}>Contrast</Button> 
     );
 
+    let predict = (
+      <Button 
+            icon="circle" 
+            active={this.state.mode == Modes.PREDICT} 
+            onClick={this.predict.bind(this)}
+            disabled = {this.state.mode == Modes.DISABLED}
+      >
+        Predict
+      </Button>
+    );
+
     let contrast_popdown = (
       <Slider className="MenuDropdown" min={0} max={2} stepSize={0.1}
                   onChange={this.changeHandler("contrast")}
@@ -303,6 +318,7 @@ class Menu extends React.Component {
         {annotation}
         {classifier}
         {classifier_popdown}
+        {predict}
         {brightness}
         {this.state.brightness_active && brightness_popdown}
         {contrast}
