@@ -298,7 +298,8 @@ class Classifier extends React.Component {
     }
     svm.train(features, classification);  // train the model
     this.setState(prevState => ({
-      classifiers: Object.assign(prevState.classifiers, {[name]: svm})
+      classifiers: Object.assign(prevState.classifiers, {[name]: {
+          'classifier': svm, 'building_zoom': this.state.building_zoom}})
     }));
   }
 
