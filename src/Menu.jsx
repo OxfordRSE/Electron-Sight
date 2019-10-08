@@ -119,6 +119,21 @@ class Menu extends React.Component {
   }
 
   predict() {
+    if (this.state.mode == Modes.PREDICT) {
+      this.props.predict.endDrawing();
+      this.setState({
+        mode: Modes.VIEW
+      });
+    } else {
+      if (this.state.mode == Modes.BUILD_CLASSIFIER) {
+        this.props.classifier.endBuilding();
+      }
+      this.props.predict.startDrawing();
+      this.setState({
+        mode: Modes.PREDICT
+      });
+    }
+
   }
 
   buildClick() {
