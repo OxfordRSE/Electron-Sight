@@ -74,9 +74,11 @@ class Predict extends React.Component {
               ] = slic.slic(img_data.data, img_data.width, img_data.height, this.state
                 .superpixel_size);
             const tile_overlay = new TileOverlay(tile, outlabels, outCollectedFeatures);
-            const superpixels = new Set(tile_overlay.labels);
+            var n_superpixels = Math.max(...outlabels) + 1;
             var features = [];
-            for(let i of superpixels) {
+            var i;
+            for(i = 0; i < n_superpixels; i++ ) {
+                console.log('creating features for superpixel', i);
                 features.push(tile_overlay.generate_data(i));
             }
             var classification = svm.predict(features);
