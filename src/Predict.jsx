@@ -2,7 +2,7 @@ import React from 'react';
 let slic = require('../addons/slic/slic');
 const electron = window.require('electron');
 import OpenSeadragon from 'openseadragon';
-import TileOverlay from './Classifier';
+import { TileOverlay } from './Classifier';
 
 class Predict extends React.Component {
   constructor(props) {
@@ -78,11 +78,9 @@ class Predict extends React.Component {
             var features = [];
             var i;
             for(i = 0; i < n_superpixels; i++ ) {
-                console.log('creating features for superpixel', i);
                 features.push(tile_overlay.generate_data(i));
             }
             var classification = svm.predict(features);
-            console.log(classification);
         });
     }
     const style = {

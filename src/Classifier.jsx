@@ -21,7 +21,7 @@ const electron = window.require('electron');
 
 import OpenSeadragon from 'openseadragon';
 
-class TileOverlay {
+export class TileOverlay {
   // tile: openseadragon Tile object
   // labels: TypedArray mapping pixels to superpixel number
   // features: 26*nsuperpixels array of features
