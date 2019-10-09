@@ -1,6 +1,8 @@
 import React from 'react';
+let slic = require('../addons/slic/slic');
 const electron = window.require('electron');
 import OpenSeadragon from 'openseadragon';
+import TileOverlay from './Classifier';
 
 class Predict extends React.Component {
   constructor(props) {
@@ -48,14 +50,38 @@ class Predict extends React.Component {
   render() {
     const openseadragon = this.state.openseadragon;
     const size = electron.remote.getCurrentWindow().getBounds();
-    const classifier = this.props.classifier
+    const classifier = this.props.classifier;
     if (this.state.drawing && classifier &&
         classifier.state.classifier_active) {
+        const tiled_image = openseadragon.world.getItemAt(0);
         let zoom_classifier = classifier.state.classifiers[
             classifier.state.classifier_active].building_zoom;
+        let svm = classifier.state.classifiers[
+            classifier.state.classifier_active].classifier;
         console.log('should be zooming to', zoom_classifier);
         openseadragon.viewport.zoomTo(zoom_classifier);
         openseadragon.forceRedraw();
+
+        // iterate through tiles
+        tiled_image.lastDrawn.forEach((tile) => {
+            var rendered = tile.context2D || tile.cacheImageRecord.getRenderedContext();
+            var img_data = rendered.getImageData(tile.sourceBounds.x, tile.sourceBounds
+            .y, tile.sourceBounds.width, tile.sourceBounds.height);
+            const [
+                outlabels, outLABMeanintensities,
+                outPixelCounts, outseedsXY,
+                outLABVariances, outCollectedFeatures
+              ] = slic.slic(img_data.data, img_data.width, img_data.height, this.state
+                .superpixel_size);
+            const tile_overlay = new TileOverlay(tile, outlabels, outCollectedFeatures);
+            const superpixels = new Set(tile_overlay.labels);
+            var features = [];
+            for(let i of superpixels) {
+                features.push(tile_overlay.generate_data(i));
+            }
+            var classification = svm.predict(features);
+            console.log(classification);
+        });
     }
     const style = {
       position: 'absolute',
@@ -68,7 +94,6 @@ class Predict extends React.Component {
     return (
       <div id="Predict">
       </div>
-
     )
   }
 }
