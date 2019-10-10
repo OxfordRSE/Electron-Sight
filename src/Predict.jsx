@@ -22,6 +22,7 @@ class Predict extends React.Component {
 
   startDrawing() {
     this.setState({drawing: true, polygon: []});
+    this.state.openseadragon.addHandler('canvas-click', this.onClick.bind(this));
   }
 
  endDrawing() {
@@ -48,6 +49,64 @@ class Predict extends React.Component {
   }
 
 
+  onClick(data) {
+    console.log('predict onClick');
+    const openseadragon = this.state.openseadragon;
+    const size = electron.remote.getCurrentWindow().getBounds();
+    const viewport = this.state.openseadragon.viewport;
+    const classifier = this.props.classifier;
+    const tiled_image = openseadragon.world.getItemAt(0);
+    const point = viewport.pointFromPixel(data.position);
+    var found_tile = null;
+    var pixel_in_tile = new OpenSeadragon.Point();
+    let zoom_classifier = classifier.state.classifiers[
+      classifier.state.classifier_active].building_zoom;
+    console.log('zoom level of selected classifier', zoom_classifier);
+    openseadragon.viewport.zoomTo(zoom_classifier);
+    openseadragon.forceRedraw();
+
+    let svm = classifier.state.classifiers[
+      classifier.state.classifier_active].classifier;
+ 
+    tiled_image.lastDrawn.forEach((tile) => {
+        if (tile.bounds.containsPoint(point)) {
+          found_tile = tile;
+       }
+    });
+   const tile = found_tile;
+   console.log('tile', tile);
+   if (tile) {
+        if(tile.cacheKey in this.state.cached_tiles) {
+            var tile_overlay = this.state.cached_tiles[tile.cacheKey];
+        } else {
+            var rendered = tile.context2D || tile.cacheImageRecord.getRenderedContext();
+            var img_data = rendered.getImageData(tile.sourceBounds.x, tile.sourceBounds
+            .y, tile.sourceBounds.width, tile.sourceBounds.height);
+            const [
+                outlabels, outLABMeanintensities,
+                outPixelCounts, outseedsXY,
+                outLABVariances, outCollectedFeatures
+              ] = slic.slic(img_data.data, img_data.width, img_data.height, this.state
+                .superpixel_size);
+            var tile_overlay = new TileOverlay(tile, outlabels, outCollectedFeatures);
+            this.state.cached_tiles[tile.cacheKey] = tile_overlay;
+        }
+        var n_superpixels = Math.max(...tile_overlay.labels) + 1;
+        var features = [];
+        var i;
+        for(i = 0; i < n_superpixels; i++ ) {
+            features.push(tile_overlay.generate_data(i));
+        }
+        var classification = svm.predict(features);
+        console.log('max classification', Math.max(...classification));
+        for(i = 0; i < n_superpixels; i++ ) {
+            tile_overlay.update_classification(i, classification[i] > 0 ? 1 : -1);
+        }
+        tile_overlay.redraw();
+        console.log('predicted for tile');
+     }
+  }
+
   render() {
     const openseadragon = this.state.openseadragon;
     const size = electron.remote.getCurrentWindow().getBounds();
@@ -64,31 +123,6 @@ class Predict extends React.Component {
         openseadragon.forceRedraw();
 
         // iterate through tiles
-        tiled_image.lastDrawn.forEach((tile) => {
-            if(tile.cacheKey in this.state.cached_tiles) {
-                var tile_overlay = this.state.cached_tiles[tile.cacheKey];
-            } else {
-                var rendered = tile.context2D || tile.cacheImageRecord.getRenderedContext();
-                var img_data = rendered.getImageData(tile.sourceBounds.x, tile.sourceBounds
-                .y, tile.sourceBounds.width, tile.sourceBounds.height);
-                const [
-                    outlabels, outLABMeanintensities,
-                    outPixelCounts, outseedsXY,
-                    outLABVariances, outCollectedFeatures
-                  ] = slic.slic(img_data.data, img_data.width, img_data.height, this.state
-                    .superpixel_size);
-                var tile_overlay = new TileOverlay(tile, outlabels, outCollectedFeatures);
-                this.state.cached_tiles[tile.cacheKey] = tile_overlay;
-            }
-            var n_superpixels = Math.max(...tile_overlay.labels) + 1;
-            var features = [];
-            var i;
-            for(i = 0; i < n_superpixels; i++ ) {
-                features.push(tile_overlay.generate_data(i));
-            }
-            var classification = svm.predict(features);
-            console.log('classification complete, max', Math.max(...classification));
-        });
     }
     const style = {
       position: 'absolute',
