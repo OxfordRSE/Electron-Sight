@@ -10,6 +10,7 @@ class Predict extends React.Component {
     this.state = {
       drawing: false,
       openseadragon: null,
+      cached_tiles: {},
       viewport: {
         x: 0,
         y: 0,
@@ -64,23 +65,29 @@ class Predict extends React.Component {
 
         // iterate through tiles
         tiled_image.lastDrawn.forEach((tile) => {
-            var rendered = tile.context2D || tile.cacheImageRecord.getRenderedContext();
-            var img_data = rendered.getImageData(tile.sourceBounds.x, tile.sourceBounds
-            .y, tile.sourceBounds.width, tile.sourceBounds.height);
-            const [
-                outlabels, outLABMeanintensities,
-                outPixelCounts, outseedsXY,
-                outLABVariances, outCollectedFeatures
-              ] = slic.slic(img_data.data, img_data.width, img_data.height, this.state
-                .superpixel_size);
-            const tile_overlay = new TileOverlay(tile, outlabels, outCollectedFeatures);
-            var n_superpixels = Math.max(...outlabels) + 1;
+            if(tile.cacheKey in this.state.cached_tiles) {
+                var tile_overlay = this.state.cached_tiles[tile.cacheKey];
+            } else {
+                var rendered = tile.context2D || tile.cacheImageRecord.getRenderedContext();
+                var img_data = rendered.getImageData(tile.sourceBounds.x, tile.sourceBounds
+                .y, tile.sourceBounds.width, tile.sourceBounds.height);
+                const [
+                    outlabels, outLABMeanintensities,
+                    outPixelCounts, outseedsXY,
+                    outLABVariances, outCollectedFeatures
+                  ] = slic.slic(img_data.data, img_data.width, img_data.height, this.state
+                    .superpixel_size);
+                var tile_overlay = new TileOverlay(tile, outlabels, outCollectedFeatures);
+                this.state.cached_tiles[tile.cacheKey] = tile_overlay;
+            }
+            var n_superpixels = Math.max(...tile_overlay.labels) + 1;
             var features = [];
             var i;
             for(i = 0; i < n_superpixels; i++ ) {
                 features.push(tile_overlay.generate_data(i));
             }
             var classification = svm.predict(features);
+            console.log('classification complete, max', Math.max(...classification));
         });
     }
     const style = {
