@@ -22,11 +22,16 @@ class Predict extends React.Component {
 
   startDrawing() {
     this.setState({drawing: true, polygon: []});
-    this.state.openseadragon.addHandler('canvas-click', this.onClick.bind(this));
+    const viewer = this.state.openseadragon;
+    viewer.addHandler('canvas-click', this.onClick.bind(this));
+    viewer.gestureSettingsByDeviceType("mouse").scrollToZoom = false;
   }
 
  endDrawing() {
     this.setState({drawing: false});
+    const viewer = this.state.openseadragon;
+    viewer.removeHandler('canvas-click', this.onClick.bind(this));
+    viewer.gestureSettingsByDeviceType("mouse").scrollToZoom = true;
   }
 
   onOpen(openseadragon) {
@@ -92,6 +97,7 @@ class Predict extends React.Component {
             this.state.cached_tiles[tile.cacheKey] = tile_overlay;
         }
         var n_superpixels = Math.max(...tile_overlay.labels) + 1;
+        console.log('n superpixels', n_superpixels);
         var features = [];
         var i;
         for(i = 0; i < n_superpixels; i++ ) {
