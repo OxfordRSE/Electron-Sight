@@ -106,7 +106,7 @@ class Predict extends React.Component {
         var classification = svm.predict(features);
         console.log('max classification', Math.max(...classification));
         for(i = 0; i < n_superpixels; i++ ) {
-            tile_overlay.update_classification(i, classification[i] > 0 ? 1 : -1);
+            tile_overlay.add_classification(i, classification[i] > 0 ? 1 : -1);
         }
         tile_overlay.redraw();
         console.log('predicted for tile');

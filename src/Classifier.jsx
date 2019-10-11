@@ -66,6 +66,13 @@ export class TileOverlay {
       }
     }
   }
+  add_classification(selected_superpixel, classification) {
+    for(let i = 0; i < this.pixel_classification.length; i++) {
+      if (this.labels[i] == selected_superpixel) {
+        this.pixel_classification[i] = classification;
+      }
+    }
+  }
 
   //var xor = [
   //    [[0, 0], 0],
