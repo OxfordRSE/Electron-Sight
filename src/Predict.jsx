@@ -64,12 +64,6 @@ class Predict extends React.Component {
     const point = viewport.pointFromPixel(data.position);
     var found_tile = null;
     var pixel_in_tile = new OpenSeadragon.Point();
-    let zoom_classifier = classifier.state.classifiers[
-      classifier.state.classifier_active].building_zoom;
-    console.log('zoom level of selected classifier', zoom_classifier);
-    openseadragon.viewport.zoomTo(zoom_classifier);
-    openseadragon.forceRedraw();
-
     let svm = classifier.state.classifiers[
       classifier.state.classifier_active].classifier;
  
@@ -106,7 +100,7 @@ class Predict extends React.Component {
         var classification = svm.predict(features);
         console.log('max classification', Math.max(...classification));
         for(i = 0; i < n_superpixels; i++ ) {
-            tile_overlay.add_classification(i, classification[i] > 0 ? 1 : -1);
+            tile_overlay.add_classification(i, (classification[i] > 0 ? 1 : -1));
         }
         tile_overlay.redraw();
         console.log('predicted for tile');
@@ -119,15 +113,14 @@ class Predict extends React.Component {
     const classifier = this.props.classifier;
     if (this.state.drawing && classifier &&
         classifier.state.classifier_active) {
+        const viewport = this.state.openseadragon.viewport;
         const tiled_image = openseadragon.world.getItemAt(0);
         let zoom_classifier = classifier.state.classifiers[
             classifier.state.classifier_active].building_zoom;
-        let svm = classifier.state.classifiers[
-            classifier.state.classifier_active].classifier;
-        console.log('should be zooming to', zoom_classifier);
-        openseadragon.viewport.zoomTo(zoom_classifier);
+        console.log('zoom level of selected classifier', zoom_classifier);
+        viewport.zoomTo(viewport.imageToViewportZoom(
+            tiled_image.source.getLevelScale(zoom_classifier)));
         openseadragon.forceRedraw();
-
         // iterate through tiles
     }
     const style = {
