@@ -159,26 +159,13 @@ class Classifier extends React.Component {
     if (this.state.building && data.quick) {
       const viewer = this.state.openseadragon;
       const viewport = this.state.openseadragon.viewport;
-      const zoom_level = viewport.getZoom();
+      
       const tiled_image = viewer.world.getItemAt(0);
-      const tile_source = viewer.world.getItemAt(0).source;
-      var found_tile = null;
-      var pixel_in_tile = new OpenSeadragon.Point();
       const point = viewport.pointFromPixel(data.position);
-      tiled_image.lastDrawn.forEach((tile) => {
-        if (tile.level == this.state.building_zoom && tile.bounds.containsPoint(
-            point)) {
-          found_tile = tile;
-          pixel_in_tile.x = Math.floor((point.x - tile.bounds.x) *
-            tile.sourceBounds.width /
-            tile.bounds.width);
-          pixel_in_tile.y = Math.floor((point.y - tile.bounds.y) *
-            tile.sourceBounds.height /
-            tile.bounds.height);
-        }
-      });
+      click_location = this.click_location_in_tile(tiled_image, point);
 
-      const tile = found_tile;
+      const tile = click_location.tile;
+      const pixel_in_tile = click_location.pixel;
 
       if (tile) {
         const selected_tile_index = pixel_in_tile.y * tile.sourceBounds.width +
@@ -231,6 +218,26 @@ class Classifier extends React.Component {
         }
       }
     }
+  }
+
+  click_location_in_tile(tiled_image, point) {
+    var click_location = null;
+    tiled_image.lastDrawn.forEach((tile) => {
+      if (tile.level == this.state.building_zoom && tile.bounds.containsPoint(point)) {
+        const pixel_in_tile = new OpenSeadragon.Point();
+        pixel_in_tile.x = Math.floor((point.x - tile.bounds.x) *
+          tile.sourceBounds.width /
+          tile.bounds.width);
+        pixel_in_tile.y = Math.floor((point.y - tile.bounds.y) *
+          tile.sourceBounds.height /
+          tile.bounds.height);
+        click_location = {
+          tile,
+          pixel: pixel_in_tile,
+        };
+      }
+    });
+    return click_location;
   }
 
   unLoadTile(data) {
