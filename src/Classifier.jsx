@@ -1,5 +1,4 @@
 import React from 'react';
-import { complement, compose, find, isNil, map } from 'ramda';
 
 let slic = require('../addons/slic/slic');
 let palette = require('google-palette');
@@ -162,10 +161,10 @@ class Classifier extends React.Component {
       const viewer = this.state.openseadragon;
       const viewport = this.state.openseadragon.viewport;
 
-      const tiled_image = viewer.world.getItemAt(0);
+      const tile_source = viewer.world.getItemAt(0).source;
       const point = viewport.pointFromPixel(data.position);
       const zoom_level = this.state.building_zoom;
-      const click_location = this.click_location_in_tile(tiled_image, point, zoom_level);
+      const click_location = this.click_location_in_tile(tile_source, point, viewer.drawer.context, zoom_level);
 
       if (click_location && click_location.tile) {
         const tile = click_location.tile;
@@ -222,28 +221,24 @@ class Classifier extends React.Component {
     }
   }
 
-  click_location_in_tile(tiled_image, point, zoom_level) {
-    const location = compose(
-      find(complement(isNil)),
-      map(tile => {
-        if (tile.level == zoom_level && tile.bounds.containsPoint(point)) {
-          const pixel_in_tile = new OpenSeadragon.Point();
-          pixel_in_tile.x = Math.floor((point.x - tile.bounds.x) *
-            tile.sourceBounds.width /
-            tile.bounds.width);
-          pixel_in_tile.y = Math.floor((point.y - tile.bounds.y) *
-            tile.sourceBounds.height /
-            tile.bounds.height);
-          return {
-            tile,
-            pixel: pixel_in_tile,
-          };
-        } else {
-          return null;
-        }
-      })
-    )(tiled_image.lastDrawn);
-    return location ? location : { tile: null, pixel: null };
+  click_location_in_tile(tile_source, point, context, zoom_level) {
+    // we have to ask the tile source for all the info, then build the tile ourselves. Boo!
+    const tile_vector = tile_source.getTileAtPoint(zoom_level, point);
+    const tile_url = tile_source.getTileUrl(zoom_level, tile_vector.x, tile_vector.y);
+    const tile_bounds = tile_source.getTileBounds(zoom_level, tile_vector.x, tile_vector.y, false);
+    const tile_exists = tile_source.tileExists(zoom_level, tile_vector.x, tile_vector.y);
+    const source_bounds = tile_source.getTileBounds(zoom_level, tile_vector.x, tile_vector.y, true);
+    const pixel_in_tile = new OpenSeadragon.Point();
+    pixel_in_tile.x = Math.floor((point.x - tile_bounds.x) *
+      source_bounds.width /
+      tile_bounds.width);
+    pixel_in_tile.y = Math.floor((point.y - tile_bounds.y) *
+      source_bounds.height /
+      tile_bounds.height);
+    return {
+      tile: new OpenSeadragon.Tile(zoom_level, tile_vector.x, tile_vector.y, tile_bounds, tile_exists, tile_url, context, false, null, source_bounds),
+      pixel: pixel_in_tile,
+    };
   }
 
   unLoadTile(data) {
