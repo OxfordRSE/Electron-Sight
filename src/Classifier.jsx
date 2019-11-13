@@ -159,15 +159,14 @@ class Classifier extends React.Component {
     if (this.state.building && data.quick) {
       const viewer = this.state.openseadragon;
       const viewport = this.state.openseadragon.viewport;
-      
+
       const tiled_image = viewer.world.getItemAt(0);
       const point = viewport.pointFromPixel(data.position);
       click_location = this.click_location_in_tile(tiled_image, point);
 
-      const tile = click_location.tile;
-      const pixel_in_tile = click_location.pixel;
-
-      if (tile) {
+      if (click_location && click_location.tile) {
+        const tile = click_location.tile;
+        const pixel_in_tile = click_location.pixel;
         const selected_tile_index = pixel_in_tile.y * tile.sourceBounds.width +
           pixel_in_tile.x;
 
