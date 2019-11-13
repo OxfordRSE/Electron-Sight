@@ -1,4 +1,6 @@
 import React from 'react';
+import { complement, compose, find, isNil, map } from 'ramda';
+
 let slic = require('../addons/slic/slic');
 let palette = require('google-palette');
 let _ = require('underscore')
@@ -162,7 +164,8 @@ class Classifier extends React.Component {
 
       const tiled_image = viewer.world.getItemAt(0);
       const point = viewport.pointFromPixel(data.position);
-      click_location = this.click_location_in_tile(tiled_image, point);
+      const zoom_level = this.state.building_zoom;
+      const click_location = this.click_location_in_tile(tiled_image, point, zoom_level);
 
       if (click_location && click_location.tile) {
         const tile = click_location.tile;
@@ -219,24 +222,28 @@ class Classifier extends React.Component {
     }
   }
 
-  click_location_in_tile(tiled_image, point) {
-    var click_location = null;
-    tiled_image.lastDrawn.forEach((tile) => {
-      if (tile.level == this.state.building_zoom && tile.bounds.containsPoint(point)) {
-        const pixel_in_tile = new OpenSeadragon.Point();
-        pixel_in_tile.x = Math.floor((point.x - tile.bounds.x) *
-          tile.sourceBounds.width /
-          tile.bounds.width);
-        pixel_in_tile.y = Math.floor((point.y - tile.bounds.y) *
-          tile.sourceBounds.height /
-          tile.bounds.height);
-        click_location = {
-          tile,
-          pixel: pixel_in_tile,
-        };
-      }
-    });
-    return click_location;
+  click_location_in_tile(tiled_image, point, zoom_level) {
+    const location = compose(
+      find(complement(isNil)),
+      map(tile => {
+        if (tile.level == zoom_level && tile.bounds.containsPoint(point)) {
+          const pixel_in_tile = new OpenSeadragon.Point();
+          pixel_in_tile.x = Math.floor((point.x - tile.bounds.x) *
+            tile.sourceBounds.width /
+            tile.bounds.width);
+          pixel_in_tile.y = Math.floor((point.y - tile.bounds.y) *
+            tile.sourceBounds.height /
+            tile.bounds.height);
+          return {
+            tile,
+            pixel: pixel_in_tile,
+          };
+        } else {
+          return null;
+        }
+      })
+    )(tiled_image.lastDrawn);
+    return location ? location : { tile: null, pixel: null };
   }
 
   unLoadTile(data) {
