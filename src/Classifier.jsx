@@ -1,4 +1,5 @@
 import React from 'react';
+
 let slic = require('../addons/slic/slic');
 let palette = require('google-palette');
 let _ = require('underscore')
@@ -32,6 +33,7 @@ export class TileOverlay {
     this.nfeatures = 26;
     this.features = new Float64Array(features);
     this.canvas = document.createElement("canvas");
+    this.canvas.style.zIndex = "1";
     this.context = this.canvas.getContext('2d');
     this.canvas.width = tile.sourceBounds.width;
     this.canvas.height = tile.sourceBounds.height;
@@ -159,28 +161,15 @@ class Classifier extends React.Component {
     if (this.state.building && data.quick) {
       const viewer = this.state.openseadragon;
       const viewport = this.state.openseadragon.viewport;
-      const zoom_level = viewport.getZoom();
-      const tiled_image = viewer.world.getItemAt(0);
+
       const tile_source = viewer.world.getItemAt(0).source;
-      var found_tile = null;
-      var pixel_in_tile = new OpenSeadragon.Point();
       const point = viewport.pointFromPixel(data.position);
-      tiled_image.lastDrawn.forEach((tile) => {
-        if (tile.level == this.state.building_zoom && tile.bounds.containsPoint(
-            point)) {
-          found_tile = tile;
-          pixel_in_tile.x = Math.floor((point.x - tile.bounds.x) *
-            tile.sourceBounds.width /
-            tile.bounds.width);
-          pixel_in_tile.y = Math.floor((point.y - tile.bounds.y) *
-            tile.sourceBounds.height /
-            tile.bounds.height);
-        }
-      });
+      const zoom_level = this.state.building_zoom;
+      const click_location = this.click_location_in_tile(tile_source, point, viewer.drawer.context, zoom_level);
 
-      const tile = found_tile;
-
-      if (tile) {
+      if (click_location && click_location.tile) {
+        const tile = click_location.tile;
+        const pixel_in_tile = click_location.pixel;
         const selected_tile_index = pixel_in_tile.y * tile.sourceBounds.width +
           pixel_in_tile.x;
 
@@ -231,6 +220,26 @@ class Classifier extends React.Component {
         }
       }
     }
+  }
+
+  click_location_in_tile(tile_source, point, context, zoom_level) {
+    // we have to ask the tile source for all the info, then build the tile ourselves. Boo!
+    const tile_vector = tile_source.getTileAtPoint(zoom_level, point);
+    const tile_url = tile_source.getTileUrl(zoom_level, tile_vector.x, tile_vector.y);
+    const tile_bounds = tile_source.getTileBounds(zoom_level, tile_vector.x, tile_vector.y, false);
+    const tile_exists = tile_source.tileExists(zoom_level, tile_vector.x, tile_vector.y);
+    const source_bounds = tile_source.getTileBounds(zoom_level, tile_vector.x, tile_vector.y, true);
+    const pixel_in_tile = new OpenSeadragon.Point();
+    pixel_in_tile.x = Math.floor((point.x - tile_bounds.x) *
+      source_bounds.width /
+      tile_bounds.width);
+    pixel_in_tile.y = Math.floor((point.y - tile_bounds.y) *
+      source_bounds.height /
+      tile_bounds.height);
+    return {
+      tile: new OpenSeadragon.Tile(zoom_level, tile_vector.x, tile_vector.y, tile_bounds, tile_exists, tile_url, context, false, null, source_bounds),
+      pixel: pixel_in_tile,
+    };
   }
 
   unLoadTile(data) {
