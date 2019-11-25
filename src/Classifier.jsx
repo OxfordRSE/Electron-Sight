@@ -33,6 +33,7 @@ export class TileOverlay {
     this.nfeatures = 26;
     this.features = new Float64Array(features);
     this.canvas = document.createElement("canvas");
+    this.canvas.style.zIndex = "1";
     this.context = this.canvas.getContext('2d');
     this.canvas.width = tile.sourceBounds.width;
     this.canvas.height = tile.sourceBounds.height;
