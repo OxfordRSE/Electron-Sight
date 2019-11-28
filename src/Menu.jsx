@@ -135,6 +135,10 @@ class Menu extends React.Component {
     }
   }
 
+  run_predict() {
+    this.props.predict.onPredict();
+  }
+
   buildClick() {
     if (this.state.mode == Modes.BUILD_CLASSIFIER) {
       this.props.classifier.endBuilding();
@@ -319,6 +323,25 @@ class Menu extends React.Component {
       </Button>
     );
 
+    let predict_popdown;
+    if (this.state.mode == Modes.PREDICT) {
+      predict_popdown = (
+        <div className="MenuDropdown" >
+        <Callout
+            intent="primary"
+        >
+        <p>Draw a region and predict within it</p>
+        </Callout>
+        <Button 
+            fill={false}
+            onClick={this.run_predict.bind(this)}
+        >
+          Go...
+        </Button>
+        </div>
+      )
+    }
+
     let contrast_popdown = (
       <Slider className="MenuDropdown" min={0} max={2} stepSize={0.1}
                   onChange={this.changeHandler("contrast")}
@@ -333,6 +356,7 @@ class Menu extends React.Component {
         {classifier}
         {classifier_popdown}
         {predict}
+        {predict_popdown}
         {brightness}
         {this.state.brightness_active && brightness_popdown}
         {contrast}
