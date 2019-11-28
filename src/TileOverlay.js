@@ -1,8 +1,17 @@
 
 export default class TileOverlay {
-  // tile: openseadragon Tile object
-  // labels: TypedArray mapping pixels to superpixel number
-  // features: 26*nsuperpixels array of features
+//
+// Stores openseadragon tiles along with classification data (from user).
+//
+// Has two responsibilities:
+// 1. Creates a canvas that is used to draw the clasificaition data
+// 2. Can return the classification data as training data for an SVM
+//
+  /// Contructor
+  ///
+  ///  @param {Openseadragon.Tile} tile: image tile
+  ///  @param {TypedArray} labels: maps pixels to superpixel number
+  ///  @param {array} features: 26*nsuperpixels array of features
   constructor(tile, labels, features) {
     this.id = tile.cacheKey;
     this.tile = tile;
@@ -22,7 +31,13 @@ export default class TileOverlay {
     this.predict_superpixels = new Set();
   }
 
+  /// user has selected a superpixel and given it a new classification
+  ///
+  /// @param {int} selected_superpixel: number of selected superpixel
+  /// @param {int} classification: -1 for negative classification, +1 for positive
   update_classification(selected_superpixel, classification) {
+
+    // make sure superpixel is in the right list
     if (classification > 0) {
       if (selected_superpixel in this.positive_superpixels) {
         this.positive_superpixels.delete(selected_superpixel);
@@ -38,6 +53,9 @@ export default class TileOverlay {
       }
       this.positive_superpixels.delete(selected_superpixel);
     }
+
+    // assign new classification to all the pixels in the tile from the
+    // selected_superpixel
     for (let i = 0; i < this.pixel_classification.length; i++) {
       if (this.labels[i] == selected_superpixel) {
         this.pixel_classification[i] = this.pixel_classification[i] ==
@@ -71,6 +89,11 @@ export default class TileOverlay {
     }
   }
 
+  
+ 
+  /// return training data for SVM as [features, classification], where features is an
+  //  array of array of features, and classification is an array of classifications (0
+  //  or 1)
   get_train_data() {
     var features = [];
     var classification = [];
@@ -83,6 +106,7 @@ export default class TileOverlay {
       const [new_features, new_classification] = this.generate_data(i, 0)
       features.push(new_features);
       classification.push(new_classification);
+
     }
     return [features, classification];
   }
@@ -95,6 +119,7 @@ export default class TileOverlay {
     return features;
   }
 
+  /// draws current classification data to the canvas
   redraw() {
     // default for createImageData is transparent black
     const imageData = this.context.createImageData(this.canvas.width, this.canvas
