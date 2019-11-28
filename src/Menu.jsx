@@ -92,8 +92,7 @@ class Menu extends React.Component {
     };
   }
 
-  openFile(nodeData: ITreeNode, _nodePath: number[], e: React.MouseEvent <
-    HTMLElement > ) {
+  openFile(nodeData) {
     this.props.openseadragon.open('file://' + nodeData.path)
     this.setState({
       mode: Modes.View
