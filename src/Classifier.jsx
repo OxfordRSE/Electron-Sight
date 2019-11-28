@@ -142,7 +142,6 @@ class Classifier extends React.Component {
       canvas.height = image.height;
       context.drawImage(image, 0, 0);
       var img_data = context.getImageData(0, 0, image.width, image.height);
-      console.log(img_data);
 
       const [
         outlabels, outLABMeanintensities,
@@ -233,7 +232,8 @@ class Classifier extends React.Component {
         kernel: SVM.KERNEL_TYPES.RBF, // The type of kernel I want to use
         type: SVM.SVM_TYPES.C_SVC,    // The type of SVM I want to run
         gamma: 1,                     // RBF kernel gamma parameter
-        cost: 1                       // C_SVC cost parameter
+        cost: 1,                      // C_SVC cost parameter
+        quiet: false
     });
 
     let features = [];
@@ -244,6 +244,7 @@ class Classifier extends React.Component {
       classification = classification.concat(tile_classification);
     }
     svm.train(features, classification);  // train the model
+
     this.setState(prevState => ({
       classifiers: Object.assign(prevState.classifiers, {[name]: {
           'classifier': svm, 'building_zoom': this.state.building_zoom}})

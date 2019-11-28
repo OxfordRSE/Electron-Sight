@@ -185,12 +185,14 @@ class Predict extends React.Component {
     const size = electron.remote.getCurrentWindow().getBounds();
     const viewport = this.state.openseadragon.viewport;
     const classifier = this.props.classifier;
+    let svm = classifier.state.classifiers[
+            classifier.state.classifier_active].classifier;
+
     const tiled_image = openseadragon.world.getItemAt(0);
     if (this.state.polygon.length > 2) {
       // get minimum bounding rectangle around polygon
       let min = new OpenSeadragon.Point(Infinity,Infinity) 
       let max = new OpenSeadragon.Point(-Infinity,-Infinity) 
-      console.log(max);
       for (let i=0; i<this.state.polygon.length; i++) {
         let x = this.state.polygon[i].x
         let y = this.state.polygon[i].y
@@ -217,24 +219,16 @@ class Predict extends React.Component {
       //    classifier.state.classifier_active].building_zoom;
       let min_tile = tile_source.getTileAtPoint(level, min);
       let max_tile = tile_source.getTileAtPoint(level, max);
-      console.log('min_tile');
-      console.log(min_tile);
-      console.log('max_tile');
-      console.log(max_tile);
-      console.log('polygon');
-      console.log(this.state.polygon);
       for (let x=min_tile.x; x<=max_tile.x; x++) {
         for (let y=min_tile.y; y<=max_tile.y; y++) {
           const tile = this.create_tile(x, y, level, tile_source, viewer.drawer.context);
           if (inPolygon(this.state.polygon, tile.bounds)) {
-            console.log(`tile at ${tile.bounds} is in the polygon`);
             if (tile.cacheKey in this.state.cached_tiles) {
               console.log(`tile already predicted`);
             } else {
               this.load_and_process_tile(tiled_image, tile);
             }
           }
-          console.log(tile);
         }
       }
     }
@@ -278,7 +272,6 @@ class Predict extends React.Component {
     canvas.height = image.height;
     context.drawImage(image, 0, 0);
     var img_data = context.getImageData(0, 0, image.width, image.height);
-    console.log(img_data);
     const [
         outlabels, outLABMeanintensities,
         outPixelCounts, outseedsXY,
@@ -300,7 +293,7 @@ class Predict extends React.Component {
     let svm = classifier.state.classifiers[
             classifier.state.classifier_active].classifier;
     var classification = svm.predict(features);
-    console.log('max classification', Math.max(...classification));
+
     for(i = 0; i < n_superpixels; i++ ) {
       tile_overlay.add_classification(i, (classification[i] > 0 ? 1 : -1));
     }
