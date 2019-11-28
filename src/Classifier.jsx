@@ -167,60 +167,27 @@ class Classifier extends React.Component {
       const zoom_level = this.state.building_zoom;
       const click_location = this.click_location_in_tile(tile_source, point, viewer.drawer.context, zoom_level);
 
-      if (click_location && click_location.tile) {
-        const tile = click_location.tile;
-        const pixel_in_tile = click_location.pixel;
-        const selected_tile_index = pixel_in_tile.y * tile.sourceBounds.width +
-          pixel_in_tile.x;
+      if (click_location.tile.cacheKey in this.state.selected_tiles) {
+        var tile_overlay = this.state.selected_tiles[click_location.tile.cacheKey];
 
+        // find superpixel user has selected
+        const selected_tile_index = click_location.pixel.y * click_location.tile.sourceBounds.width +
+      click_location.pixel.x;
+
+
+        const selected_superpixel = tile_overlay.labels[selected_tile_index];
+
+        // update classification and redraw overlay
         const classification = data.shift ? -1 : 1;
-        if (tile.cacheKey in this.state.selected_tiles) {
-          var tile_overlay = this.state.selected_tiles[tile.cacheKey];
-
-          // find superpixel user has selected
-          const selected_superpixel = tile_overlay.labels[selected_tile_index];
-
-          // update classification and redraw overlay
-          tile_overlay.update_classification(selected_superpixel, classification);
-          tile_overlay.redraw();
-
-        } else {
-          var rendered = tile.context2D || tile.cacheImageRecord
-            .getRenderedContext();
-          var img_data = rendered.getImageData(tile.sourceBounds.x, tile
-            .sourceBounds
-            .y, tile.sourceBounds.width, tile.sourceBounds.height);
-
-          const [
-            outlabels, outLABMeanintensities,
-            outPixelCounts, outseedsXY,
-            outLABVariances, outCollectedFeatures
-          ] = slic.slic(img_data.data, img_data.width, img_data.height, this.state
-            .superpixel_size);
-
-          // create overlay
-          const tile_overlay = new TileOverlay(tile, outlabels,
-            outCollectedFeatures);
-
-          // find superpixel user has selected
-          const selected_superpixel = outlabels[selected_tile_index];
-
-          // update and redraw overlay
-          tile_overlay.update_classification(selected_superpixel, classification);
-          tile_overlay.redraw();
-
-          // add overlay to openseadragon
-          viewer.addOverlay({
-            element: tile_overlay.canvas,
-            location: tile.bounds
-          });
-
-          // add to set of selected tiles
-          this.state.selected_tiles[tile_overlay.id] = tile_overlay;
-        }
+        tile_overlay.update_classification(selected_superpixel, classification);
+        tile_overlay.redraw();
+      } else {
+        const tiled_image = viewer.world.getItemAt(0);
+        this.load_and_process_tile(tiled_image, viewer, click_location.tile, data, click_location.pixel);
       }
     }
   }
+
 
   click_location_in_tile(tile_source, point, context, zoom_level) {
     // we have to ask the tile source for all the info, then build the tile ourselves. Boo!
@@ -240,6 +207,89 @@ class Classifier extends React.Component {
       tile: new OpenSeadragon.Tile(zoom_level, tile_vector.x, tile_vector.y, tile_bounds, tile_exists, tile_url, context, false, null, source_bounds),
       pixel: pixel_in_tile,
     };
+  }
+
+  // uses OpenSeadragon's image loader to load up the tile, calls 
+  // this.on_tile_load once the tile is loaded
+  load_and_process_tile(tiledImage, viewer, tile, data, pixel) {
+    tile.loading = true;
+    tiledImage._imageLoader.addJob({
+      src: tile.url,
+      loadWithAjax: tile.loadWithAjax,
+      ajaxHeaders: tile.ajaxHeaders,
+      crossOriginPolicy: tiledImage.crossOriginPolicy,
+      ajaxWithCredentials: tiledImage.ajaxWithCredentials,
+      callback: (image, errorMsg, tileRequest) => {
+        this.on_tile_load(tiledImage, viewer, tile, image, errorMsg, tileRequest, data, pixel);
+      },
+      abort: function() {
+        tile.loading = false;
+      }
+    });
+  }
+
+  // called when a new tile is loaded. renders the image data to a new canvas to get the
+  // raw data, then superpixelates the image and creates a new TileOverlay for that tile
+  on_tile_load(tiledImage, viewer, tile, image, errorMsg, tileRequest, data, pixel_in_tile) {
+    if (!image) {
+      console.log("Tile %s failed to load: %s - error: %s", tile, tile.url,
+        errorMsg);
+      tile.loading = false;
+      tile.exists = false;
+      return;
+    }
+    console.log('tile loaded');
+
+    const selected_tile_index = 
+      pixel_in_tile.y * tile.sourceBounds.width + pixel_in_tile.x;
+
+    const classification = data.shift ? -1 : 1;
+    if (tile.cacheKey in this.state.selected_tiles) {
+      var tile_overlay = this.state.selected_tiles[tile.cacheKey];
+
+      // find superpixel user has selected
+      const selected_superpixel = tile_overlay.labels[selected_tile_index];
+
+      // update classification and redraw overlay
+      tile_overlay.update_classification(selected_superpixel, classification);
+      tile_overlay.redraw();
+
+    } else {
+      var canvas = document.createElement('canvas');
+      var context = canvas.getContext('2d');
+      canvas.width = image.width;
+      canvas.height = image.height;
+      context.drawImage(image, 0, 0);
+      var img_data = context.getImageData(0, 0, image.width, image.height);
+      console.log(img_data);
+
+      const [
+        outlabels, outLABMeanintensities,
+        outPixelCounts, outseedsXY,
+        outLABVariances, outCollectedFeatures
+      ] = slic.slic(img_data.data, img_data.width, img_data.height, this.state
+        .superpixel_size);
+
+      // create overlay
+      const tile_overlay = new TileOverlay(tile, outlabels,
+        outCollectedFeatures);
+
+      // find superpixel user has selected
+      const selected_superpixel = outlabels[selected_tile_index];
+
+      // update and redraw overlay
+      tile_overlay.update_classification(selected_superpixel, classification);
+      tile_overlay.redraw();
+
+      // add overlay to openseadragon
+      viewer.addOverlay({
+        element: tile_overlay.canvas,
+        location: tile.bounds
+      });
+
+      // add to set of selected tiles
+      this.state.selected_tiles[tile_overlay.id] = tile_overlay;
+    }
   }
 
   unLoadTile(data) {
