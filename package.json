@@ -73,7 +73,7 @@
     "electron-rebuild": "^1.8.5",
     "mocha": "^6.1.4",
     "node-gyp": "^3.7.0",
-    "sharp": "^0.22.1",
+    "sharp": "^0.23.3",
     "underscore": "^1.9.1",
     "eslint": "^3.19.0",
     "eslint-config-airbnb": "^15.1.0",
