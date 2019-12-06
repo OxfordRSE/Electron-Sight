@@ -64,7 +64,6 @@ class Classifier extends React.Component {
         const selected_tile_index = click_location.pixel.y * click_location.tile.sourceBounds.width +
       click_location.pixel.x;
 
-
         const selected_superpixel = tile_overlay.labels[selected_tile_index];
 
         // update classification and redraw overlay
@@ -262,11 +261,39 @@ class Classifier extends React.Component {
       features = features.concat(tile_features);
       classification = classification.concat(tile_classification);
     }
+
+    // scale features between 0 and 1
+    let min = new Array(features[0].length).fill(Infinity);
+    let max = new Array(features[0].length).fill(-Infinity);
+    for (let i = 0; i < features.length; i++) {
+      for (let j = 0; j < features[i].length; j++) {
+        if (features[i][j] < min[j]) {
+          min[j] = features[i][j];
+        }
+        if (features[i][j] > max[j]) {
+          max[j] = features[i][j];
+        }
+      }
+    }
+
+    for (let i = 0; i < features.length; i++) {
+      for (let j = 0; j < features[i].length; j++) {
+        features[i][j] = (features[i][j] - min[j]) / (max[j] - min[j]);
+      }
+    }
+
     svm.train(features, classification);  // train the model
+
+    let classification_predicted = svm.predict(features);  // train the model
 
     this.setState(prevState => ({
       classifiers: Object.assign(prevState.classifiers, {[name]: {
-          'classifier': svm, 'building_zoom': this.state.building_zoom}})
+          'classifier': svm, 
+          'building_zoom': this.state.building_zoom, 
+          'superpixel_size': this.state.superpixel_size,
+          'feature_min': min,
+          'feature_max': max
+      }})
     }));
   }
 
@@ -297,102 +324,6 @@ class Classifier extends React.Component {
         </RadioGroup>
       </Card>
     );
-  }
-
-  onOpen(openseadragon) {
-    this.setState({
-      openseadragon: openseadragon
-    });
-  }
-
-  /// logic to run when user clicks on the image during classification loop
-  onClick(data) {
-    const viewer = this.state.openseadragon;
-    const viewport = this.state.openseadragon.viewport;
-    const zoom_level = viewport.getZoom();
-    const tiled_image = viewer.world.getItemAt(0);
-    const tile_source = viewer.world.getItemAt(0).source;
-    var found_tile = null;
-    var pixel_in_tile = new OpenSeadragon.Point();
-    const point = viewport.pointFromPixel(data.position);
-
-    // find the tile that the user clicked on in openseadragon. make sure that its level
-    // matches the zoom level chosen
-    tiled_image.lastDrawn.forEach((tile) => {
-      if (tile.level == this.state.building_zoom && tile.bounds.containsPoint(
-          point)) {
-        found_tile = tile;
-        pixel_in_tile.x = Math.floor((point.x - tile.bounds.x) *
-          tile.sourceBounds.width /
-          tile.bounds.width);
-        pixel_in_tile.y = Math.floor((point.y - tile.bounds.y) *
-          tile.sourceBounds.height /
-          tile.bounds.height);
-      }
-    });
-
-    const tile = found_tile;
-
-    // TODO: sometimes openseadragon has not loaded the tile at the expected zoom
-    // level. Not sure why this is happening
-    if (tile) {
-
-      // the index of the pixel that the user clicked on
-      const selected_tile_index = pixel_in_tile.y * tile.sourceBounds.width +
-        pixel_in_tile.x;
-
-      // if shift is held, then this indicates a "negative" classification
-      const classification = data.shift ? -1 : 1;
-
-      // check if the user has selected a superpixel in this tile previously
-      if (tile.cacheKey in this.state.selected_tiles) {
-        // get the pre-existing TileOverlay
-        var tile_overlay = this.state.selected_tiles[tile.cacheKey];
-
-        // find superpixel user has selected
-        const selected_superpixel = tile_overlay.labels[selected_tile_index];
-
-        // update classification and redraw overlay
-        tile_overlay.update_classification(selected_superpixel, classification);
-        tile_overlay.redraw();
-
-      } else {
-        // need to create a new TileOverlay. Get the image data from openseadragon and
-        // then run the superpixelation code over it
-        var rendered = tile.context2D || tile.cacheImageRecord
-          .getRenderedContext();
-        var img_data = rendered.getImageData(tile.sourceBounds.x, tile
-          .sourceBounds
-          .y, tile.sourceBounds.width, tile.sourceBounds.height);
-
-        const [
-          outlabels, outLABMeanintensities,
-          outPixelCounts, outseedsXY,
-          outLABVariances, outCollectedFeatures
-        ] = slic.slic(img_data.data, img_data.width, img_data.height, this.state
-          .superpixel_size);
-
-        // create new TileOverlay
-        const tile_overlay = new TileOverlay(tile, outlabels,
-          outCollectedFeatures);
-
-        // find superpixel user has selected
-        const selected_superpixel = outlabels[selected_tile_index];
-
-        // update and redraw overlay
-        tile_overlay.update_classification(selected_superpixel, classification);
-        tile_overlay.redraw();
-
-        // add overlay to openseadragon
-        viewer.addOverlay({
-          element: tile_overlay.canvas,
-          location: tile.bounds
-        });
-
-        // add to set of selected tiles
-        this.state.selected_tiles[tile_overlay.id] = tile_overlay;
-      }
-    }
   }
 
 }

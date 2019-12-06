@@ -80,7 +80,6 @@
     "eslint-plugin-react-hooks": "1.7.0",
     "mocha": "^6.1.4",
     "node-gyp": "^3.7.0",
-    "sharp": "^0.22.1",
     "underscore": "^1.9.1"
   }
 }

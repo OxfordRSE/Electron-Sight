@@ -18,6 +18,7 @@ import {
   FormGroup,
 } from "@blueprintjs/core";
 
+
 const electron = window.require('electron');
 const remote = electron.remote
 const fs = remote.require('fs');
@@ -95,7 +96,19 @@ class Menu extends React.Component {
 
   openFile(nodeData: ITreeNode, _nodePath: number[], e: React.MouseEvent <
     HTMLElement > ) {
-    this.props.openseadragon.open('file://' + nodeData.path)
+    const filename = nodeData.path;
+    const extension = filename.split('.').pop();
+    let success = false;
+    if (extension == 'dzi') {
+      console.log(`opening dzi file ${filename}`);
+      this.props.openseadragon.open('file://' + nodeData.path)
+    } else if (extension == 'ndpi') {
+      console.log(`opening ndpi file ${filename}`);
+
+    } else {
+      console.log(`unknown extension ${extension} for file ${filename}`);
+      return;
+    }
     this.setState({
       mode: Modes.View
     });

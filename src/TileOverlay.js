@@ -97,6 +97,7 @@ export default class TileOverlay {
   get_train_data() {
     var features = [];
     var classification = [];
+
     for (let i of this.positive_superpixels) {
       const [new_features, new_classification] = this.generate_data(i, 1)
       features.push(new_features);

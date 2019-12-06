@@ -109,6 +109,7 @@ function inPolygon(polygon, bounds) {
 class Predict extends React.Component {
   constructor(props) {
     super(props)
+    this.onClick = this.onClick.bind(this);
     this.state = {
       drawing: false,
       openseadragon: null,
@@ -126,14 +127,14 @@ class Predict extends React.Component {
   startDrawing() {
     this.setState({drawing: true, polygon: []});
     const viewer = this.state.openseadragon;
-    viewer.addHandler('canvas-click', this.onClick.bind(this));
+    viewer.addHandler('canvas-click', this.onClick);
     //viewer.gestureSettingsByDeviceType("mouse").scrollToZoom = false;
   }
 
- endDrawing() {
+  endDrawing() {
     this.setState({drawing: false, polygon: [], cached_tiles: {}});
     const viewer = this.state.openseadragon;
-    viewer.removeHandler('canvas-click', this.onClick.bind(this));
+    viewer.removeHandler('canvas-click', this.onClick);
     viewer.clearOverlays();
     //viewer.gestureSettingsByDeviceType("mouse").scrollToZoom = true;
   }
@@ -213,10 +214,7 @@ class Predict extends React.Component {
       // loop over all tiles in that bounding rectangle and see which ones are in the
       // polygon
       const classifier = this.props.classifier;
-      let level = 16;
-      
-      //classifier.state.classifiers[
-      //    classifier.state.classifier_active].building_zoom;
+      let level = classifier.state.classifiers[classifier.state.classifier_active].building_zoom;
       let min_tile = tile_source.getTileAtPoint(level, min);
       let max_tile = tile_source.getTileAtPoint(level, max);
       for (let x=min_tile.x; x<=max_tile.x; x++) {
@@ -272,26 +270,37 @@ class Predict extends React.Component {
     canvas.height = image.height;
     context.drawImage(image, 0, 0);
     var img_data = context.getImageData(0, 0, image.width, image.height);
+
+    const classifier = this.props.classifier;
+    let superpixel_size = classifier.state.classifiers[
+            classifier.state.classifier_active].superpixel_size;
     const [
         outlabels, outLABMeanintensities,
         outPixelCounts, outseedsXY,
         outLABVariances, outCollectedFeatures
-      ] = slic.slic(img_data.data, img_data.width, img_data.height, this.state
-        .superpixel_size);
+      ] = slic.slic(img_data.data, img_data.width, img_data.height, superpixel_size);
     var tile_overlay = new TileOverlay(tile, outlabels, outCollectedFeatures);
     this.state.cached_tiles[tile.cacheKey] = tile_overlay;
 
-    var n_superpixels = Math.max(...tile_overlay.labels) + 1;
-    console.log('n superpixels', n_superpixels);
+    var n_superpixels = outPixelCounts.length
     var features = [];
     var i;
     for(i = 0; i < n_superpixels; i++ ) {
         features.push(tile_overlay.generate_data(i));
     }
 
-    const classifier = this.props.classifier;
     let svm = classifier.state.classifiers[
             classifier.state.classifier_active].classifier;
+    let min = classifier.state.classifiers[
+            classifier.state.classifier_active].feature_min;
+    let max = classifier.state.classifiers[
+            classifier.state.classifier_active].feature_max;
+
+    for (let i = 0; i < features.length; i++) {
+      for (let j = 0; j < features[i].length; j++) {
+        features[i][j] = (features[i][j] - min[j]) / (max[j] - min[j]);
+      }
+    }
     var classification = svm.predict(features);
 
     for(i = 0; i < n_superpixels; i++ ) {
@@ -304,7 +313,6 @@ class Predict extends React.Component {
       element: tile_overlay.canvas,
       location: tile.bounds
     });
-    console.log('predicted for tile');
 
   }
 
@@ -321,7 +329,6 @@ class Predict extends React.Component {
         const tiled_image = openseadragon.world.getItemAt(0);
         let zoom_classifier = classifier.state.classifiers[
             classifier.state.classifier_active].building_zoom;
-        console.log('zoom level of selected classifier', zoom_classifier);
         //viewport.zoomTo(viewport.imageToViewportZoom(
         //    tiled_image.source.getLevelScale(zoom_classifier)));
         //openseadragon.forceRedraw();
