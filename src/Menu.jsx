@@ -89,6 +89,8 @@ class Menu extends React.Component {
       brightness_active: false,
       contrast_active: false,
       classifier_name: "Classifier",
+      svm_cost: 1,
+      svm_gamma: 1,
       brightness: 1,
       contrast: 1
     };
@@ -171,10 +173,6 @@ class Menu extends React.Component {
     }
   }
 
-
-  buildClassifier() {
-    this.props.classifier.buildClassifier(this.state.classifier_name);
-  }
 
   toggle(key) {
     return () => {
@@ -274,8 +272,8 @@ class Menu extends React.Component {
             <HTMLSelect 
                 id="classifier-zoom-level"
                 options={zoom_levels} 
-                onChange={this.props.classifier.setZoomLevel.bind(this.props.classifier)}
-                //value={this.props.classifier.state.zoom_level}
+                onChange={this.props.classifier.set_classifier_zoom}
+                value={this.props.classifier.state.building_zoom}
             />
         </FormGroup>
         
@@ -284,22 +282,40 @@ class Menu extends React.Component {
             labelFor="superpixel-size"
         >
           <Slider min={10} max={500} stepSize={10} labelStepSize = {490}
-                  onRelease={this.props.classifier.setSuperpixelSize.bind(this.props.classifier)}
-                  onChange={this.changeHandler("superpixel_size")}
-                  value={this.state.superpixel_size} 
+                  onRelease={this.props.classifier.update_superpixel_size}
+                  onChange={this.props.classifier.set_superpixel_size}
+                  value={this.props.classifier.superpixel_size} 
+          />
+        </FormGroup>
+        <FormGroup
+            label="SVM cost (10^x)"
+            labelFor="svm-cost"
+        >
+          <Slider id="svm-cost", min={-15} max={15} stepSize={1} labelStepSize = {2}
+                  onChange={this.props.classifier.set_svm_cost}
+                  value={this.props.classifier.svm_cost} 
+          />
+        </FormGroup>
+        <FormGroup
+            label="SVM gamma (10^x)"
+            labelFor="svm-gamma"
+        >
+          <Slider id="svm-gamma", min={-15} max={15} stepSize={1} labelStepSize = {2}
+                  onChange={this.props.classifier.set_svm_gamma}
+                  value={this.state.svm_gamma} 
           />
         </FormGroup>
         <FormGroup
             label="Name"
             labelFor="classifier-name"
         >
-          <InputGroup id="classifier-name" placeholder={this.state.classifier_name}
-                  onChange={this.inputGroupChangeHandler("classifier_name")}         
+          <InputGroup id="classifier-name" placeholder={this.props.classifier.classifier_name}
+                  onChange={this.props.classifier.set_classifier_name}
           />
         </FormGroup>
         <Button 
             fill={false}
-            onClick={this.buildClassifier.bind(this)}
+            onClick={this.props.classifier.buildClassifier}
         >
           Build new classifier...
         </Button>

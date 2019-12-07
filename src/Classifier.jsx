@@ -39,11 +39,20 @@ class Classifier extends React.Component {
     this.state = {
       building: false,
       building_zoom: 1,
-      superpixel_size: 30,
+      superpixel_size: 100,
+      svm_cost: 1,
+      svm_gamma: 1,
+      classifier_name: "Classifier",
       openseadragon: null,
       selected_tiles: {},
       classifiers: {}
     };
+    this.set_classifier_zoom = this.set_classifier_zoom.bind(this);
+    this.set_classifier_name = this.set_classifier_name.bind(this);
+    this.set_svm_cost = this.set_svm_cost.bind(this);
+    this.set_svm_gamma = this.set_svm_gamma.bind(this);
+    this.set_superpixel_size = this.set_superpixel_size.bind(this);
+    this.update_superpixel_size = this.update_superpixel_size.bind(this);
   }
 
 
@@ -188,31 +197,39 @@ class Classifier extends React.Component {
 
 
   startBuilding(zoom, superpixel_size) {
+    if (this.state.classifier_active) {
+      updateClassifier(this.state.classifier_active);
+      superpixel_size = this.state.classifiers[this.state.classifier_active].superpixel_size;
+      zoom = this.state.classifiers[this.state.classifier_active].building_zoom;
+    } else {
+      this.setState({
+        superpixel_size: superpixel_size,
+        selected_tiles: {}
+        building_zoom: zoom,
+      });
+    }
+
+    this.setState({
+      building: true,
+    });
+
     const viewer = this.state.openseadragon;
     const viewport = this.state.openseadragon.viewport;
-    const tiled_image = this.state.openseadragon.world.getItemAt(0);
-
     const tile_source = this.state.openseadragon.world.getItemAt(0).source;
     const max_level = tile_source.maxLevel;
     const max_zoom = viewport.getMaxZoom();
     const min_zoom = viewport.getMinZoom();
     viewport.zoomTo(viewport.imageToViewportZoom(tile_source.getLevelScale(zoom)));
     viewer.forceRedraw();
+
     viewer.gestureSettingsByDeviceType("mouse").scrollToZoom = false;
 
     viewer.addHandler('canvas-click', this.onClick.bind(this));
-
-    this.setState({
-      building: true,
-      building_zoom: zoom,
-      superpixel_size: superpixel_size,
-      selected_tiles: {}
-    });
   }
 
   /// change the zoom level at which the classifier is build build. This resets the
   /// classification loop and erases all data
-  setZoomLevel(event) {
+  set_classifier_zoom(event) {
     const zoom = event.currentTarget.value;
     this.endBuilding();
     this.startBuilding(zoom, this.state.superpixel_size);
@@ -223,9 +240,34 @@ class Classifier extends React.Component {
 
   /// sets the target size of the superpixels. This resets the classification loop and
   /// erases all data
-  setSuperpixelSize(size) {
+  update_superpixel_zoom(size) {
     this.endBuilding();
     this.startBuilding(this.state.building_zoom, size);
+    set_superpixel_zoom(size);
+  }
+
+  set_superpixel_zoom(size) {
+    this.setState({
+      superpixel_size:size 
+    });
+  }
+
+  set_svm_gamma(value) {
+    this.setState({
+      svm_gamma: value
+    });
+  }
+
+  set_svm_cost(value) {
+    this.setState({
+      svm_cost: value
+    });
+  }
+
+  set_classifier_name(name) {
+    this.setState({
+      classifier_name: name 
+    });
   }
 
   /// Turn off the classfication loop and remove the canvas-click callback. clear all
@@ -244,13 +286,16 @@ class Classifier extends React.Component {
   /// Build an SVM classifier with the current classification data and add it to
   /// this.state.classifiers
   /// Note: all classification data is kept so user can keep on selecting superpixels
-  buildClassifier(name) {
+  buildClassifier() {
+    const name = this.state.classifier_name;
+    const cost = this.state.svm_cost;
+    const gamma = this.state.svm_gamma;
     console.log(`building classifier ${name}`);
     const svm = new SVM({
         kernel: SVM.KERNEL_TYPES.RBF, // The type of kernel I want to use
         type: SVM.SVM_TYPES.C_SVC,    // The type of SVM I want to run
-        gamma: 1,                     // RBF kernel gamma parameter
-        cost: 1,                      // C_SVC cost parameter
+        gamma: gamma,                     // RBF kernel gamma parameter
+        cost: cost,                      // C_SVC cost parameter
         quiet: false
     });
 
@@ -291,6 +336,9 @@ class Classifier extends React.Component {
           'classifier': svm, 
           'building_zoom': this.state.building_zoom, 
           'superpixel_size': this.state.superpixel_size,
+          'selected_tiles': this.state.selected_tiles,
+          'cost': cost,
+          'gamma': gamma,
           'feature_min': min,
           'feature_max': max
       }})
@@ -303,8 +351,32 @@ class Classifier extends React.Component {
     });
   }
 
+  updateClassifier(selected_classifier) {
+    // add overlay to openseadragon
+    const selected_tiles = this.state.classifiers[selected_classifier].selected_tiles;
+    const viewer = this.state.openseadragon;
+    for (const [id, tile_overlay] of Object.entries(selected_tiles)) {
+      viewer.addOverlay({
+        element: tile_overlay.canvas,
+        location: tile_overlay.tile.bounds
+      });
+    }
+
+    this.setState({
+      superpixel_size: this.state.classifiers[selected_classifier].superpixel_size,
+      building_zoom: this.state.classifiers[selected_classifier].building_zoom,
+      selected_tiles: selected_tiles 
+    });
+  }
+
   setClassifier(evt) {
-    this.setState({classifier_active: evt.currentTarget.value});
+    if (this.state.building) {
+      updateClassifier(evt.currentTarget.value);
+    }
+    
+    this.setState({
+      classifier_active: evt.currentTarget.value,
+    });
   }
 
 
