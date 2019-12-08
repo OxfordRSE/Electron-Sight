@@ -38,16 +38,15 @@ class Classifier extends React.Component {
     super(props)
     this.state = {
       building: false,
-      building_zoom: 1,
       superpixel_size: 100,
-      svm_cost: 1,
-      svm_gamma: 1,
+      svm_cost: 0,
+      svm_gamma: 0,
       classifier_name: "Classifier",
       openseadragon: null,
       selected_tiles: {},
       classifiers: {}
     };
-    this.set_classifier_zoom = this.set_classifier_zoom.bind(this);
+    this.set_building_zoom= this.set_building_zoom.bind(this);
     this.set_classifier_name = this.set_classifier_name.bind(this);
     this.set_svm_cost = this.set_svm_cost.bind(this);
     this.set_svm_gamma = this.set_svm_gamma.bind(this);
@@ -196,29 +195,28 @@ class Classifier extends React.Component {
   }
 
 
-  startBuilding(zoom, superpixel_size) {
+  startBuilding() {
+    const viewport = this.state.openseadragon.viewport;
+    const tile_source = this.state.openseadragon.world.getItemAt(0).source;
+    const viewer = this.state.openseadragon;
+    let zoom = this.state.building_zoom;
     if (this.state.classifier_active) {
       updateClassifier(this.state.classifier_active);
       superpixel_size = this.state.classifiers[this.state.classifier_active].superpixel_size;
       zoom = this.state.classifiers[this.state.classifier_active].building_zoom;
-    } else {
+    } else if (!zoom) {
+      const max_zoom = tile_source.maxLevel;
+      zoom = max_zoom;
       this.setState({
-        superpixel_size: superpixel_size,
-        selected_tiles: {}
-        building_zoom: zoom,
+        building_zoom: max_zoom
       });
     }
 
     this.setState({
       building: true,
+      selected_tiles: {},
     });
 
-    const viewer = this.state.openseadragon;
-    const viewport = this.state.openseadragon.viewport;
-    const tile_source = this.state.openseadragon.world.getItemAt(0).source;
-    const max_level = tile_source.maxLevel;
-    const max_zoom = viewport.getMaxZoom();
-    const min_zoom = viewport.getMinZoom();
     viewport.zoomTo(viewport.imageToViewportZoom(tile_source.getLevelScale(zoom)));
     viewer.forceRedraw();
 
@@ -229,26 +227,27 @@ class Classifier extends React.Component {
 
   /// change the zoom level at which the classifier is build build. This resets the
   /// classification loop and erases all data
-  set_classifier_zoom(event) {
+  set_building_zoom(event) {
     const zoom = event.currentTarget.value;
+    console.log(`set building zoom ${zoom}`);
+    this.setState({
+      building_zoom: zoom 
+    });
     this.endBuilding();
-    this.startBuilding(zoom, this.state.superpixel_size);
-    // not sure why we need a second startBuilding, but without this
-    // the overlays do not appear until superpixel size is changed.
-    this.startBuilding(zoom, this.state.superpixel_size);
+    this.startBuilding();
   }
 
   /// sets the target size of the superpixels. This resets the classification loop and
   /// erases all data
-  update_superpixel_zoom(size) {
+  update_superpixel_size(size) {
     this.endBuilding();
     this.startBuilding(this.state.building_zoom, size);
-    set_superpixel_zoom(size);
+    this.set_superpixel_size(size);
   }
 
-  set_superpixel_zoom(size) {
+  set_superpixel_size(size) {
     this.setState({
-      superpixel_size:size 
+      superpixel_size: size 
     });
   }
 
@@ -288,8 +287,8 @@ class Classifier extends React.Component {
   /// Note: all classification data is kept so user can keep on selecting superpixels
   buildClassifier() {
     const name = this.state.classifier_name;
-    const cost = this.state.svm_cost;
-    const gamma = this.state.svm_gamma;
+    const cost = Math.pow(10,this.state.svm_cost);
+    const gamma = Math.pow(10,this.state.svm_gamma);
     console.log(`building classifier ${name}`);
     const svm = new SVM({
         kernel: SVM.KERNEL_TYPES.RBF, // The type of kernel I want to use
@@ -347,7 +346,7 @@ class Classifier extends React.Component {
 
   onOpen(openseadragon) {
     this.setState({
-      openseadragon: openseadragon
+      openseadragon: openseadragon,
     });
   }
 

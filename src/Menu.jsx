@@ -85,12 +85,13 @@ class Menu extends React.Component {
     super(props);
     this.state = {
       mode: Modes.DISABLED,
-      superpixel_size: 100,
       brightness_active: false,
       contrast_active: false,
       classifier_name: "Classifier",
-      svm_cost: 1,
-      svm_gamma: 1,
+      svm_cost: 0,
+      svm_gamma: 0,
+      superpixel_size: 100,
+      //building_zoom: props.classifier.state.building_zoom,
       brightness: 1,
       contrast: 1
     };
@@ -106,11 +107,12 @@ class Menu extends React.Component {
       this.props.openseadragon.open('file://' + nodeData.path)
     } else if (extension == 'ndpi') {
       console.log(`opening ndpi file ${filename}`);
-
     } else {
       console.log(`unknown extension ${extension} for file ${filename}`);
       return;
     }
+
+
     this.setState({
       mode: Modes.View
     });
@@ -164,11 +166,10 @@ class Menu extends React.Component {
       if (this.state.mode == Modes.ANNOTATE) {
         this.props.annotations.endDrawing();
       }
-      const tile_source = this.props.openseadragon.world.getItemAt(0).source;
-      const max_zoom = tile_source.maxLevel;
-      this.props.classifier.startBuilding(max_zoom, this.state.superpixel_size);
+      const zoom = this.props.classifier.startBuilding();
       this.setState({
-        mode: Modes.BUILD_CLASSIFIER
+        mode: Modes.BUILD_CLASSIFIER,
+        building_zoom: zoom
       });
     }
   }
@@ -191,11 +192,20 @@ class Menu extends React.Component {
     }
   }
 
-  changeHandler(key) {
+  viewerChangeHandler(key) {
     return value => {
       this.props.viewer.setState({
         [key]: value
       });
+      this.setState({
+        [key]: value
+      });
+    }
+  }
+
+  classifierChangeHandler(key) {
+    return value => {
+      this.props.classifier[`set_${key}`](value);
       this.setState({
         [key]: value
       });
@@ -272,8 +282,8 @@ class Menu extends React.Component {
             <HTMLSelect 
                 id="classifier-zoom-level"
                 options={zoom_levels} 
-                onChange={this.props.classifier.set_classifier_zoom}
-                value={this.props.classifier.state.building_zoom}
+                onChange={this.classifierChangeHandler("building_zoom")}
+                value={this.state.building_zoom}
             />
         </FormGroup>
         
@@ -281,27 +291,27 @@ class Menu extends React.Component {
             label="Superpixel size"
             labelFor="superpixel-size"
         >
-          <Slider min={10} max={500} stepSize={10} labelStepSize = {490}
+          <Slider min={10} max={500} stepSize={10} labelStepSize = {100}
                   onRelease={this.props.classifier.update_superpixel_size}
-                  onChange={this.props.classifier.set_superpixel_size}
-                  value={this.props.classifier.superpixel_size} 
+                  onChange={this.classifierChangeHandler("superpixel_size")}
+                  value={this.state.superpixel_size} 
           />
         </FormGroup>
         <FormGroup
             label="SVM cost (10^x)"
             labelFor="svm-cost"
         >
-          <Slider id="svm-cost", min={-15} max={15} stepSize={1} labelStepSize = {2}
-                  onChange={this.props.classifier.set_svm_cost}
-                  value={this.props.classifier.svm_cost} 
+          <Slider id="svm-cost" min={-15} max={15} stepSize={1} labelStepSize = {2}
+                  onChange={this.classifierChangeHandler("svm_cost")}
+                  value={this.state.svm_cost} 
           />
         </FormGroup>
         <FormGroup
             label="SVM gamma (10^x)"
             labelFor="svm-gamma"
         >
-          <Slider id="svm-gamma", min={-15} max={15} stepSize={1} labelStepSize = {2}
-                  onChange={this.props.classifier.set_svm_gamma}
+          <Slider id="svm-gamma" min={-15} max={15} stepSize={1} labelStepSize = {2}
+                  onChange={this.classifierChangeHandler("svm_gamma")}
                   value={this.state.svm_gamma} 
           />
         </FormGroup>
@@ -331,7 +341,7 @@ class Menu extends React.Component {
 
     let brightness_popdown = (
       <Slider className="MenuDropdown" min={0} max={2} stepSize={0.1}
-                onChange={this.changeHandler("brightness")}
+                onChange={this.viewerChangeHandler("brightness")}
                 value={this.state.brightness} />
     );
 
@@ -373,7 +383,7 @@ class Menu extends React.Component {
 
     let contrast_popdown = (
       <Slider className="MenuDropdown" min={0} max={2} stepSize={0.1}
-                  onChange={this.changeHandler("contrast")}
+                  onChange={this.viewerChangeHandler("contrast")}
                   value={this.state.contrast} />
     );
 
