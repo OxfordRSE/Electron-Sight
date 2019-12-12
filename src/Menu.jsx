@@ -71,18 +71,211 @@ class FileTree extends React.Component {
   }
 }
 
-const Modes = {
-  DISABLED: 0,
-  VIEW: 1,
-  ANNOTATE: 2,
-  BUILD_CLASSIFIER: 3
+const anyModeOpenFile = (menu, nodeData) => {
+  menu.props.openseadragon.open('file://' + nodeData.path);
+  return new ViewMode();
+}
+
+const truth = () => true;
+const falsity = () => false;
+const nothingness = () => null;
+
+function DisabledMode() {
+  if (!(this instanceof DisabledMode)) {
+    return new DisabledMode();
+  }
+}
+
+DisabledMode.prototype.buildClick = function() {
+  return new DisabledMode();
 };
+
+DisabledMode.prototype.animClick = function(menu) {
+  menu.props.annotations.startDrawing();
+  return new AnnotateMode();
+};
+
+DisabledMode.prototype.openFile = anyModeOpenFile;
+DisabledMode.prototype.annotateButtonActive = falsity;
+DisabledMode.prototype.annotateButtonDisabled = truth;
+DisabledMode.prototype.classifierButtonActive = falsity;
+DisabledMode.prototype.classifierButtonDisabled = truth;
+DisabledMode.prototype.classifierPopdown = nothingness;
+DisabledMode.prototype.brightnessButtonDisabled = truth;
+DisabledMode.prototype.contrastButtonDisabled = falsity;
+DisabledMode.prototype.zoom_levels = () => [];
+
+function AnnotateMode() {
+  if (!(this instanceof AnnotateMode)) {
+    return new AnnotateMode();
+  }
+}
+
+AnnotateMode.prototype.animClick = function(menu) {
+  menu.props.annotations.endDrawing();
+  return new ViewMode();
+}
+
+AnnotateMode.prototype.buildClick = function(menu) {
+  menu.props.annotations.endDrawing();
+  const tile_source = menu.props.openseadragon.world.getItemAt(0).source;
+  const max_zoom = tile_source.maxLevel;
+  menu.props.classifier.startBuilding(max_zoom, menu.state.superpixel_size);
+  return new ViewMode();
+}
+
+AnnotateMode.prototype.zoom_levels = function(menu) {
+  var zoom_levels = [];
+  if (menu.props.openseadragon.world.getItemAt(0)) {
+    const tile_source = menu.props.openseadragon.world.getItemAt(0).source;
+    const max_zoom = tile_source.maxLevel;
+    const min_zoom = tile_source.minLevel;
+    zoom_levels = [...Array(max_zoom - min_zoom).keys()].map(x => x + min_zoom +
+      1).reverse();
+  }
+  return zoom_levels;
+}
+
+AnnotateMode.prototype.openFile = anyModeOpenFile;
+AnnotateMode.prototype.annotateButtonActive = truth;
+AnnotateMode.prototype.annotateButtonDisabled = falsity;
+AnnotateMode.prototype.classifierButtonActive = falsity;
+AnnotateMode.prototype.classifierButtonDisabled = falsity;
+AnnotateMode.prototype.classifierPopdown = nothingness;
+AnnotateMode.prototype.brightnessButtonDisabled = falsity;
+AnnotateMode.prototype.contrastButtonDisabled = falsity;
+
+function ViewMode() {
+  if (!(this instanceof ViewMode)) {
+    return new ViewMode();
+  }
+}
+
+ViewMode.prototype.animClick = function(menu) {
+  menu.props.annotations.startDrawing();
+  return new AnnotateMode();
+}
+
+ViewMode.prototype.buildClick = function(menu) {
+  const tile_source = menu.props.openseadragon.world.getItemAt(0).source;
+  const max_zoom = tile_source.maxLevel;
+  menu.props.classifier.startBuilding(max_zoom, menu.state.superpixel_size);
+  return new BuildClassifierMode();
+}
+
+ViewMode.prototype.zoom_levels = function(menu) {
+  var zoom_levels = [];
+  if (menu.props.openseadragon.world.getItemAt(0)) {
+    const tile_source = menu.props.openseadragon.world.getItemAt(0).source;
+    const max_zoom = tile_source.maxLevel;
+    const min_zoom = tile_source.minLevel;
+    zoom_levels = [...Array(max_zoom - min_zoom).keys()].map(x => x + min_zoom +
+      1).reverse();
+  }
+  return zoom_levels;
+}
+
+ViewMode.prototype.openFile = anyModeOpenFile;
+ViewMode.prototype.annotateButtonActive = falsity;
+ViewMode.prototype.annotateButtonDisabled = falsity;
+ViewMode.prototype.classifierButtonActive = falsity;
+ViewMode.prototype.classifierButtonDisabled = falsity;
+ViewMode.prototype.classifierPopdown = nothingness;
+ViewMode.prototype.brightnessButtonDisabled = falsity;
+ViewMode.prototype.contrastButtonDisabled = falsity;
+
+function BuildClassifierMode() {
+  if (!(this instanceof BuildClassifierMode)) {
+    return new BuildClassifierMode();
+  }
+}
+
+BuildClassifierMode.prototype.animClick = function(menu) {
+  menu.props.classifier.endBuilding();
+  menu.props.annotations.startDrawing();
+  return new AnnotateMode();
+}
+
+BuildClassifierMode.prototype.buildClick = function(menu) {
+  menu.props.classifier.endBuilding();
+  return new ViewMode();
+}
+
+BuildClassifierMode.prototype.zoom_levels = function(menu) {
+  var zoom_levels = [];
+  if (menu.props.openseadragon.world.getItemAt(0)) {
+    const tile_source = menu.props.openseadragon.world.getItemAt(0).source;
+    const max_zoom = tile_source.maxLevel;
+    const min_zoom = tile_source.minLevel;
+    zoom_levels = [...Array(max_zoom - min_zoom).keys()].map(x => x + min_zoom +
+      1).reverse();
+  }
+  return zoom_levels;
+}
+
+BuildClassifierMode.prototype.classifierPopdown = function(menu, zoom_levels) {
+  return (
+    <div className="MenuDropdown" >
+    <Callout
+        intent="primary"
+    >
+    <p>Click to label regions of interest (green)</p>
+    <p>Shift-click to label regions of non-interest (red)</p>
+    </Callout>       
+    <FormGroup
+        label="Zoom level"
+        labelFor="classifier-zoom-level"
+        inline = {true}
+    >
+        <HTMLSelect 
+            id="classifier-zoom-level"
+            options={zoom_levels} 
+            onChange={menu.props.classifier.setZoomLevel.bind(menu.props.classifier)}
+            //value={this.props.classifier.state.zoom_level}
+        />
+    </FormGroup>
+    
+    <FormGroup
+        label="Superpixel size"
+        labelFor="superpixel-size"
+    >
+      <Slider min={10} max={500} stepSize={10} labelStepSize = {490}
+              onRelease={menu.props.classifier.setSuperpixelSize.bind(menu.props.classifier)}
+              onChange={menu.changeHandler("superpixel_size")}
+              value={menu.state.superpixel_size} 
+      />
+    </FormGroup>
+    <FormGroup
+        label="Name"
+        labelFor="classifier-name"
+    >
+      <InputGroup id="classifier-name" placeholder={menu.state.classifier_name}
+              onChange={menu.inputGroupChangeHandler("classifier_name")}         
+      />
+    </FormGroup>
+    <Button 
+        fill={false}
+        onClick={menu.buildClassifier.bind(menu)}
+    >
+      Build new classifier...
+    </Button>
+    </div>
+  );
+}
+
+BuildClassifierMode.prototype.openFile = anyModeOpenFile;
+BuildClassifierMode.prototype.annotateButtonActive = falsity;
+BuildClassifierMode.prototype.annotateButtonDisabled = falsity;
+BuildClassifierMode.prototype.classifierButtonActive = truth;
+BuildClassifierMode.prototype.classifierButtonDisabled = falsity;
+BuildClassifierMode.prototype.brightnessButtonDisabled = falsity;
+BuildClassifierMode.prototype.contrastButtonDisabled = falsity;
 
 class Menu extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-      mode: Modes.DISABLED,
+      mode: new DisabledMode(),
       superpixel_size: 100,
       brightness_active: false,
       contrast_active: false,
@@ -93,46 +286,18 @@ class Menu extends React.Component {
   }
 
   openFile(nodeData) {
-    this.props.openseadragon.open('file://' + nodeData.path)
-    this.setState({
-      mode: Modes.View
-    });
+    const nextMode = this.state.mode.openFile(this, nodeData);
+    this.setState({ mode: nextMode });
   }
 
   animClick() {
-    if (this.state.mode == Modes.ANNOTATE) {
-      this.props.annotations.endDrawing();
-      this.setState({
-        mode: Modes.VIEW
-      });
-    } else {
-      if (this.state.mode == Modes.BUILD_CLASSIFIER) {
-        this.props.classifier.endBuilding();
-      }
-      this.props.annotations.startDrawing();
-      this.setState({
-        mode: Modes.ANNOTATE
-      });
-    }
+    const nextMode = this.state.mode.animClick(this);
+    this.setState({ mode: nextMode });
   }
 
   buildClick() {
-    if (this.state.mode == Modes.BUILD_CLASSIFIER) {
-      this.props.classifier.endBuilding();
-      this.setState({
-        mode: Modes.VIEW
-      });
-    } else if (this.state.mode != Modes.DISABLED) {
-      if (this.state.mode == Modes.ANNOTATE) {
-        this.props.annotations.endDrawing();
-      }
-      const tile_source = this.props.openseadragon.world.getItemAt(0).source;
-      const max_zoom = tile_source.maxLevel;
-      this.props.classifier.startBuilding(max_zoom, this.state.superpixel_size);
-      this.setState({
-        mode: Modes.BUILD_CLASSIFIER
-      });
-    }
+    const nextMode = this.state.mode.buildClick(this);
+    this.setState({ mode: nextMode });
   }
 
 
@@ -188,92 +353,32 @@ class Menu extends React.Component {
     let annotation = (
       <Button 
             icon="polygon-filter" 
-            active={this.state.mode == Modes.ANNOTATE} 
+            active={this.state.mode.annotateButtonActive()} 
             onClick={this.animClick.bind(this)}
-            disabled = {this.state.mode == Modes.DISABLED}
+            disabled = {this.state.mode.annotateButtonDisabled()}
       >
         Annotation
       </Button>
     );
 
-    var zoom_levels = [];
-    if (this.state.mode != Modes.DISABLED) {
-      if (this.props.openseadragon.world.getItemAt(0)) {
-        const tile_source = this.props.openseadragon.world.getItemAt(0).source;
-        const max_zoom = tile_source.maxLevel;
-        const min_zoom = tile_source.minLevel;
-        const number_of_zoom_levels = 5;
-        const zoom_increment = Math.floor(max_zoom / number_of_zoom_levels);
-        zoom_levels = [...Array(max_zoom - min_zoom).keys()].map(x => x + min_zoom +
-          1).reverse();
-      }
-    }
+    const zoom_levels = this.state.mode.zoom_levels(this);
 
     let classifier = (
       <Button 
             icon="build" 
-            active={this.state.mode == Modes.BUILD_CLASSIFIER} 
+            active={this.state.mode.classifierButtonActive()} 
             onClick={this.buildClick.bind(this)}
-            disabled = {this.state.mode == Modes.DISABLED}
-        >
-          New classifier
-        </Button>
+            disabled = {this.state.mode.classifierButtonDisabled()}
+      >
+        New classifier
+      </Button>
     );
 
-    let classifier_popdown;
-    if (this.state.mode == Modes.BUILD_CLASSIFIER) {
-      classifier_popdown = (
-        <div className="MenuDropdown" >
-        <Callout
-            intent="primary"
-        >
-        <p>Click to label regions of interest (green)</p>
-        <p>Shift-click to label regions of non-interest (red)</p>
-        </Callout>       
-        <FormGroup
-            label="Zoom level"
-            labelFor="classifier-zoom-level"
-            inline = {true}
-        >
-            <HTMLSelect 
-                id="classifier-zoom-level"
-                options={zoom_levels} 
-                onChange={this.props.classifier.setZoomLevel.bind(this.props.classifier)}
-                //value={this.props.classifier.state.zoom_level}
-            />
-        </FormGroup>
-        
-        <FormGroup
-            label="Superpixel size"
-            labelFor="superpixel-size"
-        >
-          <Slider min={10} max={500} stepSize={10} labelStepSize = {490}
-                  onRelease={this.props.classifier.setSuperpixelSize.bind(this.props.classifier)}
-                  onChange={this.changeHandler("superpixel_size")}
-                  value={this.state.superpixel_size} 
-          />
-        </FormGroup>
-        <FormGroup
-            label="Name"
-            labelFor="classifier-name"
-        >
-          <InputGroup id="classifier-name" placeholder={this.state.classifier_name}
-                  onChange={this.inputGroupChangeHandler("classifier_name")}         
-          />
-        </FormGroup>
-        <Button 
-            fill={false}
-            onClick={this.buildClassifier.bind(this)}
-        >
-          Build new classifier...
-        </Button>
-        </div>
-      );
-    }
+    let classifier_popdown = this.state.mode.classifierPopdown(this, zoom_levels);
 
     let brightness = (
       <Button icon="flash" active={this.state.brightness_active}
-              disabled = {this.state.mode == Modes.DISABLED}
+              disabled = {this.state.mode.brightnessButtonDisabled()}
               onClick={this.toggle("brightness")}>Brightness</Button>
     );
 
@@ -285,7 +390,7 @@ class Menu extends React.Component {
 
     let contrast = (
       <Button icon="contrast" active={this.state.contrast_active}
-              disabled = {this.state.mode == Modes.DISABLED}
+              disabled = {this.state.mode.contrastButtonDisabled()}
               onClick={this.toggle("contrast")}>Contrast</Button>
     );
 
