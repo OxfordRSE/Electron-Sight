@@ -33,6 +33,7 @@ function AbstractMode() {
   if (!(this instanceof AbstractMode)) {
     return new AbstractMode();
   }
+  this.modeName = "Abstract";
 }
 
 AbstractMode.prototype.animClick = function(menu) {
@@ -61,6 +62,7 @@ function DisabledMode() {
   if (!(this instanceof DisabledMode)) {
     return new DisabledMode();
   }
+  this.modeName = "Disabled";
 }
 
 DisabledMode.prototype = new AbstractMode();
@@ -79,6 +81,7 @@ function AnnotateMode() {
   if (!(this instanceof AnnotateMode)) {
     return new AnnotateMode();
   }
+  this.modeName = "Annotate";
 }
 
 AnnotateMode.prototype = new AbstractMode();
@@ -102,6 +105,7 @@ function ViewMode() {
   if (!(this instanceof ViewMode)) {
     return new ViewMode();
   }
+  this.modeName = "View";
 }
 
 ViewMode.prototype = new AbstractMode();
@@ -117,6 +121,7 @@ function BuildClassifierMode() {
   if (!(this instanceof BuildClassifierMode)) {
     return new BuildClassifierMode();
   }
+  this.modename = "BuildClassifier";
 }
 
 BuildClassifierMode.prototype = new AbstractMode();
@@ -204,6 +209,7 @@ function PredictMode() {
   if (!(this instanceof PredictMode)) {
     return new PredictMode();
   }
+  this.modeName = "Predict";
 }
 
 PredictMode.prototype = new AbstractMode();
