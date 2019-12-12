@@ -8,22 +8,6 @@ import {
   FormGroup,
 } from "@blueprintjs/core";
 
-const anyModeOpenFile = (menu, nodeData) => {
-    const filename = nodeData.path;
-    const extension = filename.split('.').pop();
-    if (extension == 'dzi') {
-        console.log(`opening dzi file ${filename}`);
-        menu.props.openseadragon.open('file://' + nodeData.path)
-    } else if (extension == 'ndpi') {
-        console.log(`opening ndpi file ${filename}`);
-
-    } else {
-        console.log(`unknown extension ${extension} for file ${filename}`);
-        return this;
-    }
-  return new ViewMode();
-}
-
 const truth = () => true;
 const falsity = () => false;
 const nothingness = () => null;
@@ -46,7 +30,22 @@ AbstractMode.prototype.predict = function(menu) {
   return new PredictMode();
 }
 
-AbstractMode.prototype.openFile = anyModeOpenFile;
+AbstractMode.prototype.openFile = function(menu, nodeData) {
+    const filename = nodeData.path;
+    const extension = filename.split('.').pop();
+    if (extension == 'dzi') {
+        console.log(`opening dzi file ${filename}`);
+        menu.props.openseadragon.open('file://' + nodeData.path)
+    } else if (extension == 'ndpi') {
+        console.log(`opening ndpi file ${filename}`);
+
+    } else {
+        console.log(`unknown extension ${extension} for file ${filename}`);
+        return this;
+    }
+  return new ViewMode();
+};
+
 AbstractMode.prototype.annotateButtonActive = falsity;
 AbstractMode.prototype.annotateButtonDisabled = falsity;
 AbstractMode.prototype.classifierButtonActive = falsity;
