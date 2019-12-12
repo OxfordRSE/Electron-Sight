@@ -35,6 +35,16 @@ function AbstractMode() {
   }
 }
 
+AbstractMode.prototype.animClick = function(menu) {
+  menu.props.annotations.startDrawing();
+  return new AnnotateMode();
+}
+  
+AbstractMode.prototype.predict = function(menu) {
+  menu.props.predict.startDrawing();
+  return new PredictMode();
+}
+
 AbstractMode.prototype.openFile = anyModeOpenFile;
 AbstractMode.prototype.annotateButtonActive = falsity;
 AbstractMode.prototype.annotateButtonDisabled = falsity;
@@ -58,16 +68,6 @@ DisabledMode.prototype = new AbstractMode();
 DisabledMode.prototype.buildClick = function() {
   return new DisabledMode();
 };
-
-DisabledMode.prototype.animClick = function(menu) {
-  menu.props.annotations.startDrawing();
-  return new AnnotateMode();
-};
-
-DisabledMode.prototype.predict = function(menu) {
-    menu.props.predict.startDrawing();
-    return new PredictMode();
-}
 
 DisabledMode.prototype.annotateButtonDisabled = truth;
 DisabledMode.prototype.classifierButtonDisabled = truth;
@@ -96,11 +96,6 @@ AnnotateMode.prototype.buildClick = function(menu) {
   return new BuildClassifierMode();
 }
 
-AnnotateMode.prototype.predict = function(menu) {
-    menu.props.predict.startDrawing();
-    return new PredictMode();
-}
-
 AnnotateMode.prototype.annotateButtonActive = truth;
 
 function ViewMode() {
@@ -111,21 +106,11 @@ function ViewMode() {
 
 ViewMode.prototype = new AbstractMode();
 
-ViewMode.prototype.animClick = function(menu) {
-  menu.props.annotations.startDrawing();
-  return new AnnotateMode();
-}
-
 ViewMode.prototype.buildClick = function(menu) {
   const tile_source = menu.props.openseadragon.world.getItemAt(0).source;
   const max_zoom = tile_source.maxLevel;
   menu.props.classifier.startBuilding(max_zoom, menu.state.superpixel_size);
   return new BuildClassifierMode();
-}
-
-ViewMode.prototype.predict = function(menu) {
-    menu.props.predict.startDrawing();
-    return new PredictMode();
 }
 
 function BuildClassifierMode() {
@@ -138,8 +123,7 @@ BuildClassifierMode.prototype = new AbstractMode();
 
 BuildClassifierMode.prototype.animClick = function(menu) {
   menu.props.classifier.endBuilding();
-  menu.props.annotations.startDrawing();
-  return new AnnotateMode();
+  return AbstractMode.prototype.animClick.call(this, menu);
 }
 
 BuildClassifierMode.prototype.buildClick = function(menu) {
@@ -211,8 +195,7 @@ BuildClassifierMode.prototype.classifierPopdown = function(menu) {
 
 BuildClassifierMode.prototype.predict = function(menu) {
     menu.props.classifier.endBuilding();
-    menu.props.predict.startDrawing();
-    return new PredictMode();
+    return AbstractMode.prototype.predict.call(this, menu);
 }
 
 BuildClassifierMode.prototype.classifierButtonActive = truth;
@@ -227,8 +210,7 @@ PredictMode.prototype = new AbstractMode();
 
 PredictMode.prototype.animClick = function(menu) {
     menu.props.predict.endDrawing();
-    menu.props.annotations.startDrawing();
-    return new AnnotateMode();
+    return AbstractMode.prototype.animClick.call(this, menu);
 }
 
 PredictMode.prototype.buildClick = function(menu) {
