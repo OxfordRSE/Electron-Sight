@@ -225,6 +225,20 @@ function PredictMode() {
 
 PredictMode.prototype = new AbstractMode();
 
+PredictMode.prototype.animClick = function(menu) {
+    menu.props.predict.endDrawing();
+    menu.props.annotations.startDrawing();
+    return new AnnotateMode();
+}
+
+PredictMode.prototype.buildClick = function(menu) {
+    menu.props.predict.endDrawing();
+    const tile_source = menu.props.openseadragon.world.getItemAt(0).source;
+    const max_zoom = tile_source.maxLevel;
+    menu.props.classifier.startBuilding(max_zoom, menu.state.superpixel_size);
+    return new BuildClassifierMode();
+  }
+
 PredictMode.prototype.predict = function(menu) {
     menu.props.predict.endDrawing();
     return new ViewMode();
