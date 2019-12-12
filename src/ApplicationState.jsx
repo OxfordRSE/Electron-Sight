@@ -58,7 +58,7 @@ AnnotateMode.prototype.buildClick = function(menu) {
   const tile_source = menu.props.openseadragon.world.getItemAt(0).source;
   const max_zoom = tile_source.maxLevel;
   menu.props.classifier.startBuilding(max_zoom, menu.state.superpixel_size);
-  return new ViewMode();
+  return new BuildClassifierMode();
 }
 
 AnnotateMode.prototype.zoom_levels = function(menu) {
