@@ -156,8 +156,6 @@ class Menu extends React.Component {
       </Button>
     );
 
-    const zoom_levels = this.state.mode.zoom_levels(this);
-
     let classifier = (
       <Button 
             icon="build" 
@@ -169,7 +167,7 @@ class Menu extends React.Component {
       </Button>
     );
 
-    let classifier_popdown = this.state.mode.classifierPopdown(this, zoom_levels);
+    let classifier_popdown = this.state.mode.classifierPopdown(this);
 
     let brightness = (
       <Button icon="flash" active={this.state.brightness_active}

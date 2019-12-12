@@ -40,7 +40,6 @@ DisabledMode.prototype.classifierButtonDisabled = truth;
 DisabledMode.prototype.classifierPopdown = nothingness;
 DisabledMode.prototype.brightnessButtonDisabled = truth;
 DisabledMode.prototype.contrastButtonDisabled = falsity;
-DisabledMode.prototype.zoom_levels = () => [];
 
 function AnnotateMode() {
   if (!(this instanceof AnnotateMode)) {
@@ -59,18 +58,6 @@ AnnotateMode.prototype.buildClick = function(menu) {
   const max_zoom = tile_source.maxLevel;
   menu.props.classifier.startBuilding(max_zoom, menu.state.superpixel_size);
   return new BuildClassifierMode();
-}
-
-AnnotateMode.prototype.zoom_levels = function(menu) {
-  var zoom_levels = [];
-  if (menu.props.openseadragon.world.getItemAt(0)) {
-    const tile_source = menu.props.openseadragon.world.getItemAt(0).source;
-    const max_zoom = tile_source.maxLevel;
-    const min_zoom = tile_source.minLevel;
-    zoom_levels = [...Array(max_zoom - min_zoom).keys()].map(x => x + min_zoom +
-      1).reverse();
-  }
-  return zoom_levels;
 }
 
 AnnotateMode.prototype.openFile = anyModeOpenFile;
@@ -98,18 +85,6 @@ ViewMode.prototype.buildClick = function(menu) {
   const max_zoom = tile_source.maxLevel;
   menu.props.classifier.startBuilding(max_zoom, menu.state.superpixel_size);
   return new BuildClassifierMode();
-}
-
-ViewMode.prototype.zoom_levels = function(menu) {
-  var zoom_levels = [];
-  if (menu.props.openseadragon.world.getItemAt(0)) {
-    const tile_source = menu.props.openseadragon.world.getItemAt(0).source;
-    const max_zoom = tile_source.maxLevel;
-    const min_zoom = tile_source.minLevel;
-    zoom_levels = [...Array(max_zoom - min_zoom).keys()].map(x => x + min_zoom +
-      1).reverse();
-  }
-  return zoom_levels;
 }
 
 ViewMode.prototype.openFile = anyModeOpenFile;
@@ -150,7 +125,7 @@ BuildClassifierMode.prototype.zoom_levels = function(menu) {
   return zoom_levels;
 }
 
-BuildClassifierMode.prototype.classifierPopdown = function(menu, zoom_levels) {
+BuildClassifierMode.prototype.classifierPopdown = function(menu) {
   return (
     <div className="MenuDropdown" >
     <Callout
@@ -166,7 +141,7 @@ BuildClassifierMode.prototype.classifierPopdown = function(menu, zoom_levels) {
     >
         <HTMLSelect 
             id="classifier-zoom-level"
-            options={zoom_levels} 
+            options={this.zoom_levels(menu)} 
             onChange={menu.props.classifier.setZoomLevel.bind(menu.props.classifier)}
             //value={this.props.classifier.state.zoom_level}
         />
