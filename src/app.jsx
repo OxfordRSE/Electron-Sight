@@ -43,7 +43,6 @@ export default class App extends React.Component {
           this.predict = predict;
         }}
       />
-
       <Classifier
         ref={classifier => {
           this.classifier = classifier;

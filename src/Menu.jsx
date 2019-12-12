@@ -166,10 +166,15 @@ class Menu extends React.Component {
       if (this.state.mode == Modes.ANNOTATE) {
         this.props.annotations.endDrawing();
       }
-      const zoom = this.props.classifier.startBuilding();
+      this.props.classifier.startBuilding();
+
       this.setState({
         mode: Modes.BUILD_CLASSIFIER,
-        building_zoom: zoom
+        building_zoom: this.props.classifier.state.building_zoom,
+        classifier_name: this.props.classifier.state.classifier_name,
+        svm_cost: this.props.classifier.state.svm_cost,
+        svm_gamma: this.props.classifier.state.svm_gamma,
+        superpixel_size: this.props.classifier.state.superpixel_size
       });
     }
   }
