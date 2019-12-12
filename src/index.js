@@ -1,3 +1,6 @@
+require("babel-core/register");
+require("babel-polyfill");
+
 import { app, BrowserWindow, Menu, dialog } from 'electron';
 import installExtension, { REACT_DEVELOPER_TOOLS } from 'electron-devtools-installer';
 import { enableLiveReload } from 'electron-compile';
