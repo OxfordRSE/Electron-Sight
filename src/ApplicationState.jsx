@@ -8,7 +8,29 @@ import {
   FormGroup,
 } from "@blueprintjs/core";
 
-const anyModeOpenFile = (menu, nodeData) => {
+const truth = () => true;
+const falsity = () => false;
+const nothingness = () => null;
+
+
+function AbstractMode() {
+  if (!(this instanceof AbstractMode)) {
+    return new AbstractMode();
+  }
+  this.modeName = "Abstract";
+}
+
+AbstractMode.prototype.animClick = function(menu) {
+  menu.props.annotations.startDrawing();
+  return new AnnotateMode();
+}
+  
+AbstractMode.prototype.predict = function(menu) {
+  menu.props.predict.startDrawing();
+  return new PredictMode();
+}
+
+AbstractMode.prototype.openFile = function(menu, nodeData) {
     const filename = nodeData.path;
     const extension = filename.split('.').pop();
     if (extension == 'dzi') {
@@ -22,49 +44,46 @@ const anyModeOpenFile = (menu, nodeData) => {
         return this;
     }
   return new ViewMode();
-}
+};
 
-const truth = () => true;
-const falsity = () => false;
-const nothingness = () => null;
+AbstractMode.prototype.annotateButtonActive = falsity;
+AbstractMode.prototype.annotateButtonDisabled = falsity;
+AbstractMode.prototype.classifierButtonActive = falsity;
+AbstractMode.prototype.classifierButtonDisabled = falsity;
+AbstractMode.prototype.classifierPopdown = nothingness;
+AbstractMode.prototype.brightnessButtonDisabled = falsity;
+AbstractMode.prototype.contrastButtonDisabled = falsity;
+AbstractMode.prototype.predictButtonActive = falsity;
+AbstractMode.prototype.predictButtonDisabled = falsity;
+AbstractMode.prototype.predictPopdown = nothingness;
 
 function DisabledMode() {
   if (!(this instanceof DisabledMode)) {
     return new DisabledMode();
   }
+  this.modeName = "Disabled";
 }
+
+DisabledMode.prototype = new AbstractMode();
 
 DisabledMode.prototype.buildClick = function() {
   return new DisabledMode();
 };
 
-DisabledMode.prototype.animClick = function(menu) {
-  menu.props.annotations.startDrawing();
-  return new AnnotateMode();
-};
-
-DisabledMode.prototype.predict = function(menu) {
-    menu.props.predict.startDrawing();
-    return new PredictMode();
-}
-
-DisabledMode.prototype.openFile = anyModeOpenFile;
-DisabledMode.prototype.annotateButtonActive = falsity;
 DisabledMode.prototype.annotateButtonDisabled = truth;
-DisabledMode.prototype.classifierButtonActive = falsity;
 DisabledMode.prototype.classifierButtonDisabled = truth;
-DisabledMode.prototype.classifierPopdown = nothingness;
 DisabledMode.prototype.brightnessButtonDisabled = truth;
 DisabledMode.prototype.contrastButtonDisabled = truth;
-DisabledMode.prototype.predictButtonActive = falsity;
 DisabledMode.prototype.predictButtonDisabled = truth;
-DisabledMode.prototype.predictPopdown = nothingness;
 
 function AnnotateMode() {
   if (!(this instanceof AnnotateMode)) {
     return new AnnotateMode();
   }
+  this.modeName = "Annotate";
 }
+
+AnnotateMode.prototype = new AbstractMode();
 
 AnnotateMode.prototype.animClick = function(menu) {
   menu.props.annotations.endDrawing();
@@ -79,33 +98,16 @@ AnnotateMode.prototype.buildClick = function(menu) {
   return new BuildClassifierMode();
 }
 
-AnnotateMode.prototype.predict = function(menu) {
-    menu.props.predict.startDrawing();
-    return new PredictMode();
-}
-
-AnnotateMode.prototype.openFile = anyModeOpenFile;
 AnnotateMode.prototype.annotateButtonActive = truth;
-AnnotateMode.prototype.annotateButtonDisabled = falsity;
-AnnotateMode.prototype.classifierButtonActive = falsity;
-AnnotateMode.prototype.classifierButtonDisabled = falsity;
-AnnotateMode.prototype.classifierPopdown = nothingness;
-AnnotateMode.prototype.brightnessButtonDisabled = falsity;
-AnnotateMode.prototype.contrastButtonDisabled = falsity;
-AnnotateMode.prototype.predictButtonActive = falsity;
-AnnotateMode.prototype.predictButtonDisabled = falsity;
-AnnotateMode.prototype.predictPopdown = nothingness;
 
 function ViewMode() {
   if (!(this instanceof ViewMode)) {
     return new ViewMode();
   }
+  this.modeName = "View";
 }
 
-ViewMode.prototype.animClick = function(menu) {
-  menu.props.annotations.startDrawing();
-  return new AnnotateMode();
-}
+ViewMode.prototype = new AbstractMode();
 
 ViewMode.prototype.buildClick = function(menu) {
   const tile_source = menu.props.openseadragon.world.getItemAt(0).source;
@@ -114,33 +116,18 @@ ViewMode.prototype.buildClick = function(menu) {
   return new BuildClassifierMode();
 }
 
-ViewMode.prototype.predict = function(menu) {
-    menu.props.predict.startDrawing();
-    return new PredictMode();
-}
-
-ViewMode.prototype.openFile = anyModeOpenFile;
-ViewMode.prototype.annotateButtonActive = falsity;
-ViewMode.prototype.annotateButtonDisabled = falsity;
-ViewMode.prototype.classifierButtonActive = falsity;
-ViewMode.prototype.classifierButtonDisabled = falsity;
-ViewMode.prototype.classifierPopdown = nothingness;
-ViewMode.prototype.brightnessButtonDisabled = falsity;
-ViewMode.prototype.contrastButtonDisabled = falsity;
-ViewMode.prototype.predictButtonActive = falsity;
-ViewMode.prototype.predictButtonDisabled = falsity;
-ViewMode.prototype.predictPopdown = nothingness;
-
 function BuildClassifierMode() {
   if (!(this instanceof BuildClassifierMode)) {
     return new BuildClassifierMode();
   }
+  this.modename = "BuildClassifier";
 }
+
+BuildClassifierMode.prototype = new AbstractMode();
 
 BuildClassifierMode.prototype.animClick = function(menu) {
   menu.props.classifier.endBuilding();
-  menu.props.annotations.startDrawing();
-  return new AnnotateMode();
+  return AbstractMode.prototype.animClick.call(this, menu);
 }
 
 BuildClassifierMode.prototype.buildClick = function(menu) {
@@ -212,26 +199,32 @@ BuildClassifierMode.prototype.classifierPopdown = function(menu) {
 
 BuildClassifierMode.prototype.predict = function(menu) {
     menu.props.classifier.endBuilding();
-    menu.props.predict.startDrawing();
-    return new PredictMode();
+    return AbstractMode.prototype.predict.call(this, menu);
 }
 
-BuildClassifierMode.prototype.openFile = anyModeOpenFile;
-BuildClassifierMode.prototype.annotateButtonActive = falsity;
-BuildClassifierMode.prototype.annotateButtonDisabled = falsity;
 BuildClassifierMode.prototype.classifierButtonActive = truth;
-BuildClassifierMode.prototype.classifierButtonDisabled = falsity;
-BuildClassifierMode.prototype.brightnessButtonDisabled = falsity;
-BuildClassifierMode.prototype.contrastButtonDisabled = falsity;
-BuildClassifierMode.prototype.predictButtonActive = falsity;
-BuildClassifierMode.prototype.predictButtonDisabled = falsity;
-BuildClassifierMode.prototype.predictPopdown = nothingness;
 
 function PredictMode() {
   if (!(this instanceof PredictMode)) {
     return new PredictMode();
   }
+  this.modeName = "Predict";
 }
+
+PredictMode.prototype = new AbstractMode();
+
+PredictMode.prototype.animClick = function(menu) {
+    menu.props.predict.endDrawing();
+    return AbstractMode.prototype.animClick.call(this, menu);
+}
+
+PredictMode.prototype.buildClick = function(menu) {
+    menu.props.predict.endDrawing();
+    const tile_source = menu.props.openseadragon.world.getItemAt(0).source;
+    const max_zoom = tile_source.maxLevel;
+    menu.props.classifier.startBuilding(max_zoom, menu.state.superpixel_size);
+    return new BuildClassifierMode();
+  }
 
 PredictMode.prototype.predict = function(menu) {
     menu.props.predict.endDrawing();
@@ -256,16 +249,7 @@ PredictMode.prototype.predictPopdown = function(menu) {
       );
 }
 
-PredictMode.prototype.openFile = anyModeOpenFile;
-PredictMode.prototype.annotateButtonActive = falsity;
-PredictMode.prototype.annotateButtonDisabled = falsity;
-PredictMode.prototype.classifierButtonActive = falsity;
-PredictMode.prototype.classifierButtonDisabled = falsity;
-PredictMode.prototype.classifierPopdown = nothingness;
-PredictMode.prototype.brightnessButtonDisabled = falsity;
-PredictMode.prototype.contrastButtonDisabled = falsity;
 PredictMode.prototype.predictButtonActive = truth;
-PredictMode.prototype.predictButtonDisabled = falsity;
 
 const DefaultMode = () => new DisabledMode();
 
