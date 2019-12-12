@@ -74,11 +74,12 @@ Napi::Array slic::SlicWrapped(const Napi::CallbackInfo& info)
   auto array_outLABVariances = Napi::TypedArrayOf<double>::New(
       env, outputNumSuperpixels, buf_outLABVariances, 0);
 
+  const int nfeatures = 26;
   auto buf_outCollectedFeatures
       = Napi::ArrayBuffer::New(env, static_cast<void*>(outCollectedFeatures),
-          sizeof(double) * 26 * outputNumSuperpixels);
+          sizeof(double) * nfeatures * outputNumSuperpixels);
   auto array_outCollectedFeatures = Napi::TypedArrayOf<double>::New(
-      env, outputNumSuperpixels, buf_outCollectedFeatures, 0);
+      env, nfeatures * outputNumSuperpixels, buf_outCollectedFeatures, 0);
 
   const int n_outputs = 6;
   auto result = Napi::Array::New(env, n_outputs);

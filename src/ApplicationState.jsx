@@ -9,7 +9,18 @@ import {
 } from "@blueprintjs/core";
 
 const anyModeOpenFile = (menu, nodeData) => {
-  menu.props.openseadragon.open('file://' + nodeData.path);
+    const filename = nodeData.path;
+    const extension = filename.split('.').pop();
+    if (extension == 'dzi') {
+        console.log(`opening dzi file ${filename}`);
+        menu.props.openseadragon.open('file://' + nodeData.path)
+    } else if (extension == 'ndpi') {
+        console.log(`opening ndpi file ${filename}`);
+
+    } else {
+        console.log(`unknown extension ${extension} for file ${filename}`);
+        return this;
+    }
   return new ViewMode();
 }
 
@@ -32,6 +43,11 @@ DisabledMode.prototype.animClick = function(menu) {
   return new AnnotateMode();
 };
 
+DisabledMode.prototype.predict = function(menu) {
+    menu.props.predict.startDrawing();
+    return new PredictMode();
+}
+
 DisabledMode.prototype.openFile = anyModeOpenFile;
 DisabledMode.prototype.annotateButtonActive = falsity;
 DisabledMode.prototype.annotateButtonDisabled = truth;
@@ -39,7 +55,10 @@ DisabledMode.prototype.classifierButtonActive = falsity;
 DisabledMode.prototype.classifierButtonDisabled = truth;
 DisabledMode.prototype.classifierPopdown = nothingness;
 DisabledMode.prototype.brightnessButtonDisabled = truth;
-DisabledMode.prototype.contrastButtonDisabled = falsity;
+DisabledMode.prototype.contrastButtonDisabled = truth;
+DisabledMode.prototype.predictButtonActive = falsity;
+DisabledMode.prototype.predictButtonDisabled = truth;
+DisabledMode.prototype.predictPopdown = nothingness;
 
 function AnnotateMode() {
   if (!(this instanceof AnnotateMode)) {
@@ -60,6 +79,11 @@ AnnotateMode.prototype.buildClick = function(menu) {
   return new BuildClassifierMode();
 }
 
+AnnotateMode.prototype.predict = function(menu) {
+    menu.props.predict.startDrawing();
+    return new PredictMode();
+}
+
 AnnotateMode.prototype.openFile = anyModeOpenFile;
 AnnotateMode.prototype.annotateButtonActive = truth;
 AnnotateMode.prototype.annotateButtonDisabled = falsity;
@@ -68,6 +92,9 @@ AnnotateMode.prototype.classifierButtonDisabled = falsity;
 AnnotateMode.prototype.classifierPopdown = nothingness;
 AnnotateMode.prototype.brightnessButtonDisabled = falsity;
 AnnotateMode.prototype.contrastButtonDisabled = falsity;
+AnnotateMode.prototype.predictButtonActive = falsity;
+AnnotateMode.prototype.predictButtonDisabled = falsity;
+AnnotateMode.prototype.predictPopdown = nothingness;
 
 function ViewMode() {
   if (!(this instanceof ViewMode)) {
@@ -87,6 +114,11 @@ ViewMode.prototype.buildClick = function(menu) {
   return new BuildClassifierMode();
 }
 
+ViewMode.prototype.predict = function(menu) {
+    menu.props.predict.startDrawing();
+    return new PredictMode();
+}
+
 ViewMode.prototype.openFile = anyModeOpenFile;
 ViewMode.prototype.annotateButtonActive = falsity;
 ViewMode.prototype.annotateButtonDisabled = falsity;
@@ -95,6 +127,9 @@ ViewMode.prototype.classifierButtonDisabled = falsity;
 ViewMode.prototype.classifierPopdown = nothingness;
 ViewMode.prototype.brightnessButtonDisabled = falsity;
 ViewMode.prototype.contrastButtonDisabled = falsity;
+ViewMode.prototype.predictButtonActive = falsity;
+ViewMode.prototype.predictButtonDisabled = falsity;
+ViewMode.prototype.predictPopdown = nothingness;
 
 function BuildClassifierMode() {
   if (!(this instanceof BuildClassifierMode)) {
@@ -175,6 +210,12 @@ BuildClassifierMode.prototype.classifierPopdown = function(menu) {
   );
 }
 
+BuildClassifierMode.prototype.predict = function(menu) {
+    menu.props.classifier.endBuilding();
+    menu.props.predict.startDrawing();
+    return new PredictMode();
+}
+
 BuildClassifierMode.prototype.openFile = anyModeOpenFile;
 BuildClassifierMode.prototype.annotateButtonActive = falsity;
 BuildClassifierMode.prototype.annotateButtonDisabled = falsity;
@@ -182,6 +223,49 @@ BuildClassifierMode.prototype.classifierButtonActive = truth;
 BuildClassifierMode.prototype.classifierButtonDisabled = falsity;
 BuildClassifierMode.prototype.brightnessButtonDisabled = falsity;
 BuildClassifierMode.prototype.contrastButtonDisabled = falsity;
+BuildClassifierMode.prototype.predictButtonActive = falsity;
+BuildClassifierMode.prototype.predictButtonDisabled = falsity;
+BuildClassifierMode.prototype.predictPopdown = nothingness;
+
+function PredictMode() {
+  if (!(this instanceof PredictMode)) {
+    return new PredictMode();
+  }
+}
+
+PredictMode.prototype.predict = function(menu) {
+    menu.props.predict.endDrawing();
+    return new ViewMode();
+}
+
+PredictMode.prototype.predictPopdown = function(menu) {
+    return (
+        <div className="MenuDropdown" >
+        <Callout
+            intent="primary"
+        >
+        <p>Draw a region and predict within it</p>
+        </Callout>
+        <Button 
+            fill={false}
+            onClick={menu.run_predict.bind(menu)}
+        >
+          Go...
+        </Button>
+        </div>
+      );
+}
+
+PredictMode.prototype.openFile = anyModeOpenFile;
+PredictMode.prototype.annotateButtonActive = falsity;
+PredictMode.prototype.annotateButtonDisabled = falsity;
+PredictMode.prototype.classifierButtonActive = falsity;
+PredictMode.prototype.classifierButtonDisabled = falsity;
+PredictMode.prototype.classifierPopdown = nothingness;
+PredictMode.prototype.brightnessButtonDisabled = falsity;
+PredictMode.prototype.contrastButtonDisabled = falsity;
+PredictMode.prototype.predictButtonActive = truth;
+PredictMode.prototype.predictButtonDisabled = falsity;
 
 const DefaultMode = () => new DisabledMode();
 

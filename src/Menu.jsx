@@ -90,6 +90,15 @@ class Menu extends React.Component {
     this.setState({ mode: nextMode });
   }
 
+  predict() {
+    const nextMode = this.state.mode.predict(this);
+    this.setState({ mode: nextMode });
+  }
+
+  run_predict() {
+    this.props.predict.onPredict();
+  }
+
   buildClick() {
     const nextMode = this.state.mode.buildClick(this);
     this.setState({ mode: nextMode });
@@ -187,6 +196,19 @@ class Menu extends React.Component {
               onClick={this.toggle("contrast")}>Contrast</Button>
     );
 
+    let predict = (
+      <Button 
+            icon="circle"
+            active={this.state.mode.predictButtonActive()}
+            onClick={this.predict.bind(this)}
+            disabled = {this.state.mode.predictButtonDisabled()}
+      >
+        Predict
+      </Button>
+    );
+
+    let predict_popdown = this.state.mode.predictPopdown(this);
+
     let contrast_popdown = (
       <Slider className="MenuDropdown" min={0} max={2} stepSize={0.1}
                   onChange={this.changeHandler("contrast")}
@@ -200,6 +222,8 @@ class Menu extends React.Component {
         {annotation}
         {classifier}
         {classifier_popdown}
+        {predict}
+        {predict_popdown}
         {brightness}
         {this.state.brightness_active && brightness_popdown}
         {contrast}
@@ -209,6 +233,5 @@ class Menu extends React.Component {
     );
   }
 }
-
 
 export default Menu;
