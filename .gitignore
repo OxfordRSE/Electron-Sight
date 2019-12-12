@@ -1,2 +1,8 @@
 *~
 node_modules
+bin
+build
+*.node
+CMU-1*
+CMU-1_files
+.vscode

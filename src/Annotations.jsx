@@ -92,7 +92,7 @@ class Annotations extends React.Component {
     };
     return (
       <div id="Annotations">
-      <svg style={style}>
+      <svg style={style} id="annotation">
         {polygon.length > 0 && (
           <circle cx={first_pt.x} cy={first_pt.y} r={"5"}/>
         )
@@ -105,6 +105,7 @@ class Annotations extends React.Component {
                    stroke={"none"} 
                    fill={"green"} 
                    fillOpacity={"0.1"}/>
+
         }
       </svg>
       </div>

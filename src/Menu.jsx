@@ -18,6 +18,7 @@ import {
   FormGroup,
 } from "@blueprintjs/core";
 
+
 const electron = window.require('electron');
 const remote = electron.remote
 const fs = remote.require('fs');
@@ -75,7 +76,8 @@ const Modes = {
   DISABLED: 0,
   VIEW: 1,
   ANNOTATE: 2,
-  BUILD_CLASSIFIER: 3
+  BUILD_CLASSIFIER: 3,
+  PREDICT: 4
 };
 
 class Menu extends React.Component {
@@ -94,7 +96,19 @@ class Menu extends React.Component {
 
   openFile(nodeData: ITreeNode, _nodePath: number[], e: React.MouseEvent <
     HTMLElement > ) {
-    this.props.openseadragon.open('file://' + nodeData.path)
+    const filename = nodeData.path;
+    const extension = filename.split('.').pop();
+    let success = false;
+    if (extension == 'dzi') {
+      console.log(`opening dzi file ${filename}`);
+      this.props.openseadragon.open('file://' + nodeData.path)
+    } else if (extension == 'ndpi') {
+      console.log(`opening ndpi file ${filename}`);
+
+    } else {
+      console.log(`unknown extension ${extension} for file ${filename}`);
+      return;
+    }
     this.setState({
       mode: Modes.View
     });
@@ -115,6 +129,27 @@ class Menu extends React.Component {
         mode: Modes.ANNOTATE
       });
     }
+  }
+
+  predict() {
+    if (this.state.mode == Modes.PREDICT) {
+      this.props.predict.endDrawing();
+      this.setState({
+        mode: Modes.VIEW
+      });
+    } else {
+      if (this.state.mode == Modes.BUILD_CLASSIFIER) {
+        this.props.classifier.endBuilding();
+      }
+      this.props.predict.startDrawing();
+      this.setState({
+        mode: Modes.PREDICT
+      });
+    }
+  }
+
+  run_predict() {
+    this.props.predict.onPredict();
   }
 
   buildClick() {
@@ -290,6 +325,36 @@ class Menu extends React.Component {
               onClick={this.toggle("contrast")}>Contrast</Button>
     );
 
+    let predict = (
+      <Button 
+            icon="circle"
+            active={this.state.mode == Modes.PREDICT}
+            onClick={this.predict.bind(this)}
+            disabled = {this.state.mode == Modes.DISABLED}
+      >
+        Predict
+      </Button>
+    );
+
+    let predict_popdown;
+    if (this.state.mode == Modes.PREDICT) {
+      predict_popdown = (
+        <div className="MenuDropdown" >
+        <Callout
+            intent="primary"
+        >
+        <p>Draw a region and predict within it</p>
+        </Callout>
+        <Button 
+            fill={false}
+            onClick={this.run_predict.bind(this)}
+        >
+          Go...
+        </Button>
+        </div>
+      )
+    }
+
     let contrast_popdown = (
       <Slider className="MenuDropdown" min={0} max={2} stepSize={0.1}
                   onChange={this.changeHandler("contrast")}
@@ -303,6 +368,8 @@ class Menu extends React.Component {
         {annotation}
         {classifier}
         {classifier_popdown}
+        {predict}
+        {predict_popdown}
         {brightness}
         {this.state.brightness_active && brightness_popdown}
         {contrast}

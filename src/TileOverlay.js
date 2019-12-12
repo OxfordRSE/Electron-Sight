@@ -1,4 +1,5 @@
 
+export default class TileOverlay {
 //
 // Stores openseadragon tiles along with classification data (from user).
 //
@@ -6,8 +7,6 @@
 // 1. Creates a canvas that is used to draw the clasificaition data
 // 2. Can return the classification data as training data for an SVM
 //
-class TileOverlay {
-
   /// Contructor
   ///
   ///  @param {Openseadragon.Tile} tile: image tile
@@ -20,6 +19,7 @@ class TileOverlay {
     this.nfeatures = 26;
     this.features = new Float64Array(features);
     this.canvas = document.createElement("canvas");
+    this.canvas.style.zIndex = "2";
     this.context = this.canvas.getContext('2d');
     this.canvas.width = tile.sourceBounds.width;
     this.canvas.height = tile.sourceBounds.height;
@@ -28,6 +28,7 @@ class TileOverlay {
       .sourceBounds.height);
     this.positive_superpixels = new Set();
     this.negative_superpixels = new Set();
+    this.predict_superpixels = new Set();
   }
 
   /// user has selected a superpixel and given it a new classification
@@ -62,31 +63,61 @@ class TileOverlay {
       }
     }
   }
+  add_classification(selected_superpixel, classification) {
+    for(let i = 0; i < this.pixel_classification.length; i++) {
+      if (this.labels[i] == selected_superpixel) {
+        this.pixel_classification[i] = classification;
+      }
+    }
+  }
 
-  
-  /// return features for the requested superpixel
-  get_features(chosen_superpixel) {
+  //var xor = [
+  //    [[0, 0], 0],
+  //    [[0, 1], 1],
+  //    [[1, 0], 1],
+  //    [[1, 1], 0]
+  //];
+  generate_data(chosen_superpixel, classification) {
     const features_index = this.nfeatures * chosen_superpixel;
     const features = Array.from(this.features.slice(features_index, features_index +
       this.nfeatures));
-    return features;
+    if(typeof classification === 'undefined') {
+        return features;
+    }
+    else {
+        return [features, classification];
+    }
   }
 
+  
+ 
   /// return training data for SVM as [features, classification], where features is an
   //  array of array of features, and classification is an array of classifications (0
   //  or 1)
   get_train_data() {
     var features = [];
     var classification = [];
+
     for (let i of this.positive_superpixels) {
-      features.push(this.get_features(i));
-      classification.push(1);
+      const [new_features, new_classification] = this.generate_data(i, 1)
+      features.push(new_features);
+      classification.push(new_classification);
     }
     for (let i of this.negative_superpixels) {
-      features.push(this.get_features(i));
-      classification.push(0);
+      const [new_features, new_classification] = this.generate_data(i, 0)
+      features.push(new_features);
+      classification.push(new_classification);
+
     }
     return [features, classification];
+  }
+
+  get_test_data() {
+    var features = [];
+    for (let i of this.predict_superpixels) {
+        features.push(this.generate_data(i));
+    }
+    return features;
   }
 
   /// draws current classification data to the canvas
@@ -113,5 +144,3 @@ class TileOverlay {
     this.context.putImageData(imageData, 0, 0);
   }
 }
-
-export default TileOverlay;
