@@ -120,7 +120,7 @@ function BuildClassifierMode() {
   if (!(this instanceof BuildClassifierMode)) {
     return new BuildClassifierMode();
   }
-  this.modename = "BuildClassifier";
+  this.modeName = "BuildClassifier";
 }
 
 BuildClassifierMode.prototype = new AbstractMode();

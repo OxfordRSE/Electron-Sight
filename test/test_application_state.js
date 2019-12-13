@@ -64,5 +64,54 @@ describe('ViewMode', function() {
         chai.assert(viewMode.annotateButtonActive() === false);
         chai.assert(viewMode.classifierButtonActive() === false);
         chai.assert(viewMode.predictButtonActive() === false);
+    });
+
+    it('moves to Annotate mode when you click the Annotate button', function() {
+        const sandbox = sinon.createSandbox();
+        const annotateSpy = sandbox.spy();
+        const menu = { props: { annotations: { startDrawing: annotateSpy } } };
+        const nextMode = viewMode.animClick(menu);
+        chai.assert(nextMode.modeName === 'Annotate', 'it starts annotating when you click annotate');
+        chai.assert(annotateSpy.calledOnce, 'it tells the annotator overlay to start drawing');
+    });
+
+    it('moves to Predict mode when you click the Predict button', function() {
+        const sandbox = sinon.createSandbox();
+        const predictSpy = sandbox.spy();
+        const menu = { props: { predict: { startDrawing: predictSpy } } };
+        const nextMode = viewMode.predict(menu);
+        chai.assert(nextMode.modeName === 'Predict', 'it starts predicting when you click predict');
+        chai.assert(predictSpy.calledOnce, 'it tells the predict overlay to start drawing');
+    });
+
+    it ('moves to BuildClassifier mode when you click the Build button', function() {
+        const sandbox = sinon.createSandbox();
+        const item = {
+            source: {
+                maxLevel: 16,
+            }
+        };
+        const getItem = sandbox.stub().returns(item);
+        const buildSpy = sandbox.spy();
+        const menu = {
+            props: {
+                classifier: {
+                    startBuilding: buildSpy,
+                },
+                openseadragon: {
+                    world: {
+                        getItemAt: getItem,
+                    },
+                },
+            },
+            state: {
+                superpixel_size: 100,
+            },
+        };
+
+        const nextMode = viewMode.buildClick(menu);
+
+        chai.assert(nextMode.modeName === 'BuildClassifier');
+        chai.assert(buildSpy.calledOnceWithExactly(16, 100), 'Building was started');
     })
-})
+});
