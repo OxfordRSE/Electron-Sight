@@ -1,17 +1,29 @@
 import OpenSeadragon from 'openseadragon';
 import React from 'react';
 const electron = window.require('electron');
+import Annotations from './Annotations'
+import Classifier from './Classifier'
+import Predict from './Predict'
+import Scalebar from './Scalebar'
 const getStyle = (brightness, contrast) => ("brightness(" +
         +brightness + ") contrast(" + +contrast + ")");
 
 class Viewer extends React.Component {
   constructor(props){
-      super(props)
-      this.state = {openseadragon: null, brightness: 1, contrast: 1}
+    super(props);
+    this.state = {brightness: 1, contrast: 1};
+    this.state = {
+      viewport: {
+        x: 0,
+        y: 0,
+        width: 0,
+        height: 0
+      }  
+    };
   }
-  componentDidMount() {
 
-    let viewer = OpenSeadragon({
+  componentDidMount() {
+    this.openseadragon = OpenSeadragon({
       id: "Viewer",
       prefixUrl: "../node_modules/openseadragon/build/openseadragon/images/",
       showNavigationControl: false,
@@ -26,23 +38,64 @@ class Viewer extends React.Component {
       visibilityRatio: 1,
       zoomPerScroll: 2
     });
+    this.openseadragon.gestureSettingsByDeviceType("mouse").clickToZoom = false;
+    this.openseadragon.addHandler('animation', (data) => {
+      this.onResize(data.eventSource);
+    });
+    this.openseadragon.addHandler('canvas-click', this.props.onClick);
+    this.openseadragon.addHandler('open', this.props.fileOpened);
+  }
 
-    this.setState({openseadragon: viewer});
-    this.props.onOpen(viewer);
-
-    viewer.gestureSettingsByDeviceType("mouse").clickToZoom = false;
-    
+  onResize(openseadragon) {
+    const bounds = openseadragon.viewport.getHomeBounds();
+    const bounds_pixel = openseadragon.viewport.viewportToViewerElementRectangle(
+      bounds);
+    this.setState({
+      viewport: bounds_pixel
+    });
   }
 
   render() {
     const size = electron.remote.getCurrentWindow().getBounds();
-    let filterString = getStyle(this.state.brightness, this.state.contrast);
+    let filterString = getStyle(this.props.brightness, this.props.contrast);
     const style = {
       width: size.width,
       height: size.height,
       filter: filterString
     };
-    return (<div id="Viewer" style={style}></div>);
+    return (
+            <div>
+            <div id="Viewer" style={style}/>
+            <Annotations 
+              openseadragon={this.openseadragon}
+              viewport={this.state.viewport}
+              ref={annotations => {
+                this.annotations = annotations;
+              }}
+            />
+            <Predict
+              openseadragon={this.openseadragon}
+              viewport={this.state.viewport}
+              classifier={this.classifier}
+              ref={predict => {
+                this.predict = predict;
+              }}
+            />
+            <Classifier
+              classifier_name={this.props.classifier_name}
+              svm_cost={this.props.svm_cost}
+              svm_gamma={this.props.svm_gamma}
+              superpixel_size={this.props.superpixel_size}
+              building_zoom={this.props.building_zoom}
+              openseadragon={this.openseadragon}
+              viewport={this.state.viewport}
+              ref={classifier => {
+                this.classifier = classifier;
+              }}
+            />
+            <Scalebar ref={scalebar => {this.scalebar = scalebar;}} />
+            </div>
+            );
   }
 }
 

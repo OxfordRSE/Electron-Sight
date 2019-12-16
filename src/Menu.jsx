@@ -12,6 +12,7 @@ import {
 } from "@blueprintjs/core";
 
 import DefaultMode from './ApplicationState';
+import Viewer from './Viewer';
 
 const electron = window.require('electron');
 const remote = electron.remote
@@ -83,9 +84,20 @@ class Menu extends React.Component {
     };
   }
 
+  onClick(data) {
+    const nextMode = this.state.mode.viewerClick(this, data);
+    this.setState({ mode: nextMode });
+  }
+
   openFile(nodeData) {
     const nextMode = this.state.mode.openFile(this, nodeData);
     this.setState({ mode: nextMode });
+  }
+
+  fileOpened(data) {
+    const tile_source = this.viewer.openseadragon.world.getItemAt(0).source;
+    const max_zoom = tile_source.maxLevel;
+    this.setState({ building_zoom: max_zoom});
   }
 
   animClick() {
@@ -116,7 +128,6 @@ class Menu extends React.Component {
     }
   }
 
-
   inputGroupChangeHandler(key) {
     return event => {
       this.setState({
@@ -125,24 +136,21 @@ class Menu extends React.Component {
     }
   }
 
-  viewerChangeHandler(key) {
-    return value => {
-      this.props.viewer.setState({
-        [key]: value
-      });
+  changeHandler(key) {
+    const defaultHandler = value => {
       this.setState({
         [key]: value
       });
-    }
-  }
+    };
 
-  classifierChangeHandler(key) {
-    return value => {
-      this.props.classifier[`set_${key}`](value);
-      this.setState({
-        [key]: value
-      });
+    if (key == "building_zoom") {
+      return event => {
+        const zoom = event.currentTarget.value;
+        this.viewer.classifier.set_building_zoom(zoom);
+        defaultHandler(zoom);
+      }
     }
+    return defaultHandler;
   }
 
   render() {
@@ -194,7 +202,7 @@ class Menu extends React.Component {
 
     let brightness_popdown = (
       <Slider className="MenuDropdown" min={0} max={2} stepSize={0.1}
-                onChange={this.viewerChangeHandler("brightness")}
+                onChange={this.changeHandler("brightness")}
                 value={this.state.brightness} />
     );
 
@@ -219,11 +227,12 @@ class Menu extends React.Component {
 
     let contrast_popdown = (
       <Slider className="MenuDropdown" min={0} max={2} stepSize={0.1}
-                  onChange={this.viewerChangeHandler("contrast")}
+                  onChange={this.changeHandler("contrast")}
                   value={this.state.contrast} />
     );
 
     return (
+      <div>
       <Card id="Menu" interactive={true} elevation={Elevation.TWO}>
       <ButtonGroup vertical={true} alignText="left">
         {file}
@@ -238,6 +247,19 @@ class Menu extends React.Component {
         {this.state.contrast_active && contrast_popdown}
       </ButtonGroup>
     </Card>
+    <Viewer 
+        onClick = {this.onClick.bind(this)}
+        fileOpened = {this.fileOpened.bind(this)}
+        classifier_name={this.state.classifier_name}
+        svm_cost={this.state.svm_cost}
+        svm_gamma={this.state.svm_gamma}
+        superpixel_size={this.state.superpixel_size}
+        building_zoom={this.state.building_zoom}
+        brightness={this.state.brightness}
+        contrast={this.state.contrast}
+        ref={viewer => {this.viewer = viewer;}}
+    />
+    </div>
     );
   }
 }

@@ -20,13 +20,17 @@ function AbstractMode() {
   this.modeName = "Abstract";
 }
 
+AbstractMode.prototype.viewerClick = function(menu, data) {
+  return this;
+}
+
 AbstractMode.prototype.animClick = function(menu) {
-  menu.props.annotations.startDrawing();
+  menu.viewer.annotations.startDrawing();
   return new AnnotateMode();
 }
   
 AbstractMode.prototype.predict = function(menu) {
-  menu.props.predict.startDrawing();
+  menu.viewer.predict.startDrawing();
   return new PredictMode();
 }
 
@@ -35,7 +39,7 @@ AbstractMode.prototype.openFile = function(menu, nodeData) {
     const extension = filename.split('.').pop();
     if (extension == 'dzi') {
         console.log(`opening dzi file ${filename}`);
-        menu.props.openseadragon.open('file://' + nodeData.path)
+        menu.viewer.openseadragon.open('file://' + nodeData.path)
     } else if (extension == 'ndpi') {
         console.log(`opening ndpi file ${filename}`);
 
@@ -86,16 +90,19 @@ function AnnotateMode() {
 AnnotateMode.prototype = new AbstractMode();
 
 AnnotateMode.prototype.animClick = function(menu) {
-  menu.props.annotations.endDrawing();
+  menu.viewer.annotations.endDrawing();
   return new ViewMode();
 }
 
 AnnotateMode.prototype.buildClick = function(menu) {
-  menu.props.annotations.endDrawing();
-  const tile_source = menu.props.openseadragon.world.getItemAt(0).source;
-  const max_zoom = tile_source.maxLevel;
-  menu.props.classifier.startBuilding(max_zoom, menu.state.superpixel_size);
+  menu.viewer.annotations.endDrawing();
+  menu.viewer.classifier.startBuilding();
   return new BuildClassifierMode();
+}
+
+AnnotateMode.prototype.viewerClick = function(menu, data) {
+  menu.viewer.annotations.onClick(data);
+  return this;
 }
 
 AnnotateMode.prototype.annotateButtonActive = truth;
@@ -110,9 +117,7 @@ function ViewMode() {
 ViewMode.prototype = new AbstractMode();
 
 ViewMode.prototype.buildClick = function(menu) {
-  const tile_source = menu.props.openseadragon.world.getItemAt(0).source;
-  const max_zoom = tile_source.maxLevel;
-  menu.props.classifier.startBuilding(max_zoom, menu.state.superpixel_size);
+  menu.viewer.classifier.startBuilding();
   return new BuildClassifierMode();
 }
 
@@ -126,19 +131,24 @@ function BuildClassifierMode() {
 BuildClassifierMode.prototype = new AbstractMode();
 
 BuildClassifierMode.prototype.animClick = function(menu) {
-  menu.props.classifier.endBuilding();
+  menu.viewer.classifier.endBuilding();
   return AbstractMode.prototype.animClick.call(this, menu);
 }
 
 BuildClassifierMode.prototype.buildClick = function(menu) {
-  menu.props.classifier.endBuilding();
+  menu.viewer.classifier.endBuilding();
   return new ViewMode();
+}
+
+BuildClassifierMode.prototype.viewerClick = function(menu, data) {
+  menu.viewer.classifier.onClick(data);
+  return this;
 }
 
 BuildClassifierMode.prototype.zoom_levels = function(menu) {
   var zoom_levels = [];
-  if (menu.props.openseadragon.world.getItemAt(0)) {
-    const tile_source = menu.props.openseadragon.world.getItemAt(0).source;
+  if (menu.viewer.openseadragon.world.getItemAt(0)) {
+    const tile_source = menu.viewer.openseadragon.world.getItemAt(0).source;
     const max_zoom = tile_source.maxLevel;
     const min_zoom = tile_source.minLevel;
     zoom_levels = [...Array(max_zoom - min_zoom).keys()].map(x => x + min_zoom +
@@ -164,8 +174,7 @@ BuildClassifierMode.prototype.classifierPopdown = function(menu) {
         <HTMLSelect 
             id="classifier-zoom-level"
             options={this.zoom_levels(menu)} 
-            onChange={menu.classifierChangeHandler("building_zoom")}
-            //value={this.props.classifier.state.zoom_level}
+            onChange={menu.changeHandler("building_zoom")}
         />
     </FormGroup>
     
@@ -174,8 +183,8 @@ BuildClassifierMode.prototype.classifierPopdown = function(menu) {
         labelFor="superpixel-size"
     >
       <Slider min={10} max={500} stepSize={10} labelStepSize = {100}
-              onRelease={menu.props.classifier.update_superpixel_size}
-              onChange={menu.classifierChangeHandler("superpixel_size")}
+              onRelease={menu.viewer.classifier.update_superpixel_size}
+              onChange={menu.changeHandler("superpixel_size")}
               value={menu.state.superpixel_size} 
       />
     </FormGroup>
@@ -184,7 +193,7 @@ BuildClassifierMode.prototype.classifierPopdown = function(menu) {
             labelFor="svm-cost"
         >
           <Slider id="svm-cost" min={-15} max={15} stepSize={1} labelStepSize = {2}
-                  onChange={menu.classifierChangeHandler("svm_cost")}
+                  onChange={menu.changeHandler("svm_cost")}
                   value={menu.state.svm_cost} 
           />
         </FormGroup>
@@ -193,7 +202,7 @@ BuildClassifierMode.prototype.classifierPopdown = function(menu) {
             labelFor="svm-gamma"
         >
           <Slider id="svm-gamma" min={-15} max={15} stepSize={1} labelStepSize = {2}
-                  onChange={menu.classifierChangeHandler("svm_gamma")}
+                  onChange={menu.changeHandler("svm_gamma")}
                   value={menu.state.svm_gamma} 
           />
         </FormGroup>
@@ -202,12 +211,12 @@ BuildClassifierMode.prototype.classifierPopdown = function(menu) {
         labelFor="classifier-name"
     >
       <InputGroup id="classifier-name" placeholder={menu.state.classifier_name}
-              onChange={menu.classifierChangeHandler("classifier_name")}         
+              onChange={menu.inputGroupChangeHandler("classifier_name")}         
       />
     </FormGroup>
     <Button 
         fill={false}
-        onClick={menu.props.classifier.buildClassifier}
+        onClick={menu.viewer.classifier.buildClassifier}
     >
       Build new classifier...
     </Button>
@@ -216,7 +225,7 @@ BuildClassifierMode.prototype.classifierPopdown = function(menu) {
 }
 
 BuildClassifierMode.prototype.predict = function(menu) {
-    menu.props.classifier.endBuilding();
+    menu.viewer.classifier.endBuilding();
     return AbstractMode.prototype.predict.call(this, menu);
 }
 
@@ -232,21 +241,24 @@ function PredictMode() {
 PredictMode.prototype = new AbstractMode();
 
 PredictMode.prototype.animClick = function(menu) {
-    menu.props.predict.endDrawing();
+    menu.viewer.predict.endDrawing();
     return AbstractMode.prototype.animClick.call(this, menu);
 }
 
 PredictMode.prototype.buildClick = function(menu) {
-    menu.props.predict.endDrawing();
-    const tile_source = menu.props.openseadragon.world.getItemAt(0).source;
-    const max_zoom = tile_source.maxLevel;
-    menu.props.classifier.startBuilding(max_zoom, menu.state.superpixel_size);
+    menu.viewer.predict.endDrawing();
+    menu.viewer.classifier.startBuilding();
     return new BuildClassifierMode();
   }
 
 PredictMode.prototype.predict = function(menu) {
-    menu.props.predict.endDrawing();
+    menu.viewer.predict.endDrawing();
     return new ViewMode();
+}
+
+PredictMode.prototype.viewerClick = function(menu, data) {
+  menu.viewer.predict.onClick(data);
+  return this;
 }
 
 PredictMode.prototype.predictPopdown = function(menu) {

@@ -109,59 +109,28 @@ function inPolygon(polygon, bounds) {
 class Predict extends React.Component {
   constructor(props) {
     super(props)
-    this.onClick = this.onClick.bind(this);
     this.state = {
       drawing: false,
-      openseadragon: null,
       cached_tiles: {},
       polygon: [],
-      viewport: {
-        x: 0,
-        y: 0,
-        width: 0,
-        height: 0
-      }
     };
   }
 
   startDrawing() {
     this.setState({drawing: true, polygon: []});
-    const viewer = this.state.openseadragon;
-    viewer.addHandler('canvas-click', this.onClick);
-    //viewer.gestureSettingsByDeviceType("mouse").scrollToZoom = false;
   }
 
   endDrawing() {
     this.setState({drawing: false, polygon: [], cached_tiles: {}});
-    const viewer = this.state.openseadragon;
-    viewer.removeHandler('canvas-click', this.onClick);
+    const viewer = this.props.openseadragon;
     viewer.clearOverlays();
-    //viewer.gestureSettingsByDeviceType("mouse").scrollToZoom = true;
   }
 
-  onOpen(openseadragon) {
-    this.setState({
-      openseadragon: openseadragon
-    });
-    openseadragon.addHandler('animation', (data) => {
-      this.onResize(data.eventSource);
-    });
-
-  }
-
-  onResize(openseadragon) {
-    const bounds = openseadragon.viewport.getHomeBounds();
-    const bounds_pixel = openseadragon.viewport.viewportToViewerElementRectangle(
-      bounds);
-    this.setState({
-      viewport: bounds_pixel
-    });
-  }
 
 
   onClick(data) {
     console.log('predict onClick');
-    const viewer = this.state.openseadragon;
+    const viewer = this.props.openseadragon;
     const tile_source = viewer.world.getItemAt(0).source;
     const webPoint = data.position;
     const imagePoint = viewer.viewport.windowToViewportCoordinates(webPoint);
@@ -180,11 +149,11 @@ class Predict extends React.Component {
 
   onPredict() {
     console.log('called onPredict');
-    const viewer = this.state.openseadragon;
+    const viewer = this.props.openseadragon;
     const tile_source = viewer.world.getItemAt(0).source;
-    const openseadragon = this.state.openseadragon;
+    const openseadragon = this.props.openseadragon;
     const size = electron.remote.getCurrentWindow().getBounds();
-    const viewport = this.state.openseadragon.viewport;
+    const viewport = this.props.openseadragon.viewport;
     const classifier = this.props.classifier;
     let svm = classifier.state.classifiers[
             classifier.state.classifier_active].classifier;
@@ -254,7 +223,7 @@ class Predict extends React.Component {
   // called when a new tile is loaded. renders the image data to a new canvas to get the
   // raw data, then superpixelates the image and creates a new TileOverlay for that tile
   on_tile_load(tile, image, errorMsg, tileRequest) {
-    const viewer = this.state.openseadragon;
+    const viewer = this.props.openseadragon;
     if (!image) {
       console.log("Tile %s failed to load: %s - error: %s", tile, tile.url,
         errorMsg);
@@ -318,21 +287,17 @@ class Predict extends React.Component {
 
 
   render() {
-    const openseadragon = this.state.openseadragon;
+    const openseadragon = this.props.openseadragon;
     const size = electron.remote.getCurrentWindow().getBounds();
     const polygon = this.state.polygon;
 
     const classifier = this.props.classifier;
     if (this.state.drawing && classifier &&
         classifier.state.classifier_active) {
-        const viewport = this.state.openseadragon.viewport;
+        const viewport = this.props.openseadragon.viewport;
         const tiled_image = openseadragon.world.getItemAt(0);
         let zoom_classifier = classifier.state.classifiers[
             classifier.state.classifier_active].building_zoom;
-        //viewport.zoomTo(viewport.imageToViewportZoom(
-        //    tiled_image.source.getLevelScale(zoom_classifier)));
-        //openseadragon.forceRedraw();
-        // iterate through tiles
     }
 
     let path_str = '';

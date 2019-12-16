@@ -7,14 +7,7 @@ class Annotations extends React.Component {
     super(props)
     this.state = {
       drawing: false,
-      openseadragon: null,
-      polygon: [],
-      viewport: {
-        x: 0,
-        y: 0,
-        width: 0,
-        height: 0
-      }
+      polygon: []
     };
   }
 
@@ -31,45 +24,21 @@ class Annotations extends React.Component {
     });
   }
 
-  onOpen(openseadragon) {
-    this.setState({
-      openseadragon: openseadragon
-    });
-    openseadragon.addHandler('canvas-click', (data) => {
-      if (data.quick) {
-        this.onClick(data.position);
-      }
-    });
-    openseadragon.addHandler('animation', (data) => {
-      this.onResize(data.eventSource);
-    });
-
-  }
-
-  onClick(webPoint) {
-    if (this.state.drawing) {
-      const viewer = this.state.openseadragon;
-      const imagePoint = viewer.viewport.windowToImageCoordinates(webPoint);
+  onClick(data) {
+    if (this.state.drawing && data.quick) {
+      const point = data.position;
+      const viewer = this.props.openseadragon;
+      const imagePoint = viewer.viewport.windowToImageCoordinates(point);
       this.setState((state, props) => ({
         polygon: state.polygon.concat([imagePoint])
       }));
     }
   }
 
-  onResize(openseadragon) {
-    const bounds = openseadragon.viewport.getHomeBounds();
-    const bounds_pixel = openseadragon.viewport.viewportToViewerElementRectangle(
-      bounds);
-    this.setState({
-      viewport: bounds_pixel
-    });
-  }
-
 
   render() {
-    const viewport = this.state.viewport;
     const polygon = this.state.polygon;
-    const openseadragon = this.state.openseadragon;
+    const openseadragon = this.props.openseadragon;
     const size = electron.remote.getCurrentWindow().getBounds();
 
     let path_str = '';

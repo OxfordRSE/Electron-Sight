@@ -11,11 +11,10 @@
 #Menu{
   opacity: 0.7;
   position: absolute;
-  top: 0;
+  top: 30px;
   left: 0;
   background-color: white;
   z-index: 2;
-  margin-top: 30px;
 }
 
 #Classifier{
