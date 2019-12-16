@@ -1,10 +1,13 @@
 import React, {PureComponent} from 'react';
+import { createStore } from 'redux'
+import reducer from './redux/index'
 import Menu from './components/Menu'
 const electron = window.require('electron');
 
 const remote = electron.remote
 const fs = remote.require('fs');
 
+const store = createStore(reducer)
 
 export default class App extends React.Component {
   constructor(props) {
@@ -13,7 +16,9 @@ export default class App extends React.Component {
 
   render() {
     return (
+      <Provider store={store}>
       <Menu/>
+      </Provider>,
     );
   }
 }
