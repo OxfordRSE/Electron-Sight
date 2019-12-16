@@ -1,8 +1,8 @@
 import React from 'react';
-let slic = require('../addons/slic/slic');
+let slic = require('../../addons/slic/slic');
 const electron = window.require('electron');
 import OpenSeadragon from 'openseadragon';
-import TileOverlay from './TileOverlay'
+import TileOverlay from '../util/TileOverlay'
 
 // Check if point is in polygon source:
 // https://www.geeksforgeeks.org/how-to-check-if-a-given-point-lies-inside-a-polygon/

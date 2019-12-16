@@ -1,6 +1,5 @@
 import React, {PureComponent} from 'react';
-import Viewer from './Viewer'
-import Menu from './Menu'
+import Menu from './components/Menu'
 const electron = window.require('electron');
 
 const remote = electron.remote

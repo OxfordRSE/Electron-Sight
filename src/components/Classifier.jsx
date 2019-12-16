@@ -15,12 +15,12 @@ import {
   RadioGroup,
 } from "@blueprintjs/core";
 
-import slic from '../addons/slic/slic';
+import slic from '../../addons/slic/slic';
 
 const electron = window.require('electron');
 
 import OpenSeadragon from 'openseadragon';
-import TileOverlay from './TileOverlay'
+import TileOverlay from '../util/TileOverlay'
 
 
 /// Handles the creation of classifiers by the user. 
