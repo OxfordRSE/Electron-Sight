@@ -319,7 +319,7 @@ class Predict extends React.Component {
       height: '100%'
     };
     return (
-      <div id="Annotations">
+      <div id="AnnotationsOverlay">
       <svg style={style} id="annotation">
         {polygon.length > 0 && (
           <circle cx={first_pt.x} cy={first_pt.y} r={"5"}/>

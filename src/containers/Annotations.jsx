@@ -10,7 +10,8 @@ const mapStateToProps = (state, ownProps) => {
 
 const mapDispatchToProps = (dispatch) => {
   return {
-    createAnnotation: (name) => { dispatch(createAnnotation(name)) }
+    createAnnotation: (name) => { dispatch(createAnnotation(name)) },
+    setCurrentAnnotation: (name) => { dispatch(setCurrentAnnotation(name)) },
     addPoint: (position) => { dispatch(addPoint(position)) }
   }
 }

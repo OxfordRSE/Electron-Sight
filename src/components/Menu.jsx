@@ -85,6 +85,7 @@ class Menu extends React.Component {
   }
 
   onClick(data) {
+    console.log('onClick!');
     const nextMode = this.state.mode.viewerClick(this, data);
     this.setState({ mode: nextMode });
   }

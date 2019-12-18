@@ -69,6 +69,9 @@ class Viewer extends React.Component {
             <Annotations 
               openseadragon={this.openseadragon}
               viewport={this.state.viewport}
+              ref={annotations => {
+                this.annotations= annotations;
+              }}
             />
             <Predict
               openseadragon={this.openseadragon}

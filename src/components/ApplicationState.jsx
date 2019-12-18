@@ -25,7 +25,6 @@ AbstractMode.prototype.viewerClick = function(menu, data) {
 }
 
 AbstractMode.prototype.animClick = function(menu) {
-  menu.viewer.annotations.startDrawing();
   return new AnnotateMode();
 }
   

@@ -1,4 +1,4 @@
-#Annotations{
+#AnnotationsOverlay{
   width: 100%;
   height: 100%;
   position: absolute;
@@ -6,6 +6,16 @@
   left: 0;
   z-index: 1;
   pointer-events: none;
+}
+
+#AnnotationsList{
+  position: relative;
+  float: right;
+  width: 300px;
+  padding: 10px;
+  opacity: 0.7;
+  background-color: white;
+  z-index: 2;
 }
 
 #Menu{
