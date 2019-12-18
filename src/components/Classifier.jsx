@@ -389,7 +389,7 @@ class Classifier extends React.Component {
     return (
       <Card id="Classifier" interactive={true} elevation={Elevation.Two}>
         <H5>Classifiers</H5>
-		<RadioGroup label=""
+		    <RadioGroup label=""
             onChange={this.setClassifier.bind(this)}
             selectedValue={this.state.classifier_active}
         >

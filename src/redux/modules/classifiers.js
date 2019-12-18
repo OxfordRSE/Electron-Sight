@@ -1,6 +1,6 @@
 const { Map, List } = require("immutable");
 
-const CREATE = 'electron-sight/classifiers/CREATE`
+const CREATE = 'electron-sight/classifiers/CREATE'
 
 export function createClassifier(name) {
   return { type: CREATE, name};

@@ -1,7 +1,7 @@
 import OpenSeadragon from 'openseadragon';
 import React from 'react';
 const electron = window.require('electron');
-import Annotations from './Annotations'
+import Annotations from '../containers/Annotations'
 import Classifier from './Classifier'
 import Predict from './Predict'
 import Scalebar from './Scalebar'
@@ -69,9 +69,6 @@ class Viewer extends React.Component {
             <Annotations 
               openseadragon={this.openseadragon}
               viewport={this.state.viewport}
-              ref={annotations => {
-                this.annotations = annotations;
-              }}
             />
             <Predict
               openseadragon={this.openseadragon}

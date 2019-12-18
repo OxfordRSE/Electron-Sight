@@ -248,6 +248,7 @@ class Menu extends React.Component {
       </ButtonGroup>
     </Card>
     <Viewer 
+        mode = {this.state.mode}
         onClick = {this.onClick.bind(this)}
         fileOpened = {this.fileOpened.bind(this)}
         classifier_name={this.state.classifier_name}

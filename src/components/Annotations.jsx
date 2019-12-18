@@ -5,50 +5,53 @@ import OpenSeadragon from 'openseadragon';
 class Annotations extends React.Component {
   constructor(props) {
     super(props)
-    this.state = {
-      drawing: false,
-      polygon: []
-    };
-  }
-
-  startDrawing() {
-    this.setState({
-      drawing: true,
-      polygon: []
-    });
-  }
-
-  endDrawing() {
-    this.setState({
-      drawing: false
-    });
   }
 
   onClick(data) {
-    if (this.state.drawing && data.quick) {
+    if (data.quick) {
       const point = data.position;
       const viewer = this.props.openseadragon;
       const imagePoint = viewer.viewport.windowToImageCoordinates(point);
-      this.setState((state, props) => ({
-        polygon: state.polygon.concat([imagePoint])
-      }));
+      this.props.addPoint(imagePoint);
     }
   }
 
+  createAnnotation() {
+    this.props.createAnnotation(this.props.current.name);
+  }
 
   render() {
-    const polygon = this.state.polygon;
+    const polygon = this.props.annotations.current.polygon;
     const openseadragon = this.props.openseadragon;
     const size = electron.remote.getCurrentWindow().getBounds();
 
-    let path_str = '';
-    const pixel_points = polygon.map(p => openseadragon.viewport
-      .imageToWindowCoordinates(p));
-    const first_pt = pixel_points[0];
-    if (polygon.length > 0) {
-      const path_array = pixel_points.map(p => `L ${p.x} ${p.y}`);
-      path_array[0] = `M ${first_pt.x} ${first_pt.y}`;
-      path_str = path_array.join(' ');
+    // get list of annotations for UI
+    let annotations_list = []
+    for (const [name, value] of this.props.annoations.created) {
+      const label = `${name}`;
+      annotations_list.push(<Radio label={label} value={name} key={name} />);
+    }
+
+    // get annotaion overlay 
+    let annotation_overlay = []
+    for (const [name, value] of this.props.annotaions.created) {
+      let path_str = '';
+      const pixel_points = value.polygon.map(p => openseadragon.viewport
+        .imageToWindowCoordinates(p));
+      const first_pt = pixel_points[0];
+      if (polygon.length > 0) {
+        const path_array = pixel_points.map(p => `L ${p.x} ${p.y}`);
+        path_array[0] = `M ${first_pt.x} ${first_pt.y}`;
+        path_str = path_array.join(' ');
+        annotation_overlay.push(
+          <circle cx={first_pt.x} cy={first_pt.y} r={"5"}/>
+          <path d={path_str} strokeWidth={"2"} stroke={"black"} fill={"none"}/>
+          <path d={path_str.concat(" Z")} 
+                     stroke={"none"} 
+                     fill={"green"} 
+                     fillOpacity={"0.1"}/>
+        );
+      }
     }
 
     const style = {
@@ -60,28 +63,28 @@ class Annotations extends React.Component {
       height: '100%'
     };
     return (
-      <div id="Annotations">
+      <div>
+      <div id="AnnotationsOverlay">
       <svg style={style} id="annotation">
-        {polygon.length > 0 && (
-          <circle cx={first_pt.x} cy={first_pt.y} r={"5"}/>
-        )
-        }
-        {polygon.length > 0 &&
-          <path d={path_str} strokeWidth={"2"} stroke={"black"} fill={"none"}/>
-        }
-        {polygon.length > 0 &&
-          <path d={path_str.concat(" Z")} 
-                   stroke={"none"} 
-                   fill={"green"} 
-                   fillOpacity={"0.1"}/>
-
-        }
+        {annotation_overlay}
       </svg>
       </div>
+      <Card id="AnnotationsList" interactive={true} elevation={Elevation.Two}>
+        <H5>Annotations</H5>
+		    <RadioGroup label=""
+            onChange={this.setClassifier.bind(this)}
+            selectedValue={this.state.classifier_active}
+        >
+        {annotations_list}
+        </RadioGroup>
+      </Card>
+      </div>
+    );
 
     )
   }
 }
 
 
-export default Annotations;
+export default connect()(Annotations)
+

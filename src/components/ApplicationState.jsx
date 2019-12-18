@@ -90,13 +90,11 @@ function AnnotateMode() {
 AnnotateMode.prototype = new AbstractMode();
 
 AnnotateMode.prototype.animClick = function(menu) {
-  menu.viewer.annotations.endDrawing();
   return new ViewMode();
 }
 
 AnnotateMode.prototype.buildClick = function(menu) {
-  menu.viewer.annotations.endDrawing();
-  menu.viewer.classifier.startBuilding();
+  menu.viewer.annotations.createAnnotation();
   return new BuildClassifierMode();
 }
 

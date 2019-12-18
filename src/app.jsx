@@ -1,4 +1,5 @@
-import React, {PureComponent} from 'react';
+import React from 'react'
+import { Provider } from 'react-redux'
 import { createStore } from 'redux'
 import reducer from './redux/index'
 import Menu from './components/Menu'
@@ -18,7 +19,7 @@ export default class App extends React.Component {
     return (
       <Provider store={store}>
       <Menu/>
-      </Provider>,
+      </Provider>
     );
   }
 }
