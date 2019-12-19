@@ -29,14 +29,13 @@ class Annotations extends React.Component {
 
   setAnnotation(evt) {
     const name = evt.currentTarget.value;
-    console.log(`selected annotation ${name}`);
     this.props.setCurrentAnnotation(name);
     this.setState({
-      classifier_active: name,
+      annotation_active: name,
     });
   }
 
-  annotationToReact(name, value) {
+  annotationToReact({name='', value={}, dashed=false, fill_color="green"}) {
     let path_str = '';
     const polygon = value.get('polygon');
     const pixel_points = polygon.map(p => this.props.openseadragon.viewport
@@ -46,14 +45,16 @@ class Annotations extends React.Component {
       const path_array = pixel_points.map(p => `L ${p.x} ${p.y}`);
       path_array[0] = `M ${first_pt.x} ${first_pt.y}`;
       path_str = path_array.join(' ');
-      return [
-        <circle key={`circle_${name}`} cx={first_pt.x} cy={first_pt.y} r={"5"}/>,
-        <path key={`path1_${name}`} d={path_str} strokeWidth={"2"} stroke={"black"} fill={"none"}/>,
-        <path key={`path2_${name}`} d={path_str.concat(" Z")} 
+      let text = <text x={first_pt.x+5} y={first_pt.y-5}>{name}</text>;
+      let circle = <circle key={`circle_${name}`} cx={first_pt.x} cy={first_pt.y} r={"5"}/>;
+      let line = dashed ? 
+        <path key={`path1_${name}`} d={path_str} strokeDasharray="5,5" strokeWidth={"2"} stroke={"black"} fill={"none"}/>:
+        <path key={`path1_${name}`} d={path_str} strokeWidth={"2"} stroke={"black"} fill={"none"}/>;
+      let fill = <path key={`path2_${name}`} d={path_str.concat(" Z")} 
                    stroke={"none"} 
-                   fill={"green"} 
-                   fillOpacity={"0.1"}/>
-      ];
+                   fill={fill_color} 
+                   fillOpacity={"0.1"}/>;
+      return [text, circle, line, fill];
     }
   }
 
@@ -65,20 +66,22 @@ class Annotations extends React.Component {
     // get list of annotations for UI
     let annotations_list = 
       this.props.annotations.get("created").map((value, key) => {
-        const label = `${name}`;
-        return <Radio label={label} value={name} key={name} />;
+        const label = `${key}`;
+        return <Radio label={label} value={key} key={key} />;
     }).toList();
 
     // get annotaion overlay 
     const annotation_overlay = this.props.annotations.get("created").map((value, key) => {
-      return this.annotationToReact(key, value);
+      return this.annotationToReact({name: key, value: value});
     }).toList();
 
-    // get annotaion overlay 
-    const annotation_current = this.annotationToReact(
-                                  this.props.annotations.get('current').get('name'),
-                                  this.props.annotations.get('current')
-    );
+    // get current annotaion overlay 
+    const annotation_current = this.annotationToReact({
+      name: this.props.annotations.get('current').get('name'),
+      value: this.props.annotations.get('current'),
+      dashed: true,
+      fill_color: "red"
+    });
 
     const style = {
       position: 'absolute',

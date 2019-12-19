@@ -23,7 +23,7 @@ export function addPoint(position) {
 
 const initialState = Map({
   created: Map(),
-  current: Map({polygon: List()})
+  current: Map({name: '', polygon: List()})
 });
 
 export default function reducer(state = initialState, action = {}) {
