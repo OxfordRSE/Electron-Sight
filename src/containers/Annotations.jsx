@@ -1,5 +1,11 @@
 import { connect } from 'react-redux'
-import {addPoint, createAnnotation} from '../redux/modules/annotations.js'
+import {
+  addPoint, 
+  saveAnnotation, 
+  setCurrentAnnotation, 
+  setCurrentAnnotationName
+} from '../redux/modules/annotations.js'
+
 import Annotations from '../components/Annotations.jsx'
 
 const mapStateToProps = (state, ownProps) => {
@@ -10,8 +16,9 @@ const mapStateToProps = (state, ownProps) => {
 
 const mapDispatchToProps = (dispatch) => {
   return {
-    createAnnotation: (name) => { dispatch(createAnnotation(name)) },
+    saveAnnotation: () => { dispatch(saveAnnotation()) },
     setCurrentAnnotation: (name) => { dispatch(setCurrentAnnotation(name)) },
+    setCurrentAnnotationName: (name) => { dispatch(setCurrentAnnotationName(name)) },
     addPoint: (position) => { dispatch(addPoint(position)) }
   }
 }

@@ -27,10 +27,6 @@ class Annotations extends React.Component {
     }
   }
 
-  createAnnotation() {
-    this.props.createAnnotation(this.props.current.name);
-  }
-
   setAnnotation(evt) {
     const name = evt.currentTarget.value;
     console.log(`selected annotation ${name}`);
@@ -40,7 +36,7 @@ class Annotations extends React.Component {
     });
   }
 
-  annotationToReact(value) {
+  annotationToReact(name, value) {
     let path_str = '';
     const polygon = value.get('polygon');
     const pixel_points = polygon.map(p => this.props.openseadragon.viewport
@@ -50,16 +46,14 @@ class Annotations extends React.Component {
       const path_array = pixel_points.map(p => `L ${p.x} ${p.y}`);
       path_array[0] = `M ${first_pt.x} ${first_pt.y}`;
       path_str = path_array.join(' ');
-      return (
-        <div>
-        <circle cx={first_pt.x} cy={first_pt.y} r={"5"}/>
-        <path d={path_str} strokeWidth={"2"} stroke={"black"} fill={"none"}/>
-        <path d={path_str.concat(" Z")} 
+      return [
+        <circle key={`circle_${name}`} cx={first_pt.x} cy={first_pt.y} r={"5"}/>,
+        <path key={`path1_${name}`} d={path_str} strokeWidth={"2"} stroke={"black"} fill={"none"}/>,
+        <path key={`path2_${name}`} d={path_str.concat(" Z")} 
                    stroke={"none"} 
                    fill={"green"} 
                    fillOpacity={"0.1"}/>
-        </div>
-      );
+      ];
     }
   }
 
@@ -70,18 +64,21 @@ class Annotations extends React.Component {
 
     // get list of annotations for UI
     let annotations_list = 
-      this.props.annotations.get("created").map((key, value) => {
+      this.props.annotations.get("created").map((value, key) => {
         const label = `${name}`;
         return <Radio label={label} value={name} key={name} />;
     }).toList();
 
     // get annotaion overlay 
-    const annotation_overlay = this.props.annotations.get("created").map((key, value) => {
-      return this.annotationToReact(value);
+    const annotation_overlay = this.props.annotations.get("created").map((value, key) => {
+      return this.annotationToReact(key, value);
     }).toList();
 
     // get annotaion overlay 
-    const annotation_current = this.annotationToReact(this.props.annotations.get('current'));
+    const annotation_current = this.annotationToReact(
+                                  this.props.annotations.get('current').get('name'),
+                                  this.props.annotations.get('current')
+    );
 
     const style = {
       position: 'absolute',

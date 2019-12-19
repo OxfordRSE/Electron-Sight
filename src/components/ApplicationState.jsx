@@ -104,6 +104,37 @@ AnnotateMode.prototype.viewerClick = function(menu, data) {
 
 AnnotateMode.prototype.annotateButtonActive = truth;
 
+AnnotateMode.prototype.classifierPopdown = function(menu) {
+  const annotations = menu.viewer.annotations;
+  const current_name = annotations.props.annotations.get('current').get('name');
+  const set_current_name = annotations.props.setCurrentAnnotationName;
+  const save_annotation = annotations.props.saveAnnotation;
+  return (
+    <div className="MenuDropdown" >
+    <Callout
+        intent="primary"
+    >
+    <p>Click to create a polygon annotation</p>
+    </Callout>       
+    <FormGroup
+        label="Name"
+        labelFor="annotation-name"
+    >
+      <InputGroup id="annotation-name" 
+                  placeholder={current_name} 
+                  onChange={(evt) => (set_current_name(event.target.value))}         
+      />
+    </FormGroup>
+    <Button 
+        fill={false}
+        onClick={save_annotation}
+    >
+      Save annotation...
+    </Button>
+    </div>
+  );
+}
+
 function ViewMode() {
   if (!(this instanceof ViewMode)) {
     return new ViewMode();
