@@ -202,7 +202,11 @@ BuildClassifierMode.prototype.classifierPopdown = function(menu) {
         <HTMLSelect 
             id="classifier-zoom-level"
             options={this.zoom_levels(menu)} 
-            onChange={menu.changeHandler("building_zoom")}
+            onChange={(evnt) => {
+                        const zoom = evnt.target.value;
+                        menu.props.updateClassifierZoom(zoom);
+                        menu.viewer.classifier.updateZoom(zoom);
+                      }}
         />
     </FormGroup>
     
@@ -211,9 +215,9 @@ BuildClassifierMode.prototype.classifierPopdown = function(menu) {
         labelFor="superpixel-size"
     >
       <Slider min={10} max={500} stepSize={10} labelStepSize = {100}
-              onRelease={menu.viewer.classifier.update_superpixel_size}
-              onChange={menu.changeHandler("superpixel_size")}
-              value={menu.state.superpixel_size} 
+              onRelease={(size) => {menu.viewer.classifier.updateSuperpixelSize();}}
+              onChange={menu.props.updateClassifierSuperpixelSize}
+              value={menu.props.classifierSuperpixelSize} 
       />
     </FormGroup>
     <FormGroup
@@ -221,8 +225,8 @@ BuildClassifierMode.prototype.classifierPopdown = function(menu) {
             labelFor="svm-cost"
         >
           <Slider id="svm-cost" min={-15} max={15} stepSize={1} labelStepSize = {2}
-                  onChange={menu.changeHandler("svm_cost")}
-                  value={menu.state.svm_cost} 
+                  onChange={menu.props.updateClassifierCost}
+                  value={menu.props.classifierCost} 
           />
         </FormGroup>
         <FormGroup
@@ -230,21 +234,21 @@ BuildClassifierMode.prototype.classifierPopdown = function(menu) {
             labelFor="svm-gamma"
         >
           <Slider id="svm-gamma" min={-15} max={15} stepSize={1} labelStepSize = {2}
-                  onChange={menu.changeHandler("svm_gamma")}
-                  value={menu.state.svm_gamma} 
+                  onChange={menu.props.updateClassifierGamma}
+                  value={menu.props.classifierGamma} 
           />
         </FormGroup>
     <FormGroup
         label="Name"
         labelFor="classifier-name"
     >
-      <InputGroup id="classifier-name" placeholder={menu.state.classifier_name}
-              onChange={menu.inputGroupChangeHandler("classifier_name")}         
+      <InputGroup id="classifier-name" value={menu.props.classifierName}
+              onChange={(evnt) => {menu.props.updateClassifierName(evnt.target.value);}}
       />
     </FormGroup>
     <Button 
         fill={false}
-        onClick={menu.viewer.classifier.buildClassifier}
+        onClick={() => {menu.viewer.classifier.buildClassifier();}}
     >
       Build new classifier...
     </Button>

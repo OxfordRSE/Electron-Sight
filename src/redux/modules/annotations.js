@@ -3,7 +3,7 @@ const { Map, List } = require("immutable");
 const SAVE = 'electron-sight/annotations/SAVE'
 const ADD_POINT = 'electron-sight/annotations/ADD_POINT'
 const CURRENT = 'electron-sight/annotations/CURRENT'
-const CURRENT_NAME = 'electron-sight/annotations/CURRENT_NAME'
+const UPDATE_NAME = 'electron-sight/annotations/UPDATE_NAME'
 
 export function saveAnnotation() {
   return { type: SAVE };
@@ -13,8 +13,8 @@ export function setCurrentAnnotation(name) {
   return { type: CURRENT, name };
 }
 
-export function setCurrentAnnotationName(name) {
-  return { type: CURRENT_NAME, name };
+export function updateName(name) {
+  return { type: CURRENT_NAME, name: 'name', value: name };
 }
 
 export function addPoint(position) {
@@ -28,6 +28,8 @@ const initialState = Map({
 
 export default function reducer(state = initialState, action = {}) {
   switch (action.type) {
+    case UPDATE_NAME:
+      return state.set('current', state.get('current').set(action.name, action.value));
     case SAVE:
       const name = state.get('current').get('name');
       return state.set('created', state.get('created').set(name, state.get('current')))
@@ -38,8 +40,6 @@ export default function reducer(state = initialState, action = {}) {
       );
     case CURRENT:
       return state.set('current', state.get('created').get(action.name));
-    case CURRENT_NAME:
-      return state.set('current', state.get('current').set('name', action.name));
     default: 
       return state;
   }

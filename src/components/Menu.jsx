@@ -74,11 +74,6 @@ class Menu extends React.Component {
       mode: DefaultMode(),
       brightness_active: false,
       contrast_active: false,
-      classifier_name: "Classifier",
-      svm_cost: 0,
-      svm_gamma: 0,
-      superpixel_size: 100,
-      //building_zoom: props.classifier.state.building_zoom,
       brightness: 1,
       contrast: 1
     };
@@ -98,7 +93,7 @@ class Menu extends React.Component {
   fileOpened(data) {
     const tile_source = this.viewer.openseadragon.world.getItemAt(0).source;
     const max_zoom = tile_source.maxLevel;
-    this.setState({ building_zoom: max_zoom});
+    this.props.updateClassifierZoom(max_zoom);
   }
 
   animClick() {
@@ -143,14 +138,6 @@ class Menu extends React.Component {
         [key]: value
       });
     };
-
-    if (key == "building_zoom") {
-      return event => {
-        const zoom = event.currentTarget.value;
-        this.viewer.classifier.set_building_zoom(zoom);
-        defaultHandler(zoom);
-      }
-    }
     return defaultHandler;
   }
 
@@ -252,11 +239,6 @@ class Menu extends React.Component {
         mode = {this.state.mode}
         onClick = {this.onClick.bind(this)}
         fileOpened = {this.fileOpened.bind(this)}
-        classifier_name={this.state.classifier_name}
-        svm_cost={this.state.svm_cost}
-        svm_gamma={this.state.svm_gamma}
-        superpixel_size={this.state.superpixel_size}
-        building_zoom={this.state.building_zoom}
         brightness={this.state.brightness}
         contrast={this.state.contrast}
         ref={viewer => {this.viewer = viewer;}}

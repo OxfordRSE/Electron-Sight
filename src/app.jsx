@@ -2,7 +2,7 @@ import React from 'react'
 import { Provider } from 'react-redux'
 import { createStore } from 'redux'
 import reducer from './redux/index'
-import Menu from './components/Menu'
+import Menu from './containers/Menu'
 const electron = window.require('electron');
 
 const remote = electron.remote

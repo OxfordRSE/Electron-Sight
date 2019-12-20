@@ -3,7 +3,6 @@ const { Map, List } = require("immutable");
 const SAVE = 'electron-sight/classifiers/SAVE'
 const ADD_POINT = 'electron-sight/classifiers/ADD_POINT'
 const CURRENT = 'electron-sight/classifiers/CURRENT'
-const CURRENT_NAME = 'electron-sight/classifiers/CURRENT_NAME'
 const ADD_SELECTED_TILE = 'electron-sight/classifiers/ADD_SELECTED_TILE'
 const UPDATE_CLASSIFICATION = 'electron-sight/classifiers/UPDATE_CLASSIFICATION'
 const CLEAR_SELECTED_TILES = 'electron-sight/classifiers/CLEAR_SELECTED_TILES'
@@ -15,47 +14,43 @@ const UPDATE_NAME = 'electron-sight/menu/UPDATE_NAME'
 
 
 export function saveClassifier(svm, feature_min, feature_max, score) {
-  return { type: SAVE };
+  return { type: SAVE, svm, feature_min, feature_max, score };
 }
 
-export function setCurrentClassifier(name) {
-  return { type: CURRENT, name };
+export function setCurrentClassifier(classifier) {
+  return { type: CURRENT, classifier };
 }
 
-export function addSelectedTile(tile) {
-  return { type: ADD_SELECTED_TILE, tile };
+export function addSelectedTile(tile_overlay) {
+  return { type: ADD_SELECTED_TILE, tile_overlay };
 }
 
 export function updateClassification(tile_id, selected_superpixel, classification) {
   return { type: UPDATE_CLASSIFICATION, tile };
 }
 
-export function setCurrentClassifierName(name) {
-  return { type: CURRENT_NAME, name };
-}
-
 export function clearSelectedTiles() {
   return { type: CLEAR_SELECTED_TILES };
 }
 
+export function updateName(name) {
+  return { type: UPDATE_NAME, name: 'name', value: name};
+}
+
 export function updateZoom(zoom) {
-  return { type: UPDATE_ZOOM, zoom };
+  return { type: UPDATE_ZOOM, name: 'zoom', value: zoom};
 }
 
 export function updateSuperpixelSize(size) {
-  return { type: UPDATE_SUPERPIXEL_SIZE, size };
+  return { type: UPDATE_SUPERPIXEL_SIZE, name: 'superpixel_size', value: size};
 }
 
 export function updateCost(cost) {
-  return { type: UPDATE_COST, cost };
+  return { type: UPDATE_COST, name: 'cost', value: cost};
 }
 
 export function updateGamma(gamma) {
-  return { type: UPDATE_GAMMA, gamma };
-}
-
-export function updateName(name) {
-  return { type: UPDATE_NAME, name };
+  return { type: UPDATE_GAMMA, name: 'gamma', value: gamma};
 }
 
 const initialState = Map({
@@ -66,24 +61,32 @@ const initialState = Map({
     superpixel_size: 200,
     selected_tiles: Map(),
     cost: 0,
+    gamma: 0,
   })
 });
 
 export default function reducer(state = initialState, action = {}) {
   switch (action.type) {
+    case UPDATE_NAME:
+    case UPDATE_GAMMA:
+    case UPDATE_COST:
+    case UPDATE_SUPERPIXEL_SIZE:
+    case UPDATE_ZOOM:
+      return state.set('current', state.get('current').set(action.name,action.value));
     case SAVE:
       const name = state.get('current').get('name');
+      const zoom = state.get('current').get('zoom');
       const current = state.get('current')
                         .set('svm', action.svm)
                         .set('feature_min', action.feature_min)
                         .set('feature_max', action.feature_max)
                         .set('score', action.score);
       return state.set('created', state.get('created').set(name, current))
-                  .set('current', initialState.get('current'));
+                  .set('current', initialState.get('current').set('zoom', zoom));
     case ADD_SELECTED_TILE:
       return state.set('current', 
         state.get('current').set('selected_tiles', 
-          state.get('current').get('selected_tiles').push(action.tile)
+          state.get('current').get('selected_tiles').set(action.tile_overlay.id, action.tile_overlay)
         )
       );
     case CLEAR_SELECTED_TILES:
@@ -100,9 +103,7 @@ export default function reducer(state = initialState, action = {}) {
               )
       );
     case CURRENT:
-      return state.set('current', state.get('created').get(action.name));
-    case CURRENT_NAME:
-      return state.set('current', state.get('current').set('name', action.name));
+      return state.set('current', action.classifier);
     default: 
       return state;
   }

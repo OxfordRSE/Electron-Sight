@@ -69,6 +69,7 @@ class Viewer extends React.Component {
             <Annotations 
               openseadragon={this.openseadragon}
               viewport={this.state.viewport}
+              mode={this.props.mode}
               ref={annotations => {
                 this.annotations= annotations;
               }}
@@ -77,6 +78,7 @@ class Viewer extends React.Component {
               openseadragon={this.openseadragon}
               viewport={this.state.viewport}
               classifier={this.classifier}
+              mode={this.props.mode}
               ref={predict => {
                 this.predict = predict;
               }}
@@ -84,6 +86,7 @@ class Viewer extends React.Component {
             <Classifiers
               openseadragon={this.openseadragon}
               viewport={this.state.viewport}
+              mode={this.props.mode}
               ref={classifier => {
                 this.classifier = classifier;
               }}

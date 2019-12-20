@@ -36,9 +36,8 @@ import TileOverlay from '../util/TileOverlay'
 class Classifiers extends React.Component {
   constructor(props) {
     super(props)
-    this.state = { building: false };
+    this.state = {};
   }
-
 
   onClick(data) {
     if (data.quick) {
@@ -47,7 +46,7 @@ class Classifiers extends React.Component {
 
       const tile_source = viewer.world.getItemAt(0).source;
       const point = viewport.pointFromPixel(data.position);
-      const zoom_level = this.props.building_zoom;
+      const zoom_level = this.props.classifiers.get('current').get('zoom');
       const click_location = this.click_location_in_tile(tile_source, point, viewer.drawer.context, zoom_level);
       const selected_tiles = this.props.classifiers.get('current').get('selected_tiles');
 
@@ -127,9 +126,9 @@ class Classifiers extends React.Component {
 
     const classification = data.shift ? -1 : 1;
     const selected_tiles = this.props.classifiers.get('current').get('selected_tiles');
-    if (tile.cacheKey in selected_tiles) {
+    if (selected_tiles.has(tile.cacheKey)) {
       console.log('tile in cache');
-      var tile_overlay = selected_tiles[tile.cacheKey];
+      var tile_overlay = selected_tiles.get(tile.cacheKey);
 
       // find superpixel user has selected
       const selected_superpixel = tile_overlay.labels[selected_tile_index];
@@ -165,11 +164,7 @@ class Classifiers extends React.Component {
       tile_overlay.update_classification(selected_superpixel, classification);
       tile_overlay.redraw();
 
-      // add overlay to openseadragon
-      viewer.addOverlay({
-        element: tile_overlay.canvas,
-        location: tile.bounds
-      });
+      
 
       // add to set of selected tiles
       this.props.addSelectedTile(tile_overlay);
@@ -177,7 +172,6 @@ class Classifiers extends React.Component {
   }
 
   unLoadTile(data) {
-
     // clean up overlay
     viewer.removeOverlay(data.tile.cacheKey);
   }
@@ -191,41 +185,37 @@ class Classifiers extends React.Component {
     viewport.zoomTo(viewport.imageToViewportZoom(tile_source.getLevelScale(zoom)));
     viewer.forceRedraw();
     viewer.gestureSettingsByDeviceType("mouse").scrollToZoom = false;
-    this.setState({ building: true });
+    this.props.classifiers.get('current').get('selected_tiles').map((tile_overlay, id) => {
+      this.props.openseadragon.addOverlay({
+        element: tile_overlay.canvas,
+        location: tile_overlay.tile.bounds
+      });
+    });
   }
 
-  clearBuilding() {
-    const viewer = this.props.openseadragon;
-    viewer.clearOverlays();
-    this.props.clearSelectedTiles();
-  }
-
-  /// change the zoom level at which the classifier is built. This resets the
-  /// classification loop and erases all data
-  set_building_zoom(zoom) {
+  /// sets the building zoom level. 
+  updateZoom(zoom) {
     console.log(`set building zoom ${zoom}`);
     const viewer = this.props.openseadragon;
     const viewport = this.props.openseadragon.viewport;
     const tile_source = this.props.openseadragon.world.getItemAt(0).source;
     viewport.zoomTo(viewport.imageToViewportZoom(tile_source.getLevelScale(zoom)));
     viewer.forceRedraw();
-    this.clearBuilding();
+    viewer.gestureSettingsByDeviceType("mouse").scrollToZoom = false;
+    this.props.clearSelectedTiles();
   }
 
   /// sets the target size of the superpixels. This resets the classification loop and
   /// erases all data
-  update_superpixel_size(size) {
-    this.clearBuilding();
+  updateSuperpixelSize(size) {
+    this.props.clearSelectedTiles();
   }
-
 
   /// Turn off the classfication loop. clear all overlays from openseadragon
   endBuilding() {
     const viewer = this.props.openseadragon;
-    const viewport = this.props.openseadragon.viewport;
     viewer.gestureSettingsByDeviceType("mouse").scrollToZoom = true;
     viewer.clearOverlays();
-    this.setState({ building: false });
   }
 
   /// Build an SVM classifier with the current classification data and add it to
@@ -293,29 +283,13 @@ class Classifiers extends React.Component {
 
     console.log('finished training');
 
-    this.props.saveClassifier(svm, min, max, validation_score);
-
+    this.props.saveClassifier(svm, min, max, accuracy);
   }
 
-  updateClassifier(selected_classifier, update_overlays) {
-    // add overlay to openseadragon
-    const classifier = this.props.classifiers.get(selected_classifier);
-    const viewer = this.props.openseadragon;
-    if (update_overlays) {
-      viewer.clearOverlays();
-      selected_tiles.map((tile_overlay, id) => {
-        viewer.addOverlay({
-          element: tile_overlay.canvas,
-          location: tile_overlay.tile.bounds
-        });
-      });
-    }
-    this.props.setCurrentClassifier(selected_classifier);
-  }
 
   setClassifier(evt) {
-    this.updateClassifier(evt.currentTarget.value, this.state.building);
-    
+    const classifier_name = evt.currentTarget.value;
+    this.props.setCurrentClassifier(this.props.classifiers.get('created').get(classifier_name));
     this.setState({
       classifier_active: evt.currentTarget.value,
     });
@@ -325,7 +299,7 @@ class Classifiers extends React.Component {
   render() {
     const classifiers = this.props.classifiers.get('created').map((classifier, name) => {
       const name_and_score = `${name} (LOOCV: ${classifier.get('score')}%)`;
-      classifiers.push(<Radio label={name_and_score} value={name} key={name} />);
+      return <Radio label={name_and_score} value={name} key={name} />;
     }).toList();
     return (
       <Card id="Classifier" interactive={true} elevation={Elevation.Two}>
