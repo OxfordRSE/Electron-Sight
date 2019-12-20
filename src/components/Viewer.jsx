@@ -2,7 +2,7 @@ import OpenSeadragon from 'openseadragon';
 import React from 'react';
 const electron = window.require('electron');
 import Annotations from '../containers/Annotations'
-import Classifier from './Classifier'
+import Classifiers from '../containers/Classifiers'
 import Predict from './Predict'
 import Scalebar from './Scalebar'
 const getStyle = (brightness, contrast) => ("brightness(" +
@@ -81,12 +81,7 @@ class Viewer extends React.Component {
                 this.predict = predict;
               }}
             />
-            <Classifier
-              classifier_name={this.props.classifier_name}
-              svm_cost={this.props.svm_cost}
-              svm_gamma={this.props.svm_gamma}
-              superpixel_size={this.props.superpixel_size}
-              building_zoom={this.props.building_zoom}
+            <Classifiers
               openseadragon={this.openseadragon}
               viewport={this.state.viewport}
               ref={classifier => {
