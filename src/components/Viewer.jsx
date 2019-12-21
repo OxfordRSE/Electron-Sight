@@ -3,7 +3,7 @@ import React from 'react';
 const electron = window.require('electron');
 import Annotations from '../containers/Annotations'
 import Classifiers from '../containers/Classifiers'
-import Predict from './Predict'
+import Predict from '../containers/Predict'
 import Scalebar from './Scalebar'
 const getStyle = (brightness, contrast) => ("brightness(" +
         +brightness + ") contrast(" + +contrast + ")");
@@ -77,7 +77,6 @@ class Viewer extends React.Component {
             <Predict
               openseadragon={this.openseadragon}
               viewport={this.state.viewport}
-              classifier={this.classifier}
               mode={this.props.mode}
               ref={predict => {
                 this.predict = predict;

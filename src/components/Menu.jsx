@@ -169,6 +169,8 @@ class Menu extends React.Component {
       </Button>
     );
 
+    let annotation_popdown = this.state.mode.annotationPopdown(this);
+
     let classifier = (
       <Button 
             icon="build" 
@@ -225,6 +227,7 @@ class Menu extends React.Component {
       <ButtonGroup vertical={true} alignText="left">
         {file}
         {annotation}
+        {annotation_popdown}
         {classifier}
         {classifier_popdown}
         {predict}

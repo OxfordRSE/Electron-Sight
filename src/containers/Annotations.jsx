@@ -3,7 +3,7 @@ import {
   addPoint, 
   saveAnnotation, 
   setCurrentAnnotation, 
-  setCurrentAnnotationName
+  updateName
 } from '../redux/modules/annotations.js'
 
 import Annotations from '../components/Annotations.jsx'
@@ -18,7 +18,7 @@ const mapDispatchToProps = (dispatch) => {
   return {
     saveAnnotation: () => { dispatch(saveAnnotation()) },
     setCurrentAnnotation: (name) => { dispatch(setCurrentAnnotation(name)) },
-    setCurrentAnnotationName: (name) => { dispatch(setCurrentAnnotationName(name)) },
+    updateName: (name) => { dispatch(updateName(name)) },
     addPoint: (position) => { dispatch(addPoint(position)) }
   }
 }

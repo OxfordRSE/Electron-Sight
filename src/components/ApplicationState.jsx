@@ -29,7 +29,7 @@ AbstractMode.prototype.animClick = function(menu) {
 }
   
 AbstractMode.prototype.predict = function(menu) {
-  menu.viewer.predict.startDrawing();
+  menu.viewer.predict.startPredict();
   return new PredictMode();
 }
 
@@ -51,6 +51,7 @@ AbstractMode.prototype.openFile = function(menu, nodeData) {
 
 AbstractMode.prototype.annotateButtonActive = falsity;
 AbstractMode.prototype.annotateButtonDisabled = falsity;
+AbstractMode.prototype.annotationPopdown = nothingness;
 AbstractMode.prototype.classifierButtonActive = falsity;
 AbstractMode.prototype.classifierButtonDisabled = falsity;
 AbstractMode.prototype.classifierPopdown = nothingness;
@@ -93,7 +94,7 @@ AnnotateMode.prototype.animClick = function(menu) {
 }
 
 AnnotateMode.prototype.buildClick = function(menu) {
-  menu.viewer.annotations.createAnnotation();
+  menu.viewer.classifier.startBuilding();
   return new BuildClassifierMode();
 }
 
@@ -104,10 +105,10 @@ AnnotateMode.prototype.viewerClick = function(menu, data) {
 
 AnnotateMode.prototype.annotateButtonActive = truth;
 
-AnnotateMode.prototype.classifierPopdown = function(menu) {
+AnnotateMode.prototype.annotationPopdown = function(menu) {
   const annotations = menu.viewer.annotations;
   const current_name = annotations.props.annotations.get('current').get('name');
-  const set_current_name = annotations.props.setCurrentAnnotationName;
+  const set_current_name = annotations.props.updateName;
   const save_annotation = annotations.props.saveAnnotation;
   return (
     <div className="MenuDropdown" >
@@ -153,7 +154,7 @@ function BuildClassifierMode() {
   if (!(this instanceof BuildClassifierMode)) {
     return new BuildClassifierMode();
   }
-  this.modename = "BuildClassifier";
+  this.modeName = "BuildClassifier";
 }
 
 BuildClassifierMode.prototype = new AbstractMode();
@@ -273,24 +274,19 @@ function PredictMode() {
 PredictMode.prototype = new AbstractMode();
 
 PredictMode.prototype.animClick = function(menu) {
-    menu.viewer.predict.endDrawing();
+    menu.viewer.predict.endPredict();
     return AbstractMode.prototype.animClick.call(this, menu);
 }
 
 PredictMode.prototype.buildClick = function(menu) {
-    menu.viewer.predict.endDrawing();
+    menu.viewer.predict.endPredict();
     menu.viewer.classifier.startBuilding();
     return new BuildClassifierMode();
   }
 
 PredictMode.prototype.predict = function(menu) {
-    menu.viewer.predict.endDrawing();
+    menu.viewer.predict.endPredict();
     return new ViewMode();
-}
-
-PredictMode.prototype.viewerClick = function(menu, data) {
-  menu.viewer.predict.onClick(data);
-  return this;
 }
 
 PredictMode.prototype.predictPopdown = function(menu) {
@@ -303,7 +299,7 @@ PredictMode.prototype.predictPopdown = function(menu) {
         </Callout>
         <Button 
             fill={false}
-            onClick={menu.run_predict.bind(menu)}
+            onClick={() => menu.viewer.predict.onPredict()}
         >
           Go...
         </Button>

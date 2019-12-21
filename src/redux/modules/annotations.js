@@ -14,7 +14,7 @@ export function setCurrentAnnotation(name) {
 }
 
 export function updateName(name) {
-  return { type: CURRENT_NAME, name: 'name', value: name };
+  return { type: UPDATE_NAME, name: 'name', value: name };
 }
 
 export function addPoint(position) {

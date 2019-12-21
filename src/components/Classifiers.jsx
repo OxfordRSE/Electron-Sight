@@ -171,12 +171,6 @@ class Classifiers extends React.Component {
     }
   }
 
-  unLoadTile(data) {
-    // clean up overlay
-    viewer.removeOverlay(data.tile.cacheKey);
-  }
-
-
   startBuilding() {
     const viewport = this.props.openseadragon.viewport;
     const tile_source = this.props.openseadragon.world.getItemAt(0).source;
@@ -218,9 +212,7 @@ class Classifiers extends React.Component {
     viewer.clearOverlays();
   }
 
-  /// Build an SVM classifier with the current classification data and add it to
-  /// this.state.classifiers
-  /// Note: all classification data is kept so user can keep on selecting superpixels
+  /// Build an SVM classifier with the current classification data
   buildClassifier() {
     const name = this.props.classifiers.get('current').get('name');
     const cost = Math.pow(10,this.props.classifiers.get('current').get('cost'));
@@ -278,11 +270,8 @@ class Classifiers extends React.Component {
     console.log(`Cross Validation Accuracy = ${accuracy}`);
 
     svm.train(features, classification);  // train the model
-
     var pclassification = svm.predict(features);
-
     console.log('finished training');
-
     this.props.saveClassifier(svm, min, max, accuracy);
   }
 
