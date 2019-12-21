@@ -22,7 +22,8 @@ class Annotations extends React.Component {
     if (data.quick) {
       const point = data.position;
       const viewer = this.props.openseadragon;
-      const imagePoint = viewer.viewport.windowToImageCoordinates(point);
+      const imagePoint = viewer.viewport.windowToViewportCoordinates(point);
+      console.log(imagePoint);
       this.props.addPoint(imagePoint);
     }
   }
@@ -39,7 +40,7 @@ class Annotations extends React.Component {
     let path_str = '';
     const polygon = value.get('polygon');
     const pixel_points = polygon.map(p => this.props.openseadragon.viewport
-      .imageToWindowCoordinates(p)).toJS();
+      .viewportToWindowCoordinates(p)).toJS();
     const first_pt = pixel_points[0];
     if (polygon.size > 0) {
       const path_array = pixel_points.map(p => `L ${p.x} ${p.y}`);
@@ -96,14 +97,12 @@ class Annotations extends React.Component {
     console.log(`mode is ${this.props.mode.modeName}`);
     return (
       <div >
-      { this.props.mode.modeName == "Annotate" &&
       <div id="AnnotationsOverlay">
       <svg style={style} id="annotation">
         {annotation_overlay}
         {annotation_current}
       </svg>
       </div>
-      }
       <Card id="AnnotationsList" interactive={true} elevation={Elevation.Two}>
         <H5>Annotations</H5>
 		    <RadioGroup label=""

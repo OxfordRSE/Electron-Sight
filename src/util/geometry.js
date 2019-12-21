@@ -1,3 +1,5 @@
+import OpenSeadragon from 'openseadragon';
+
 // Check if point is in polygon source:
 // https://www.geeksforgeeks.org/how-to-check-if-a-given-point-lies-inside-a-polygon/
 
@@ -88,7 +90,7 @@ function isInside(polygon, n, p) {
     return count&1;  // Same as (count%2 == 1) 
 } 
 
-function inPolygon(polygon, bounds) {
+export function inPolygon(polygon, bounds) {
   const n = polygon.length;
   const x = bounds.x;
   const y = bounds.y;
