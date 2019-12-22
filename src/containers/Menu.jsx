@@ -20,6 +20,7 @@ const mapStateToProps = (state, ownProps) => {
     classifierGamma: state.classifiers.get('current').get('gamma'),
     classifierSuperpixelSize: state.classifiers.get('current').get('superpixel_size'),
     classifierZoom: state.classifiers.get('current').get('zoom'),
+    classifiers: state.classifiers.get('created'),
   }
 }
 
@@ -27,7 +28,7 @@ const mapDispatchToProps = (dispatch) => {
   return {
     updateClassifierZoom: (zoom) => { dispatch(updateClassifierZoom(zoom)) },
     updateClassifierSuperpixelSize: (size) => { dispatch(updateClassifierSuperpixelSize(size)) },
-    updateClassifierCost: (cost) => { dispatch(updateClassifierCost(zoom)) },
+    updateClassifierCost: (cost) => { dispatch(updateClassifierCost(cost)) },
     updateClassifierGamma: (gamma) => { dispatch(updateClassifierGamma(gamma)) },
     updateClassifierName: (name) => { dispatch(updateClassifierName(name)) },
     updateAnnotationName: (name) => { dispatch(updateAnnotationName(name)) }

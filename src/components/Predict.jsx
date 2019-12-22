@@ -7,7 +7,7 @@ import TileOverlay from '../util/TileOverlay'
 import { create_tile, load_and_process_tile } from '../util/openseadragon.js'
 import { inPolygon } from '../util/geometry.js'
 
-function predictAnnotation(openseadragon, classifier, annotation) {
+function predictAnnotation(openseadragon, classifier, annotation, saveTilePrediction) {
   console.log(`predict using ${classifier.get('name')} on ${annotation.get('name')}`);
   const tile_source = openseadragon.world.getItemAt(0).source;
   const tiled_image = openseadragon.world.getItemAt(0);
@@ -33,8 +33,17 @@ function predictAnnotation(openseadragon, classifier, annotation) {
 
   let result = Map();
   let process_and_store_tile = (tile, img_data) => { 
+    // predict for tile
     const tile_overlay = predictTile(tile, img_data, classifier);
-    return result.set(tile_overlay.id, tile_overlay);
+
+    // add overlay to openseadragon viewer
+    openseadragon.addOverlay({
+      element: tile_overlay.canvas,
+      location: tile_overlay.tile.bounds
+    });
+
+    // add tile_overlay to store
+    saveTilePrediction(annotation.get('name'), tile_overlay);
   };
 
   // loop over all tiles in that bounding rectangle and see which ones are in the
@@ -109,17 +118,14 @@ class Predict extends React.Component {
   onPredict() {
     console.log('called onPredict');
     this.props.openseadragon.clearOverlays();
-    const results = this.props.annotations.map(annotation => {
-      const result = predictAnnotation(this.props.openseadragon, this.props.classifier, annotation);
-      result.map((tile_overlay, id) => {
-        this.props.openseadragon.addOverlay({
-          element: tile_overlay.canvas,
-          location: tile_overlay.tile.bounds
-        });
-      });
-      return result;
+    this.props.annotations.map(annotation => {
+      predictAnnotation(
+        this.props.openseadragon, 
+        this.props.classifier, 
+        annotation, 
+        this.props.saveTilePrediction
+      );
     });
-    this.props.savePrediction(results);
   }
 
   render() {

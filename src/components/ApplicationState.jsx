@@ -3,6 +3,7 @@ import {
   Callout,
   InputGroup,
   Button,
+  ButtonGroup,
   Slider,
   HTMLSelect,
   FormGroup,
@@ -126,12 +127,13 @@ AnnotateMode.prototype.annotationPopdown = function(menu) {
                   onChange={(evt) => (set_current_name(event.target.value))}         
       />
     </FormGroup>
+    <ButtonGroup className="Buttons" fill={false}>
     <Button 
-        fill={false}
         onClick={save_annotation}
     >
-      Save annotation...
+      Save
     </Button>
+    </ButtonGroup>
     </div>
   );
 }
@@ -247,12 +249,16 @@ BuildClassifierMode.prototype.classifierPopdown = function(menu) {
               onChange={(evnt) => {menu.props.updateClassifierName(evnt.target.value);}}
       />
     </FormGroup>
+    <ButtonGroup fill={false} className="Buttons">
     <Button 
-        fill={false}
+        disabled={menu.props.classifierName==''}
         onClick={() => {menu.viewer.classifier.buildClassifier();}}
-    >
-      Build new classifier...
-    </Button>
+    >Save</Button>
+    <Button 
+        disabled={!menu.props.classifiers.has(menu.props.classifierName)}
+        onClick={() => {menu.viewer.classifier.loadClassifier(menu.props.classifierName);}}
+    >Load</Button>
+    </ButtonGroup>
     </div>
   );
 }
@@ -290,21 +296,23 @@ PredictMode.prototype.predict = function(menu) {
 }
 
 PredictMode.prototype.predictPopdown = function(menu) {
-    return (
-        <div className="MenuDropdown" >
-        <Callout
-            intent="primary"
-        >
-        <p>Draw a region and predict within it</p>
-        </Callout>
-        <Button 
-            fill={false}
-            onClick={() => menu.viewer.predict.onPredict()}
-        >
-          Go...
-        </Button>
-        </div>
-      );
+  return (
+      <div className="MenuDropdown" >
+      <Callout
+          intent="primary"
+      >
+      <p>Select a classifier and predict over all annotated areas</p>
+      </Callout>
+      <ButtonGroup className="Buttons"> 
+      <Button 
+          disabled={!menu.props.classifiers.has(menu.props.classifierName)}
+          onClick={() => menu.viewer.predict.onPredict()}
+      >
+        Go...
+      </Button>
+      </ButtonGroup> 
+      </div>
+    );
 }
 
 PredictMode.prototype.predictButtonActive = truth;

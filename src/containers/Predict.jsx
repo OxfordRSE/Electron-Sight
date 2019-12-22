@@ -1,12 +1,12 @@
 import { connect } from 'react-redux'
 import {
-  savePrediction, 
+  saveTilePrediction, 
 } from '../redux/modules/predict.js'
 import Predict from '../components/Predict.jsx'
 
 const mapStateToProps = (state, ownProps) => {
   return {
-    classifier: state.classifiers.get('current'),
+    classifier: state.classifiers.getIn(['created', state.classifiers.getIn(['current', 'name'])]),
     annotations: state.annotations.get('created'),
     results: state.predict.results
   }
@@ -14,8 +14,10 @@ const mapStateToProps = (state, ownProps) => {
 
 const mapDispatchToProps = (dispatch, ownProps) => {
   return {
-    savePrediction: (prediction) => { dispatch(savePrediction(prediction)) },
-    }
+    saveTilePrediction: (annotation_name, tile_overlay) => { 
+      dispatch(saveTilePrediction(annotation_name, tile_overlay)) 
+    },
+  }
 }
 
 export default connect(

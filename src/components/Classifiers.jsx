@@ -276,14 +276,10 @@ class Classifiers extends React.Component {
   }
 
 
-  setClassifier(evt) {
-    const classifier_name = evt.currentTarget.value;
-    this.props.setCurrentClassifier(this.props.classifiers.get('created').get(classifier_name));
-    this.setState({
-      classifier_active: evt.currentTarget.value,
-    });
+  loadClassifier(name) {
+    console.log(`loading classifier ${name}`);
+    this.props.loadClassifier(this.props.classifiers.getIn(['created', name]));
   }
-
 
   render() {
     const classifiers = this.props.classifiers.get('created').map((classifier, name) => {
@@ -294,8 +290,8 @@ class Classifiers extends React.Component {
       <Card id="Classifier" interactive={true} elevation={Elevation.Two}>
         <H5>Classifiers</H5>
 		    <RadioGroup label=""
-            onChange={this.setClassifier.bind(this)}
-            selectedValue={this.state.classifier_active}
+            onChange={(evt) => this.props.updateName(evt.currentTarget.value)}
+            selectedValue={this.props.classifiers.getIn(['current', 'name'])}
         >
         {classifiers}
         </RadioGroup>

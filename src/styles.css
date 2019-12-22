@@ -21,10 +21,14 @@
 #Menu{
   opacity: 0.7;
   position: absolute;
+  width: 300px;
   top: 30px;
   left: 0;
   background-color: white;
   z-index: 2;
+}
+
+.MenuButtons {
 }
 
 #Classifier{
@@ -40,6 +44,13 @@
 .MenuDropdown {
   margin-top: 10px;
   margin-bottom: 5px;
+}
+
+.Buttons {
+  text-align: center;
+  margin: 0px auto;
+  margin-left: 20%; 
+  width: 60%;
 }
 
 #Viewer {

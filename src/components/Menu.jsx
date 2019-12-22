@@ -224,7 +224,7 @@ class Menu extends React.Component {
     return (
       <div>
       <Card id="Menu" interactive={true} elevation={Elevation.TWO}>
-      <ButtonGroup vertical={true} alignText="left">
+      <ButtonGroup id="MenuButtons" fill={true} vertical={true}>
         {file}
         {annotation}
         {annotation_popdown}

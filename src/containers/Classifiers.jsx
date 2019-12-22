@@ -1,8 +1,8 @@
 import { connect } from 'react-redux'
 import {
   saveClassifier, 
-  setCurrentClassifier, 
-  setCurrentClassifierName,
+  loadClassifier, 
+  updateName,
   updateClassification,
   clearSelectedTiles,
   addSelectedTile
@@ -22,14 +22,14 @@ const mapDispatchToProps = (dispatch, ownProps) => {
       ownProps.openseadragon.clearOverlays();
       dispatch(saveClassifier(svm, min, max, score)) 
     },
-    setCurrentClassifier: (classifier) => { 
+    loadClassifier: (classifier) => { 
       // make sure all internal stuff in tile_overlay is **copied** across
       const new_selected_tiles = classifier.get('selected_tiles').map((tile_overlay, tile_id) => {
         return tile_overlay.copy();
       });
 
       // update openseadragon overlays
-      const build_mode = ownProps.mode.modename == "BuildClassifier"; 
+      const build_mode = ownProps.mode.modeName == "BuildClassifier"; 
       if (build_mode) {
         console.log('clearing overlays');
         ownProps.openseadragon.clearOverlays();
@@ -42,9 +42,9 @@ const mapDispatchToProps = (dispatch, ownProps) => {
       }
 
       // dispatch with **copied** classifier
-      dispatch(setCurrentClassifier(classifier.set('selected_tiles', new_selected_tiles))); 
+      dispatch(loadClassifier(classifier.set('selected_tiles', new_selected_tiles))); 
     },
-    setCurrentClassifierName: (name) => { dispatch(setCurrentClassifierName(name)) },
+    updateName: (name) => { dispatch(updateName(name)) },
     updateClassification: (tile_id, selected_superpixel, classification) => {     
       dispatch(updateClassification(tile_id, selected_superpixel, classification)) 
     },

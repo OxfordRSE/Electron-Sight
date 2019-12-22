@@ -2,7 +2,7 @@ const { Map, List } = require("immutable");
 
 const SAVE = 'electron-sight/classifiers/SAVE'
 const ADD_POINT = 'electron-sight/classifiers/ADD_POINT'
-const CURRENT = 'electron-sight/classifiers/CURRENT'
+const LOAD = 'electron-sight/classifiers/CURRENT'
 const ADD_SELECTED_TILE = 'electron-sight/classifiers/ADD_SELECTED_TILE'
 const UPDATE_CLASSIFICATION = 'electron-sight/classifiers/UPDATE_CLASSIFICATION'
 const CLEAR_SELECTED_TILES = 'electron-sight/classifiers/CLEAR_SELECTED_TILES'
@@ -17,8 +17,8 @@ export function saveClassifier(svm, feature_min, feature_max, score) {
   return { type: SAVE, svm, feature_min, feature_max, score };
 }
 
-export function setCurrentClassifier(classifier) {
-  return { type: CURRENT, classifier };
+export function loadClassifier(classifier) {
+  return { type: LOAD, classifier };
 }
 
 export function addSelectedTile(tile_overlay) {
@@ -83,6 +83,8 @@ export default function reducer(state = initialState, action = {}) {
                         .set('score', action.score);
       return state.set('created', state.get('created').set(name, current))
                   .set('current', initialState.get('current').set('zoom', zoom));
+    case LOAD:
+      return state.set('current', action.classifier);
     case ADD_SELECTED_TILE:
       return state.set('current', 
         state.get('current').set('selected_tiles', 
@@ -102,8 +104,6 @@ export default function reducer(state = initialState, action = {}) {
                 state.get('current').get('selected_tiles').set(action.tile_id, tile_overlay)
               )
       );
-    case CURRENT:
-      return state.set('current', action.classifier);
     default: 
       return state;
   }
