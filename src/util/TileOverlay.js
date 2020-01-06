@@ -1,3 +1,4 @@
+import cv from 'opencv.js';
 
 export default class TileOverlay {
 //
@@ -12,13 +13,15 @@ export default class TileOverlay {
   ///  @param {Openseadragon.Tile} tile: image tile
   ///  @param {TypedArray} labels: maps pixels to superpixel number
   ///  @param {array} features: 26*nsuperpixels array of features
-  constructor(tile, labels, features) {
+  ///  @param {ImageData} src: the source image data for this tile
+  constructor(tile, labels, features, src) {
     this.id = tile.cacheKey;
     this.tile = tile;
+    this.src = src; 
     this.labels = new Int32Array(labels);
     this.nfeatures = 26;
     this.features = new Float64Array(features);
-    this.canvas = document.createElement("canvas");
+    this.canvas = document.createElement('canvas');
     this.canvas.style.zIndex = "2";
     this.context = this.canvas.getContext('2d');
     this.canvas.width = tile.sourceBounds.width;
@@ -26,17 +29,22 @@ export default class TileOverlay {
     this.canvas.id = this.id;
     this.pixel_classification = new Int8Array(tile.sourceBounds.width * tile
       .sourceBounds.height);
+    this.pixel_segmentation = new Int8Array(tile.sourceBounds.width * tile
+      .sourceBounds.height);
     this.positive_superpixels = new Set();
     this.negative_superpixels = new Set();
     this.predict_superpixels = new Set();
+    this.segmented = false;
   }
 
   copy() {
-    let c = new TileOverlay(this.tile, this.labels, this.features);
+    let c = new TileOverlay(this.tile, this.labels, this.features, this.src);
     c.pixel_classification = new Int8Array(this.pixel_classification);
+    c.pixel_segmentation = new Int8Array(this.pixel_segmentation);
     c.positive_superpixels = new Set(this.positive_superpixels);
     c.negative_superpixels = new Set(this.negative_superpixels);
     c.predict_superpixels = new Set(this.predict_superpixels);
+    c.segmented = this.segmented;
     c.redraw();
     return c;
   }
@@ -130,23 +138,112 @@ export default class TileOverlay {
     return features;
   }
 
+  segment() {
+    const rows = this.canvas.height;
+    const cols = this.canvas.width;
+    let src = new cv.Mat(rows, cols, cv.CV_8UC4);
+    let opening = cv.Mat.zeros(rows, cols, cv.CV_8UC1);
+    // Iterate through every pixel
+    // pixel_classification is [1 = green, -1 = red, 0 = transparent]
+    for (let i = 0; i < rows; i++) {
+      for (let j = 0; j < cols; j++) {
+        const index = i*cols + j;
+        if (this.pixel_classification[index] > 0) {
+          // classification 
+          opening.ucharPtr(i, j)[0] = 255;
+        }
+        src.ucharPtr(i, j)[0] = this.src.data[index*4 + 0]; // R
+        src.ucharPtr(i, j)[1] = this.src.data[index*4 + 1]; // G
+        src.ucharPtr(i, j)[2] = this.src.data[index*4 + 2]; // B
+        src.ucharPtr(i, j)[3] = this.src.data[index*4 + 3]; // A
+      }
+    }
+
+    let background = new cv.Mat();
+    let foreground = new cv.Mat();
+    let distTrans = new cv.Mat();
+    let unknown = new cv.Mat();
+    let markers = new cv.Mat();
+    // get background
+    let M = cv.Mat.ones(3, 3, cv.CV_8U);
+    cv.dilate(opening, background, M, new cv.Point(-1, -1), 3);
+    // distance transform
+    cv.distanceTransform(opening, distTrans, cv.DIST_L2, 5);
+    cv.normalize(distTrans, distTrans, 1, 0, cv.NORM_INF);
+    // get foreground
+    cv.threshold(distTrans, foreground, 0.7 * 1, 255, cv.THRESH_BINARY);
+    foreground.convertTo(foreground, cv.CV_8U, 1, 0);
+    cv.subtract(background, foreground, unknown);
+    // get connected components markers
+    cv.connectedComponents(foreground, markers);
+    for (let i = 0; i < markers.rows; i++) {
+        for (let j = 0; j < markers.cols; j++) {
+            markers.intPtr(i, j)[0] = markers.ucharPtr(i, j)[0] + 1;
+            if (unknown.ucharPtr(i, j)[0] == 255) {
+                markers.intPtr(i, j)[0] = 0;
+            }
+        }
+    }
+    //cv.cvtColor(src, src, cv.COLOR_RGBA2RGB, 0);
+    //cv.watershed(src, markers);
+    // copy segmentation
+    for (let i = 0; i < markers.rows; i++) {
+        for (let j = 0; j < markers.cols; j++) {
+          const index = i*cols + j;
+          this.pixel_segmentation[index] = foreground.intPtr(i, j)[0]; 
+        }
+    }
+    console.log(markers);
+    src.delete(); opening.delete(); background.delete();
+    foreground.delete(); distTrans.delete(); unknown.delete(); markers.delete(); M.delete();
+    this.segmented = true;
+  }
+
   /// draws current classification data to the canvas
   redraw() {
     // default for createImageData is transparent black
     const imageData = this.context.createImageData(this.canvas.width, this.canvas
       .height);
 
-    // Iterate through every pixel
-    // pixel_classification is [1 = green, -1 = red, 0 = transparent]
-    for (let i = 0; i < imageData.width * imageData.height; i++) {
-      if (this.pixel_classification[i] > 0) {
-        // green
-        imageData.data[4 * i + 1] = 255;
-        imageData.data[4 * i + 3] = 100;
-      } else if (this.pixel_classification[i] < 0) {
-        // red
-        imageData.data[4 * i + 0] = 255;
-        imageData.data[4 * i + 3] = 100;
+    if (!this.segmented) {
+      // pixel_classification is [1 = green, -1 = red, 0 = transparent]
+      for (let i = 0; i < imageData.width * imageData.height; i++) {
+        if (this.pixel_classification[i] > 0) {
+          // green
+          imageData.data[4 * i + 0] = 0;
+          imageData.data[4 * i + 1] = 255;
+          imageData.data[4 * i + 2] = 0;
+          imageData.data[4 * i + 3] = 100;
+        } else if (this.pixel_classification[i] < 0) {
+          // red 
+          imageData.data[4 * i + 0] = 255;
+          imageData.data[4 * i + 1] = 0;
+          imageData.data[4 * i + 2] = 0;
+          imageData.data[4 * i + 3] = 100;
+        }
+      }
+    } else {
+      // pixel_segmentation is [-1 = border, 1 = background, X = cell number]
+      for (let i = 0; i < imageData.width * imageData.height; i++) {
+        if (this.pixel_segmentation[i] < 1) {
+          // black borders
+          imageData.data[4 * i + 0] = 0;
+          imageData.data[4 * i + 1] = 0;
+          imageData.data[4 * i + 2] = 0;
+          imageData.data[4 * i + 3] = 100;
+        } else if (this.pixel_segmentation[i] == 1) {
+          // transparent background
+          imageData.data[4 * i + 0] = 0;
+          imageData.data[4 * i + 1] = 0;
+          imageData.data[4 * i + 2] = 0;
+          imageData.data[4 * i + 3] = 0;
+        } else {
+          // color by region
+          imageData.data[4 * i + 0] = 0;
+          imageData.data[4 * i + 1] = this.pixel_segmentation[i];
+          imageData.data[4 * i + 2] = 0;
+          imageData.data[4 * i + 3] = 100;
+        }
       }
     }
 

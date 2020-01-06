@@ -155,7 +155,7 @@ class Classifiers extends React.Component {
 
       // create overlay
       const tile_overlay = new TileOverlay(tile, outlabels,
-        outCollectedFeatures);
+        outCollectedFeatures, img_data);
 
       // find superpixel user has selected
       const selected_superpixel = outlabels[selected_tile_index];

@@ -72,7 +72,7 @@ function predictTile(tile, img_data, classifier) {
         outLABVariances, outCollectedFeatures
       ] = slic.slic(img_data.data, img_data.width, img_data.height, superpixel_size);
 
-    var tile_overlay = new TileOverlay(tile, outlabels, outCollectedFeatures);
+    var tile_overlay = new TileOverlay(tile, outlabels, outCollectedFeatures, img_data);
 
     // generate features
     const min = classifier.get('feature_min');
@@ -89,6 +89,7 @@ function predictTile(tile, img_data, classifier) {
     classifier.get('svm').predict(features).map((x, idx) => {
       tile_overlay.add_classification(idx, (x > 0 ? 1 : -1));
     });
+    tile_overlay.segment();
     tile_overlay.redraw();
     return tile_overlay;
   }
@@ -107,6 +108,14 @@ class Predict extends React.Component {
           element: tile_overlay.canvas,
           location: tile_overlay.tile.bounds
         });
+      });
+    });
+  }
+
+  redrawOverlays() {
+    this.props.results.map(annotation_result => {
+      annotation_result.map((tile_overlay, id) => {
+        tile_overlay.draw
       });
     });
   }
