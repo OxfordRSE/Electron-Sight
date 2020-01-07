@@ -11,7 +11,6 @@ import {
   Popover,
 } from "@blueprintjs/core";
 
-import DefaultMode from './ApplicationState';
 import Viewer from './Viewer';
 
 const electron = window.require('electron');
@@ -71,23 +70,11 @@ class Menu extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-      mode: DefaultMode(),
       brightness_active: false,
       contrast_active: false,
       brightness: 1,
       contrast: 1
     };
-  }
-
-  onClick(data) {
-    console.log('onClick!');
-    const nextMode = this.state.mode.viewerClick(this, data);
-    this.setState({ mode: nextMode });
-  }
-
-  openFile(nodeData) {
-    const nextMode = this.state.mode.openFile(this, nodeData);
-    this.setState({ mode: nextMode });
   }
 
   fileOpened(data) {
@@ -96,25 +83,9 @@ class Menu extends React.Component {
     this.props.updateClassifierZoom(max_zoom);
   }
 
-  animClick() {
-    const nextMode = this.state.mode.animClick(this);
-    this.setState({ mode: nextMode });
-  }
-
-  predict() {
-    const nextMode = this.state.mode.predict(this);
-    this.setState({ mode: nextMode });
-  }
-
   run_predict() {
     this.props.predict.onPredict();
   }
-
-  buildClick() {
-    const nextMode = this.state.mode.buildClick(this);
-    this.setState({ mode: nextMode });
-  }
-
 
   toggle(key) {
     return () => {
@@ -145,7 +116,7 @@ class Menu extends React.Component {
     const directory = fs.realpathSync('.');
     let file_tree = (
       <FileTree path={directory} 
-        open_file_callback = {this.openFile.bind(this)}
+        open_file_callback = {(nodeData) => { this.props.openFile(this, nodeData); }}
         openseadragon={this.props.openseadragon}/>
     );
 
@@ -161,32 +132,32 @@ class Menu extends React.Component {
     let annotation = (
       <Button 
             icon="polygon-filter" 
-            active={this.state.mode.annotateButtonActive()} 
-            onClick={this.animClick.bind(this)}
-            disabled = {this.state.mode.annotateButtonDisabled()}
+            active={this.props.mode.annotateButtonActive()} 
+            onClick={() => { this.props.animClick(this); }}
+            disabled = {this.props.mode.annotateButtonDisabled()}
       >
         Annotation
       </Button>
     );
 
-    let annotation_popdown = this.state.mode.annotationPopdown(this);
+    let annotation_popdown = this.props.mode.annotationPopdown(this);
 
     let classifier = (
       <Button 
             icon="build" 
-            active={this.state.mode.classifierButtonActive()} 
-            onClick={this.buildClick.bind(this)}
-            disabled = {this.state.mode.classifierButtonDisabled()}
+            active={this.props.mode.classifierButtonActive()} 
+            onClick={() => {this.props.buildClick(this); }}
+            disabled = {this.props.mode.classifierButtonDisabled()}
       >
         New classifier
       </Button>
     );
 
-    let classifier_popdown = this.state.mode.classifierPopdown(this);
+    let classifier_popdown = this.props.mode.classifierPopdown(this);
 
     let brightness = (
       <Button icon="flash" active={this.state.brightness_active}
-              disabled = {this.state.mode.brightnessButtonDisabled()}
+              disabled = {this.props.mode.brightnessButtonDisabled()}
               onClick={this.toggle("brightness")}>Brightness</Button>
     );
 
@@ -198,22 +169,22 @@ class Menu extends React.Component {
 
     let contrast = (
       <Button icon="contrast" active={this.state.contrast_active}
-              disabled = {this.state.mode.contrastButtonDisabled()}
+              disabled = {this.props.mode.contrastButtonDisabled()}
               onClick={this.toggle("contrast")}>Contrast</Button>
     );
 
     let predict = (
       <Button 
             icon="circle"
-            active={this.state.mode.predictButtonActive()}
-            onClick={this.predict.bind(this)}
-            disabled = {this.state.mode.predictButtonDisabled()}
+            active={this.props.mode.predictButtonActive()}
+            onClick={() => { this.props.predict(this); }}
+            disabled = {this.props.mode.predictButtonDisabled()}
       >
         Predict
       </Button>
     );
 
-    let predict_popdown = this.state.mode.predictPopdown(this);
+    let predict_popdown = this.props.mode.predictPopdown(this);
 
     let contrast_popdown = (
       <Slider className="MenuDropdown" min={0} max={2} stepSize={0.1}
@@ -239,8 +210,8 @@ class Menu extends React.Component {
       </ButtonGroup>
     </Card>
     <Viewer 
-        mode = {this.state.mode}
-        onClick = {this.onClick.bind(this)}
+        mode = {this.props.mode}
+        onClick = {(data) => { this.props.onClick(this, data); }}
         fileOpened = {this.fileOpened.bind(this)}
         brightness={this.state.brightness}
         contrast={this.state.contrast}

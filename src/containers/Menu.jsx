@@ -9,6 +9,13 @@ import {
 import {
   updateName as updateAnnotationName,
 } from '../redux/modules/annotations.js'
+import {
+  viewerClick,
+  animClick,
+  buildClick,
+  predict,
+  openFile,
+} from '../redux/modules/applicationState.js'
 
 import Menu from '../components/Menu.jsx'
 
@@ -21,6 +28,7 @@ const mapStateToProps = (state, ownProps) => {
     classifierSuperpixelSize: state.classifiers.get('current').get('superpixel_size'),
     classifierZoom: state.classifiers.get('current').get('zoom'),
     classifiers: state.classifiers.get('created'),
+    mode: state.applicationState.mode,
   }
 }
 
@@ -31,8 +39,13 @@ const mapDispatchToProps = (dispatch) => {
     updateClassifierCost: (cost) => { dispatch(updateClassifierCost(cost)) },
     updateClassifierGamma: (gamma) => { dispatch(updateClassifierGamma(gamma)) },
     updateClassifierName: (name) => { dispatch(updateClassifierName(name)) },
-    updateAnnotationName: (name) => { dispatch(updateAnnotationName(name)) }
-  }
+    updateAnnotationName: (name) => { dispatch(updateAnnotationName(name)) },
+    predict: (menu) => { dispatch(predict(menu)) },
+    buildClick: (menu) => { dispatch(buildClick(menu)) },
+    animClick: (menu) => { dispatch(animClick(menu)) },
+    openFile: (menu, nodeData) => { dispatch(openFile(menu, nodeData)) },
+    onClick: (menu, data) => { dispatch(viewerClick(menu, data)) },
+  };
 }
 
 export default connect(

@@ -8,7 +8,7 @@ const electron = window.require('electron');
 const remote = electron.remote
 const fs = remote.require('fs');
 
-const store = createStore(reducer)
+const store = createStore(reducer);
 
 export default class App extends React.Component {
   constructor(props) {
