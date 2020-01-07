@@ -24,7 +24,9 @@ class Annotations extends React.Component {
       const viewer = this.props.openseadragon;
       const imagePoint = viewer.viewport.windowToViewportCoordinates(point);
       console.log(imagePoint);
-      this.props.addPoint(imagePoint);
+      new Promise((resolve, reject) => resolve()).then(() => {
+        this.props.addPoint(imagePoint);
+      });
     }
   }
 
