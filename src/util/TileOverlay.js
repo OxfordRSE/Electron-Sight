@@ -31,6 +31,16 @@ export default class TileOverlay {
     this.predict_superpixels = new Set();
   }
 
+  copy() {
+    let c = new TileOverlay(this.tile, this.labels, this.features);
+    c.pixel_classification = new Int8Array(this.pixel_classification);
+    c.positive_superpixels = new Set(this.positive_superpixels);
+    c.negative_superpixels = new Set(this.negative_superpixels);
+    c.predict_superpixels = new Set(this.predict_superpixels);
+    c.redraw();
+    return c;
+  }
+
   /// user has selected a superpixel and given it a new classification
   ///
   /// @param {int} selected_superpixel: number of selected superpixel

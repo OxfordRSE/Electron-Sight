@@ -11,7 +11,7 @@ import {
   Popover,
 } from "@blueprintjs/core";
 
-import DefaultMode from './ApplicationState';
+import Viewer from './Viewer';
 
 const electron = window.require('electron');
 const remote = electron.remote
@@ -70,43 +70,21 @@ class Menu extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-      mode: DefaultMode(),
-      superpixel_size: 100,
       brightness_active: false,
       contrast_active: false,
-      classifier_name: "Classifier",
       brightness: 1,
       contrast: 1
     };
   }
 
-  openFile(nodeData) {
-    const nextMode = this.state.mode.openFile(this, nodeData);
-    this.setState({ mode: nextMode });
-  }
-
-  animClick() {
-    const nextMode = this.state.mode.animClick(this);
-    this.setState({ mode: nextMode });
-  }
-
-  predict() {
-    const nextMode = this.state.mode.predict(this);
-    this.setState({ mode: nextMode });
+  fileOpened(data) {
+    const tile_source = this.viewer.openseadragon.world.getItemAt(0).source;
+    const max_zoom = tile_source.maxLevel;
+    this.props.updateClassifierZoom(max_zoom);
   }
 
   run_predict() {
     this.props.predict.onPredict();
-  }
-
-  buildClick() {
-    const nextMode = this.state.mode.buildClick(this);
-    this.setState({ mode: nextMode });
-  }
-
-
-  buildClassifier() {
-    this.props.classifier.buildClassifier(this.state.classifier_name);
   }
 
   toggle(key) {
@@ -117,7 +95,6 @@ class Menu extends React.Component {
     }
   }
 
-
   inputGroupChangeHandler(key) {
     return event => {
       this.setState({
@@ -127,21 +104,19 @@ class Menu extends React.Component {
   }
 
   changeHandler(key) {
-    return value => {
-      this.props.viewer.setState({
-        [key]: value
-      });
+    const defaultHandler = value => {
       this.setState({
         [key]: value
       });
-    }
+    };
+    return defaultHandler;
   }
 
   render() {
     const directory = fs.realpathSync('.');
     let file_tree = (
       <FileTree path={directory} 
-        open_file_callback = {this.openFile.bind(this)}
+        open_file_callback = {(nodeData) => { this.props.openFile(this, nodeData); }}
         openseadragon={this.props.openseadragon}/>
     );
 
@@ -157,30 +132,32 @@ class Menu extends React.Component {
     let annotation = (
       <Button 
             icon="polygon-filter" 
-            active={this.state.mode.annotateButtonActive()} 
-            onClick={this.animClick.bind(this)}
-            disabled = {this.state.mode.annotateButtonDisabled()}
+            active={this.props.mode.annotateButtonActive()} 
+            onClick={() => { this.props.animClick(this); }}
+            disabled = {this.props.mode.annotateButtonDisabled()}
       >
         Annotation
       </Button>
     );
 
+    let annotation_popdown = this.props.mode.annotationPopdown(this);
+
     let classifier = (
       <Button 
             icon="build" 
-            active={this.state.mode.classifierButtonActive()} 
-            onClick={this.buildClick.bind(this)}
-            disabled = {this.state.mode.classifierButtonDisabled()}
+            active={this.props.mode.classifierButtonActive()} 
+            onClick={() => {this.props.buildClick(this); }}
+            disabled = {this.props.mode.classifierButtonDisabled()}
       >
         New classifier
       </Button>
     );
 
-    let classifier_popdown = this.state.mode.classifierPopdown(this);
+    let classifier_popdown = this.props.mode.classifierPopdown(this);
 
     let brightness = (
       <Button icon="flash" active={this.state.brightness_active}
-              disabled = {this.state.mode.brightnessButtonDisabled()}
+              disabled = {this.props.mode.brightnessButtonDisabled()}
               onClick={this.toggle("brightness")}>Brightness</Button>
     );
 
@@ -192,22 +169,22 @@ class Menu extends React.Component {
 
     let contrast = (
       <Button icon="contrast" active={this.state.contrast_active}
-              disabled = {this.state.mode.contrastButtonDisabled()}
+              disabled = {this.props.mode.contrastButtonDisabled()}
               onClick={this.toggle("contrast")}>Contrast</Button>
     );
 
     let predict = (
       <Button 
             icon="circle"
-            active={this.state.mode.predictButtonActive()}
-            onClick={this.predict.bind(this)}
-            disabled = {this.state.mode.predictButtonDisabled()}
+            active={this.props.mode.predictButtonActive()}
+            onClick={() => { this.props.predict(this); }}
+            disabled = {this.props.mode.predictButtonDisabled()}
       >
         Predict
       </Button>
     );
 
-    let predict_popdown = this.state.mode.predictPopdown(this);
+    let predict_popdown = this.props.mode.predictPopdown(this);
 
     let contrast_popdown = (
       <Slider className="MenuDropdown" min={0} max={2} stepSize={0.1}
@@ -216,10 +193,12 @@ class Menu extends React.Component {
     );
 
     return (
+      <div>
       <Card id="Menu" interactive={true} elevation={Elevation.TWO}>
-      <ButtonGroup vertical={true} alignText="left">
+      <ButtonGroup id="MenuButtons" fill={true} vertical={true}>
         {file}
         {annotation}
+        {annotation_popdown}
         {classifier}
         {classifier_popdown}
         {predict}
@@ -230,6 +209,15 @@ class Menu extends React.Component {
         {this.state.contrast_active && contrast_popdown}
       </ButtonGroup>
     </Card>
+    <Viewer 
+        mode = {this.props.mode}
+        onClick = {(data) => { this.props.mode.viewerClick(this, data); }}
+        fileOpened = {this.fileOpened.bind(this)}
+        brightness={this.state.brightness}
+        contrast={this.state.contrast}
+        ref={viewer => {this.viewer = viewer;}}
+    />
+    </div>
     );
   }
 }
