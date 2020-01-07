@@ -37,6 +37,7 @@ export default class TileOverlay {
     this.segmented = false;
   }
 
+
   copy() {
     let c = new TileOverlay(this.tile, this.labels, this.features, this.src);
     c.pixel_classification = new Int8Array(this.pixel_classification);

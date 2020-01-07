@@ -55,6 +55,7 @@
     "electron-compile": "^6.4.4",
     "electron-devtools-installer": "^2.2.4",
     "electron-squirrel-startup": "^1.0.0",
+    "electron-store": "^5.1.0",
     "google-palette": "^1.1.0",
     "immutable": "^4.0.0-rc.12",
     "libsvm-js": "^0.2.1",

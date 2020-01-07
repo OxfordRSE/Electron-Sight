@@ -4,6 +4,9 @@ import palette from 'google-palette';
 import _ from 'underscore';
 import Color from 'color';
 import SVM from 'libsvm-js/asm';
+import Store from 'electron-store'
+const remote = require('electron').remote;
+const app = remote.app;
 
 import {
   H5,
@@ -37,6 +40,7 @@ class Classifiers extends React.Component {
   constructor(props) {
     super(props)
     this.state = {};
+    this.store = new Store({name: 'sight'});
   }
 
   onClick(data) {
@@ -279,6 +283,33 @@ class Classifiers extends React.Component {
   loadClassifier(name) {
     console.log(`loading classifier ${name}`);
     this.props.loadClassifier(this.props.classifiers.getIn(['created', name]));
+  }
+
+  saveClassifierToJSON() {
+    const selected_name = this.props.classifiers.getIn(['current', 'name']);
+    let selected_classifier = this.props.classifiers.getIn(['created', selected_name]);
+    selected_classifier = selected_classifier.set('svm', selected_classifier.get('svm').serializeModel());
+    console.log(`trying to save {name: ${selected_name}, classifier: ${selected_classifier}}`);
+    if (selected_classifier) {
+      console.log(`save current classifier in ${app.getPath('userData')}`);
+      this.store.set('classifier', selected_classifier);
+    }
+  }
+
+  loadClassifierFromJSON() {
+    let selected_classifier = this.store.get('classifier');
+    if (selected_classifier) {
+      selected_classifier.svm = SVM.load(selected_classifier.svm);
+      const name = selected_classifier.name;
+      const min = selected_classifier.feature_min;
+      const max = selected_classifier.feature_max;
+      const score = selected_classifier.score;
+      const svm = selected_classifier.svm;
+    
+      console.log('load current classifier');
+      this.props.updateName(name);
+      this.props.saveClassifier(svm, min, max, score);
+    }
   }
 
   render() {

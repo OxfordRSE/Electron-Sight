@@ -64,35 +64,35 @@ function predictAnnotation(openseadragon, classifier, annotation, saveTilePredic
 
 // called when a new tile is loaded
 function predictTile(tile, img_data, classifier) {
-    // SLIC the image data
-    const superpixel_size = classifier.get('superpixel_size');
-    const [
-        outlabels, outLABMeanintensities,
-        outPixelCounts, outseedsXY,
-        outLABVariances, outCollectedFeatures
-      ] = slic.slic(img_data.data, img_data.width, img_data.height, superpixel_size);
+  // SLIC the image data
+  const superpixel_size = classifier.get('superpixel_size');
+  const [
+      outlabels, outLABMeanintensities,
+      outPixelCounts, outseedsXY,
+      outLABVariances, outCollectedFeatures
+    ] = slic.slic(img_data.data, img_data.width, img_data.height, superpixel_size);
 
-    var tile_overlay = new TileOverlay(tile, outlabels, outCollectedFeatures, img_data);
+  var tile_overlay = new TileOverlay(tile, outlabels, outCollectedFeatures, img_data);
 
-    // generate features
-    const min = classifier.get('feature_min');
-    const max = classifier.get('feature_max');
-    const n_superpixels = outPixelCounts.length
-    const features = Array(n_superpixels).fill().map((_, idx) => {
-      // scale features
-      return tile_overlay.generate_data(idx).map(
-                  (x, idx) => ((x - min[idx]) / (max[idx] - min[idx]))
-      );
-    });
+  // generate features
+  const min = classifier.get('feature_min');
+  const max = classifier.get('feature_max');
+  const n_superpixels = outPixelCounts.length
+  const features = Array(n_superpixels).fill().map((_, idx) => {
+    // scale features
+    return tile_overlay.generate_data(idx).map(
+                (x, idx) => ((x - min[idx]) / (max[idx] - min[idx]))
+    );
+  });
 
-    // predict on features using svm
-    classifier.get('svm').predict(features).map((x, idx) => {
-      tile_overlay.add_classification(idx, (x > 0 ? 1 : -1));
-    });
-    tile_overlay.segment();
-    tile_overlay.redraw();
-    return tile_overlay;
-  }
+  // predict on features using svm
+  classifier.get('svm').predict(features).map((x, idx) => {
+    tile_overlay.add_classification(idx, (x > 0 ? 1 : -1));
+  });
+  tile_overlay.segment();
+  tile_overlay.redraw();
+  return tile_overlay;
+}
 
 
 class Predict extends React.Component {
@@ -136,6 +136,7 @@ class Predict extends React.Component {
       );
     });
   }
+
 
   render() {
     return null;
