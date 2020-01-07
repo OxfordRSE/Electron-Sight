@@ -10,7 +10,6 @@ import {
   updateName as updateAnnotationName,
 } from '../redux/modules/annotations.js'
 import {
-  viewerClick,
   animClick,
   buildClick,
   predict,
@@ -44,7 +43,6 @@ const mapDispatchToProps = (dispatch) => {
     buildClick: (menu) => { dispatch(buildClick(menu)) },
     animClick: (menu) => { dispatch(animClick(menu)) },
     openFile: (menu, nodeData) => { dispatch(openFile(menu, nodeData)) },
-    onClick: (menu, data) => { dispatch(viewerClick(menu, data)) },
   };
 }
 

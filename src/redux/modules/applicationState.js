@@ -1,18 +1,9 @@
 import DefaultMode from '../../components/ApplicationState';
 
-const VIEWER_CLICK = 'electron-sight/application-state/viewer-click';
 const ANIM_CLICK = 'electron-sight/application-state/anim-click';
 const BUILD_CLICK = 'electron-sight/application-state/build-click';
 const PREDICT_CLICK = 'electron-sight/application-state/predict-click';
 const OPEN_FILE = 'electron-sight/application-state/open-file';
-
-export function viewerClick(menu, data) {
-    return {
-        type: VIEWER_CLICK,
-        menu,
-        data,
-    };
-}
 
 export function animClick(menu) {
     return {
@@ -51,9 +42,6 @@ export default function reducer(state = initialState, action = {}) {
     const currentMode = state.mode;
     var nextMode = currentMode;
     switch (action.type) {
-        case VIEWER_CLICK:
-            nextMode = currentMode.viewerClick(action.menu, action.data);
-            break;
         case ANIM_CLICK:
             nextMode = currentMode.animClick(action.menu);
             break;

@@ -211,7 +211,7 @@ class Menu extends React.Component {
     </Card>
     <Viewer 
         mode = {this.props.mode}
-        onClick = {(data) => { this.props.onClick(this, data); }}
+        onClick = {(data) => { this.props.mode.viewerClick(this, data); }}
         fileOpened = {this.fileOpened.bind(this)}
         brightness={this.state.brightness}
         contrast={this.state.contrast}
