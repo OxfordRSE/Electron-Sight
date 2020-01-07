@@ -10,7 +10,9 @@ Currently not much to it, just a demo of a slide viewer.
 
 ## Packaging
 
-Don't know yet, haven't tried.
+    $ npm run make
+
+Generates packages for whatever platform you run it on.
 
 ## Creating DZI files
 
