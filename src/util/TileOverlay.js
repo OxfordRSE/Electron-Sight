@@ -143,7 +143,8 @@ export default class TileOverlay {
     const rows = this.canvas.height;
     const cols = this.canvas.width;
     let src = new cv.Mat(rows, cols, cv.CV_8UC4);
-    let opening = cv.Mat.zeros(rows, cols, cv.CV_8UC1);
+    let dst = cv.Mat.zeros(rows, cols, cv.CV_8UC3);
+    let mask = cv.Mat.zeros(rows, cols, cv.CV_8UC1);
     // Iterate through every pixel
     // pixel_classification is [1 = green, -1 = red, 0 = transparent]
     for (let i = 0; i < rows; i++) {
@@ -151,7 +152,7 @@ export default class TileOverlay {
         const index = i*cols + j;
         if (this.pixel_classification[index] > 0) {
           // classification 
-          opening.ucharPtr(i, j)[0] = 255;
+          mask.ucharPtr(i, j)[0] = 255;
         }
         src.ucharPtr(i, j)[0] = this.src.data[index*4 + 0]; // R
         src.ucharPtr(i, j)[1] = this.src.data[index*4 + 1]; // G
@@ -160,43 +161,59 @@ export default class TileOverlay {
       }
     }
 
-    let background = new cv.Mat();
-    let foreground = new cv.Mat();
-    let distTrans = new cv.Mat();
-    let unknown = new cv.Mat();
-    let markers = new cv.Mat();
-    // get background
-    let M = cv.Mat.ones(3, 3, cv.CV_8U);
-    cv.dilate(opening, background, M, new cv.Point(-1, -1), 3);
-    // distance transform
-    cv.distanceTransform(opening, distTrans, cv.DIST_L2, 5);
-    cv.normalize(distTrans, distTrans, 1, 0, cv.NORM_INF);
-    // get foreground
-    cv.threshold(distTrans, foreground, 0.7 * 1, 255, cv.THRESH_BINARY);
-    foreground.convertTo(foreground, cv.CV_8U, 1, 0);
-    cv.subtract(background, foreground, unknown);
-    // get connected components markers
-    cv.connectedComponents(foreground, markers);
-    for (let i = 0; i < markers.rows; i++) {
-        for (let j = 0; j < markers.cols; j++) {
-            markers.intPtr(i, j)[0] = markers.ucharPtr(i, j)[0] + 1;
-            if (unknown.ucharPtr(i, j)[0] == 255) {
-                markers.intPtr(i, j)[0] = 0;
-            }
+    let contours = new cv.MatVector();
+    let hierarchy = new cv.Mat();
+    let goal_max_area = 200;
+    let max_area = 2*goal_max_area;
+
+    //while (max_area > goal_max_area) {
+    for (let ii = 0; ii < 4; ++ii) {
+      cv.findContours(mask, contours, hierarchy, cv.RETR_TREE, cv.CHAIN_APPROX_SIMPLE);
+      max_area = 0;
+      for (let i = 0; i < contours.size(); ++i) {
+        if (hierarchy.intPtr(0, i)[2] >= 0) continue;
+        const color = new cv.Scalar(Math.ceil((i+1)/contours.size() * 255), 0, 0);
+        //cv.drawContours(dst, contours, i, color, 1, cv.LINE_8, hierarchy, 100);
+        const cell_area = cv.contourArea(contours.get(i));
+        if (cell_area > max_area) {
+          max_area = cell_area;
         }
+
+        if (cell_area > goal_max_area) {
+          const rotatedRect = cv.fitEllipse(contours.get(i));
+          const vertices = cv.RotatedRect.points(rotatedRect);
+          const point1 = new cv.Point(0.5*(vertices[0].x + vertices[1].x), 0.5*(vertices[0].y + vertices[1].y));
+          const point2 = new cv.Point(0.5*(vertices[2].x + vertices[3].x), 0.5*(vertices[2].y + vertices[3].y));
+          const line_color = new cv.Scalar(0, 0, 0);
+          cv.line(mask, point1, point2, line_color, 2);
+        }
+      }
+      console.log(`iteration max area is ${max_area}`);
     }
-    //cv.cvtColor(src, src, cv.COLOR_RGBA2RGB, 0);
-    //cv.watershed(src, markers);
+    console.log(`final max area is ${max_area}`);
+
+    for (let i = 0; i < contours.size(); ++i) {
+      if (hierarchy.intPtr(0, i)[2] >= 0) continue;
+      const color = new cv.Scalar(Math.ceil((i+1)/contours.size() * 255), 0, 0);
+      //cv.drawContours(dst, contours, i, color, 1, cv.LINE_8, hierarchy, 100);
+      const cell_area = cv.contourArea(contours.get(i));
+
+      if (cell_area > 10) {
+        const rotatedRect = cv.fitEllipse(contours.get(i));
+        cv.ellipse1(dst, rotatedRect, color, 1, cv.LINE_8);
+      }
+    }
+
     // copy segmentation
-    for (let i = 0; i < markers.rows; i++) {
-        for (let j = 0; j < markers.cols; j++) {
+    for (let i = 0; i < dst.rows; i++) {
+        for (let j = 0; j < dst.cols; j++) {
           const index = i*cols + j;
-          this.pixel_segmentation[index] = foreground.intPtr(i, j)[0]; 
+          this.pixel_segmentation[index] = dst.ucharPtr(i, j)[0]; 
         }
     }
-    console.log(markers);
-    src.delete(); opening.delete(); background.delete();
-    foreground.delete(); distTrans.delete(); unknown.delete(); markers.delete(); M.delete();
+
+    src.delete(); mask.delete(); dst.delete();
+    contours.delete(); hierarchy.delete();
     this.segmented = true;
   }
 
@@ -224,15 +241,9 @@ export default class TileOverlay {
         }
       }
     } else {
-      // pixel_segmentation is [-1 = border, 1 = background, X = cell number]
+      // pixel_segmentation is [0 = background, X = cell number]
       for (let i = 0; i < imageData.width * imageData.height; i++) {
-        if (this.pixel_segmentation[i] < 1) {
-          // black borders
-          imageData.data[4 * i + 0] = 0;
-          imageData.data[4 * i + 1] = 0;
-          imageData.data[4 * i + 2] = 0;
-          imageData.data[4 * i + 3] = 100;
-        } else if (this.pixel_segmentation[i] == 1) {
+        if (this.pixel_segmentation[i] == 0) {
           // transparent background
           imageData.data[4 * i + 0] = 0;
           imageData.data[4 * i + 1] = 0;
@@ -243,7 +254,7 @@ export default class TileOverlay {
           imageData.data[4 * i + 0] = 0;
           imageData.data[4 * i + 1] = this.pixel_segmentation[i];
           imageData.data[4 * i + 2] = 0;
-          imageData.data[4 * i + 3] = 100;
+          imageData.data[4 * i + 3] = 255;
         }
       }
     }
