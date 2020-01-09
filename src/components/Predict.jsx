@@ -4,11 +4,11 @@ let slic = require('../../addons/slic/slic');
 const electron = window.require('electron');
 import OpenSeadragon from 'openseadragon';
 import TileOverlay from '../util/TileOverlay'
+import TileCellData from '../util/TileCellData'
 import { create_tile, load_and_process_tile } from '../util/openseadragon.js'
 import { inPolygon } from '../util/geometry.js'
 
-function predictAnnotation(openseadragon, classifier, annotation, saveTilePrediction) {
-  console.log(`predict using ${classifier.get('name')} on ${annotation.get('name')}`);
+function predictAnnotation(openseadragon, classifier, annotation, saveTilePrediction, show_cells, show_superpixels) {
   const tile_source = openseadragon.world.getItemAt(0).source;
   const tiled_image = openseadragon.world.getItemAt(0);
   // get minimum bounding rectangle around polygon
@@ -36,11 +36,22 @@ function predictAnnotation(openseadragon, classifier, annotation, saveTilePredic
     // predict for tile
     const tile_overlay = predictTile(tile, img_data, classifier);
 
-    // add overlay to openseadragon viewer
-    openseadragon.addOverlay({
-      element: tile_overlay.canvas,
-      location: tile_overlay.tile.bounds
-    });
+    // render and add overlay to openseadragon viewer
+    if (show_superpixels) {
+      tile_overlay.superpixel_classification.redraw();
+      openseadragon.addOverlay({
+        element: tile_overlay.superpixel_classification.canvas,
+        location: tile_overlay.tile.bounds
+      });
+    }
+    if (show_cells) {
+      tile_overlay.redraw();
+      openseadragon.addOverlay({
+        element: tile_overlay.canvas,
+        location: tile_overlay.tile.bounds
+      });
+    }
+    
 
     // add tile_overlay to store
     saveTilePrediction(annotation.get('name'), tile_overlay);
@@ -89,9 +100,7 @@ function predictTile(tile, img_data, classifier) {
   classifier.get('svm').predict(features).map((x, idx) => {
     tile_overlay.add_classification(idx, (x > 0 ? 1 : -1));
   });
-  tile_overlay.segment();
-  tile_overlay.redraw();
-  return tile_overlay;
+  return new TileCellData(tile_overlay);
 }
 
 
@@ -101,23 +110,35 @@ class Predict extends React.Component {
     this.state = {};
   }
 
-  startPredict() {
+  redrawOverlays(show_cells, show_superpixels) {
+
+    // clear existing overlays
+    this.props.openseadragon.clearOverlays();
+
+    // redraw everything and add to openseadragon overlays
     this.props.results.map(annotation_result => {
       annotation_result.map((tile_overlay, id) => {
-        this.props.openseadragon.addOverlay({
-          element: tile_overlay.canvas,
-          location: tile_overlay.tile.bounds
-        });
+        if (show_superpixels) {
+          tile_overlay.superpixel_classification.redraw();
+          this.props.openseadragon.addOverlay({
+            element: tile_overlay.superpixel_classification.canvas,
+            location: tile_overlay.tile.bounds
+          });
+        }
+        if (show_cells) {
+          tile_overlay.redraw();
+          this.props.openseadragon.addOverlay({
+            element: tile_overlay.canvas,
+            location: tile_overlay.tile.bounds
+          });
+        }
+        
       });
     });
   }
 
-  redrawOverlays() {
-    this.props.results.map(annotation_result => {
-      annotation_result.map((tile_overlay, id) => {
-        tile_overlay.draw
-      });
-    });
+  startPredict() {
+    this.redrawOverlays(this.props.show_cells, this.props.show_superpixels);
   }
 
   endPredict() {
@@ -125,14 +146,15 @@ class Predict extends React.Component {
   }
 
   onPredict() {
-    console.log('called onPredict');
     this.props.openseadragon.clearOverlays();
     this.props.annotations.map(annotation => {
       predictAnnotation(
         this.props.openseadragon, 
         this.props.classifier, 
         annotation, 
-        this.props.saveTilePrediction
+        this.props.saveTilePrediction,
+        this.props.show_cells,
+        this.props.show_superpixels
       );
     });
   }

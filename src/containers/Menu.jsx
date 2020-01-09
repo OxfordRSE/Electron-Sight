@@ -15,6 +15,12 @@ import {
   predict,
   openFile,
 } from '../redux/modules/applicationState.js'
+import {
+  updateShowCells as updatePredictShowCells,
+  updateShowSuperpixels as updatePredictShowSuperpixels,
+} from '../redux/modules/predict.js'
+
+
 
 import Menu from '../components/Menu.jsx'
 
@@ -27,6 +33,8 @@ const mapStateToProps = (state, ownProps) => {
     classifierSuperpixelSize: state.classifiers.get('current').get('superpixel_size'),
     classifierZoom: state.classifiers.get('current').get('zoom'),
     classifiers: state.classifiers.get('created'),
+    predictShowCells: state.predict.get('show_cells'),
+    predictShowSuperpixels: state.predict.get('show_superpixels'),
     mode: state.applicationState.mode,
   }
 }
@@ -39,6 +47,8 @@ const mapDispatchToProps = (dispatch) => {
     updateClassifierGamma: (gamma) => { dispatch(updateClassifierGamma(gamma)) },
     updateClassifierName: (name) => { dispatch(updateClassifierName(name)) },
     updateAnnotationName: (name) => { dispatch(updateAnnotationName(name)) },
+    updatePredictShowCells: (value) => { dispatch(updatePredictShowCells(value)) },
+    updatePredictShowSuperpixels: (value) => { dispatch(updatePredictShowSuperpixels(value)) },
     predict: (menu) => { dispatch(predict(menu)) },
     buildClick: (menu) => { dispatch(buildClick(menu)) },
     animClick: (menu) => { dispatch(animClick(menu)) },
