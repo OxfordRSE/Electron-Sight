@@ -329,6 +329,12 @@ PredictMode.prototype.predictPopdown = function(menu) {
                     menu.props.updatePredictShowSuperpixels(value);
                   }}
         />
+        <Checkbox checked={menu.props.predictShowPlots} label="Data Analytics" 
+                  onChange={(evt) => {
+                    const value = evt.target.checked;
+                    menu.props.updatePredictShowPlots(value);
+                  }}
+        />
       </div>
       </div>
     );

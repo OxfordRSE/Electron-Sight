@@ -18,6 +18,7 @@ import {
 import {
   updateShowCells as updatePredictShowCells,
   updateShowSuperpixels as updatePredictShowSuperpixels,
+  updateShowPlots as updatePredictShowPlots,
 } from '../redux/modules/predict.js'
 
 
@@ -35,6 +36,7 @@ const mapStateToProps = (state, ownProps) => {
     classifiers: state.classifiers.get('created'),
     predictShowCells: state.predict.get('show_cells'),
     predictShowSuperpixels: state.predict.get('show_superpixels'),
+    predictShowPlots: state.predict.get('show_plots'),
     mode: state.applicationState.mode,
   }
 }
@@ -49,6 +51,7 @@ const mapDispatchToProps = (dispatch) => {
     updateAnnotationName: (name) => { dispatch(updateAnnotationName(name)) },
     updatePredictShowCells: (value) => { dispatch(updatePredictShowCells(value)) },
     updatePredictShowSuperpixels: (value) => { dispatch(updatePredictShowSuperpixels(value)) },
+    updatePredictShowPlots: (value) => { dispatch(updatePredictShowPlots(value)) },
     predict: (menu) => { dispatch(predict(menu)) },
     buildClick: (menu) => { dispatch(buildClick(menu)) },
     animClick: (menu) => { dispatch(animClick(menu)) },

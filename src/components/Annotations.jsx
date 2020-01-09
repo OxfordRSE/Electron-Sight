@@ -7,6 +7,9 @@ import {
   Elevation,
   Callout,
   Radio,
+  Divider,
+  Button,
+  ButtonGroup,
   RadioGroup,
 } from "@blueprintjs/core";
 
@@ -135,7 +138,7 @@ class Annotations extends React.Component {
         {annotation_current}
       </svg>
       </div>
-      <Card id="AnnotationsList" interactive={true} elevation={Elevation.Two}>
+      <Card id="AnnotationsList" interactive={true} elevation={Elevation.TWO}>
         <H5>Annotations</H5>
 		    <RadioGroup label=""
             onChange={this.setAnnotation.bind(this)}
@@ -143,6 +146,24 @@ class Annotations extends React.Component {
         >
         {annotations_list}
         </RadioGroup>
+        <Divider/>
+        <ButtonGroup fill={false} className="Buttons">
+          <Button 
+              onClick={() => {
+                this.saveAnnotationToJSON();
+              }}
+          >
+          Save
+          </Button>
+          <Button 
+              onClick={() => {
+                this.loadAnnotationFromJSON();
+              }}
+          >
+          Load 
+          </Button>
+       </ButtonGroup>
+
       </Card>
       </div>
     );
