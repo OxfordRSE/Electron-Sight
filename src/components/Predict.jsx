@@ -169,28 +169,8 @@ class Predict extends React.Component {
 
 
   render() {
-    let plots = null;
-    if (this.props.show_plots) {
-      plots = (
-        <Card id="PredictPlots" interactive={true} elevation={Elevation.TWO}>
-            <H5>Data Analytics</H5>
-            <div className="row">
-              <div className="column">
-                <VictoryBar/>
-                <VictoryBar/>
-              </div>
-              <div className="column">
-                <VictoryBar/>
-                <VictoryBar/>
-              </div>
-           </div>
-        </Card>
-      );
-    }
     return (
-      <div>
-        {plots}
-      </div>
+      null 
     );
   }
 }

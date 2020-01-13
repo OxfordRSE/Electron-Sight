@@ -12,6 +12,7 @@ import {
 } from "@blueprintjs/core";
 
 import Viewer from './Viewer';
+import Analytics from '../containers/Analytics';
 
 const electron = window.require('electron');
 const remote = electron.remote
@@ -72,6 +73,7 @@ class Menu extends React.Component {
     this.state = {
       brightness_active: false,
       contrast_active: false,
+      analytics_active: false,
       brightness: 1,
       contrast: 1
     };
@@ -174,7 +176,6 @@ class Menu extends React.Component {
     );
 
     let predict = (
-      
       <Button 
             icon="circle"
             active={this.props.mode.predictButtonActive()}
@@ -192,7 +193,12 @@ class Menu extends React.Component {
                   onChange={this.changeHandler("contrast")}
                   value={this.state.contrast} />
     );
-    
+
+    let analytics = (
+      <Button icon="analytics" active={this.state.analytics_active}
+              disabled = {this.props.mode.analyticsButtonDisabled()}
+              onClick={this.toggle("analytics")}>Analytics</Button>
+    );
 
     return (
       <div>
@@ -209,15 +215,17 @@ class Menu extends React.Component {
         {this.state.brightness_active && brightness_popdown}
         {contrast}
         {this.state.contrast_active && contrast_popdown}
+        {analytics}
       </ButtonGroup>
     </Card>
+    {this.state.analytics_active && <Analytics/>}
     <Viewer 
-        mode = {this.props.mode}
-        onClick = {(data) => { this.props.mode.viewerClick(this, data); }}
-        fileOpened = {this.fileOpened.bind(this)}
-        brightness={this.state.brightness}
-        contrast={this.state.contrast}
-        ref={viewer => {this.viewer = viewer;}}
+      mode = {this.props.mode}
+      onClick = {(data) => { this.props.mode.viewerClick(this, data); }}
+      fileOpened = {this.fileOpened.bind(this)}
+      brightness={this.state.brightness}
+      contrast={this.state.contrast}
+      ref={viewer => {this.viewer = viewer;}}
     />
     </div>
     );

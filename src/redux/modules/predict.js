@@ -2,7 +2,6 @@ const { Map, List } = require("immutable");
 
 const SAVE = 'electron-sight/predict/SAVE'
 const UPDATE_SHOW_CELLS = 'electron-sight/predict/UPDATE_SHOW_CELLS'
-const UPDATE_SHOW_PLOTS = 'electron-sight/predict/UPDATE_SHOW_CELLS'
 const UPDATE_SHOW_SUPERPIXELS = 'electron-sight/predict/UPDATE_SHOW_SUPERPIXELS'
 
 export function saveTilePrediction(annotation_name, tile_overlay) {
@@ -17,14 +16,9 @@ export function updateShowSuperpixels(value) {
   return { type: UPDATE_SHOW_SUPERPIXELS, name:'show_superpixels', value };
 }
 
-export function updateShowPlots(value) {
-  return { type: UPDATE_SHOW_PLOTS, name:'show_plots', value };
-}
-
 const initialState = Map({ 
   show_cells: true,
   show_superpixels: false,
-  show_plots: false,
   results: Map() 
 });
 
@@ -35,7 +29,6 @@ export default function reducer(state = initialState, action = {}) {
       const old_results = state.getIn(key); 
       return state.setIn(key, action.tile_overlay); 
     case UPDATE_SHOW_CELLS:
-    case UPDATE_SHOW_PLOTS:
     case UPDATE_SHOW_SUPERPIXELS:
       return state.set(action.name, action.value);
     default: 

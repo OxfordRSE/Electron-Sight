@@ -5,6 +5,7 @@ import reducer from './redux/index'
 import Menu from './containers/Menu'
 const electron = window.require('electron');
 
+
 const remote = electron.remote
 const fs = remote.require('fs');
 
@@ -18,7 +19,7 @@ export default class App extends React.Component {
   render() {
     return (
       <Provider store={store}>
-      <Menu/>
+      <Menu />
       </Provider>
     );
   }

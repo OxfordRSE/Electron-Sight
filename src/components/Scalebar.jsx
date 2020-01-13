@@ -45,7 +45,7 @@ class Scalebar extends React.Component {
           width: +zoom.size + "px",
           position: "absolute",
           opacity: 0.5,
-          zIndex: 5
+          zIndex: 2
       }
       return (<div id="Scalebar" style={style}>{zoom.text}</div>)
   }
