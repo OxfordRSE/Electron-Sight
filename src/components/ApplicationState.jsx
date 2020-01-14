@@ -9,10 +9,17 @@ import {
   FormGroup,
 } from "@blueprintjs/core";
 
+const exec = require('child_process').exec;
+const path = require('path');
 const truth = () => true;
 const falsity = () => false;
 const nothingness = () => null;
 
+function execute(command, callback) {
+    exec(command, (error, stdout, stderr) => {
+        callback(stdout);
+    });
+};
 
 function AbstractMode() {
   if (!(this instanceof AbstractMode)) {
@@ -42,7 +49,13 @@ AbstractMode.prototype.openFile = function(menu, nodeData) {
         menu.viewer.openseadragon.open('file://' + nodeData.path)
     } else if (extension == 'ndpi') {
         console.log(`opening ndpi file ${filename}`);
-
+        var filebase = path.basename(filename, path.extname(filename));
+        execute(`vips dzSave ${filename} ${filebase}`, (output) => {
+            console.log('dzi created');
+            console.log(output);
+            var created_dzi = 'file://' + path.dirname(filename) + '/' + filebase + '.dzi';
+            menu.viewer.openseadragon.open(created_dzi);
+        });
     } else {
         console.log(`unknown extension ${extension} for file ${filename}`);
         return this;
