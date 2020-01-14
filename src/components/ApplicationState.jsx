@@ -50,9 +50,12 @@ AbstractMode.prototype.openFile = function(menu, nodeData) {
     } else if (extension == 'ndpi') {
         console.log(`opening ndpi file ${filename}`);
         var filebase = path.basename(filename, path.extname(filename));
+        menu.viewer.setState({loading: true});
+        menu.viewer.setState({loading_progress: 1});
+        console.log('converting to dzi format');
         execute(`vips dzSave ${filename} ${filebase}`, (output) => {
-            console.log('dzi created');
-            console.log(output);
+            console.log('conversion finished');
+            menu.viewer.setState({loading: false});
             var created_dzi = 'file://' + path.dirname(filename) + '/' + filebase + '.dzi';
             menu.viewer.openseadragon.open(created_dzi);
         });
