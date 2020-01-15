@@ -9,6 +9,7 @@ import {
   FormGroup,
 } from "@blueprintjs/core";
 
+const fs = require('fs');
 const commandExistsSync = require('command-exists').sync;
 const remote = window.require('electron').remote;
 const spawn = require('child_process').spawn;
@@ -45,6 +46,7 @@ AbstractMode.prototype.predict = function(menu) {
 
 AbstractMode.prototype.openFile = function(menu, nodeData) {
     const filename = nodeData.path;
+    const filebase = path.basename(filename, path.extname(filename));
     const extension = filename.split('.').pop();
     const re = /.*?(\d+)\% complete/
     if (extension == 'dzi') {
@@ -52,7 +54,13 @@ AbstractMode.prototype.openFile = function(menu, nodeData) {
         menu.viewer.openseadragon.open('file://' + nodeData.path)
     } else if (extension == 'ndpi') {
         console.log(`opening ndpi file ${filename}`);
-        var filebase = path.basename(filename, path.extname(filename));
+        const dzi = filebase + '.dzi';
+        const dzi_full = 'file://' + path.dirname(filename) + '/' + dzi;
+        if(fs.existsSync(dzi)) {
+            console.log(`Using existing converted file at ${dzi}`);
+            menu.viewer.openseadragon.open(dzi_full);
+            return new ViewMode();
+        }
         if(!commandExistsSync('vips')) {
             remote.dialog.showErrorBox('VIPS not found', 'VIPS is needed to convert files other than DeepZoom.' +
                 ' See https://libvips.github.io/libvips for installation instructions.');
@@ -84,8 +92,7 @@ AbstractMode.prototype.openFile = function(menu, nodeData) {
             } else {
                 console.log('conversion finished');
                 menu.viewer.setState({loading: false});
-                var created_dzi = 'file://' + path.dirname(filename) + '/' + filebase + '.dzi';
-                menu.viewer.openseadragon.open(created_dzi);
+                menu.viewer.openseadragon.open(dzi_full);
             };
         });
     } else {
