@@ -64,7 +64,7 @@ AbstractMode.prototype.openFile = function(menu, nodeData) {
         if(!commandExistsSync('vips')) {
             remote.dialog.showErrorBox('VIPS not found', 'VIPS is needed to convert files other than DeepZoom.' +
                 ' See https://libvips.github.io/libvips for installation instructions.');
-            return new ViewMode();
+            return new DisabledMode();
         }
         const notification = new window.Notification('Converting .ndpi to .dzi', {
             title: 'Converting .ndpi', body: 'Converting file using VIPS. This may take a while.'});
@@ -76,7 +76,7 @@ AbstractMode.prototype.openFile = function(menu, nodeData) {
             menu.viewer.setState({loading: false});
             remote.dialog.showErrorBox('Conversion error', 'Could not convert .ndpi file. ' +
                 'Check error logs for information.');
-            return new ViewMode();
+            return new DisabledMode();
         });
         var matched;
         converter.stdout.setEncoding('utf8');
