@@ -9,7 +9,7 @@ import {
   FormGroup,
 } from "@blueprintjs/core";
 
-const exec = require('child_process').exec;
+const spawn = require('child_process').spawn;
 const path = require('path');
 const truth = () => true;
 const falsity = () => false;
@@ -44,6 +44,7 @@ AbstractMode.prototype.predict = function(menu) {
 AbstractMode.prototype.openFile = function(menu, nodeData) {
     const filename = nodeData.path;
     const extension = filename.split('.').pop();
+    const re = /.*?(\d+)\% complete/
     if (extension == 'dzi') {
         console.log(`opening dzi file ${filename}`);
         menu.viewer.openseadragon.open('file://' + nodeData.path)
@@ -53,11 +54,24 @@ AbstractMode.prototype.openFile = function(menu, nodeData) {
         menu.viewer.setState({loading: true});
         menu.viewer.setState({loading_progress: 1});
         console.log('converting to dzi format');
-        execute(`vips dzSave ${filename} ${filebase}`, (output) => {
-            console.log('conversion finished');
-            menu.viewer.setState({loading: false});
-            var created_dzi = 'file://' + path.dirname(filename) + '/' + filebase + '.dzi';
-            menu.viewer.openseadragon.open(created_dzi);
+        var converter = spawn('vips', ['dzSave', '--vips-progress', filename, filebase]);
+        var matched;
+        converter.stdout.setEncoding('utf8');
+        converter.stdout.on('data', (data) => {
+            matched = data.match(re);
+            if(matched) {
+                menu.viewer.setState({loading_progress: parseInt(matched[1]) / 100});
+            };
+        });
+        converter.on('close', (code) => {
+            if (code !== 0) {
+                console.log('conversion failed');
+            } else {
+                console.log('conversion finished');
+                menu.viewer.setState({loading: false});
+                var created_dzi = 'file://' + path.dirname(filename) + '/' + filebase + '.dzi';
+                menu.viewer.openseadragon.open(created_dzi);
+            };
         });
     } else {
         console.log(`unknown extension ${extension} for file ${filename}`);
