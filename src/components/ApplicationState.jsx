@@ -52,6 +52,7 @@ AbstractMode.prototype.openFile = function(menu, nodeData) {
     if (extension == 'dzi') {
         console.log(`opening dzi file ${filename}`);
         menu.viewer.openseadragon.open('file://' + nodeData.path)
+        return new ViewMode();
     } else if (extension == 'ndpi') {
         console.log(`opening ndpi file ${filename}`);
         const dzi = filebase + '.dzi';
@@ -93,13 +94,14 @@ AbstractMode.prototype.openFile = function(menu, nodeData) {
                 console.log('conversion finished');
                 menu.viewer.setState({loading: false});
                 menu.viewer.openseadragon.open(dzi_full);
+                return new ViewMode();
             };
         });
     } else {
         console.log(`unknown extension ${extension} for file ${filename}`);
         return this;
     }
-  return new ViewMode();
+  return new DisabledMode();
 };
 
 AbstractMode.prototype.annotateButtonActive = falsity;
