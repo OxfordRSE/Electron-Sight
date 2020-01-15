@@ -9,6 +9,7 @@ import {
   FormGroup,
 } from "@blueprintjs/core";
 
+const commandExistsSync = require('command-exists').sync;
 const remote = window.require('electron').remote;
 const spawn = require('child_process').spawn;
 const path = require('path');
@@ -52,6 +53,13 @@ AbstractMode.prototype.openFile = function(menu, nodeData) {
     } else if (extension == 'ndpi') {
         console.log(`opening ndpi file ${filename}`);
         var filebase = path.basename(filename, path.extname(filename));
+        if(!commandExistsSync('vips')) {
+            remote.dialog.showErrorBox('VIPS not found', 'VIPS is needed to convert files other than DeepZoom.' +
+                ' See https://libvips.github.io/libvips for installation instructions.');
+            return new ViewMode();
+        }
+        const notification = new window.Notification('Converting .ndpi to .dzi', {
+            title: 'Converting .ndpi', body: 'Converting file using VIPS. This may take a while.'});
         menu.viewer.setState({loading: true});
         console.log('converting to dzi format');
         var converter = spawn('vips', ['dzSave', '--vips-progress', filename, filebase]);
@@ -59,7 +67,7 @@ AbstractMode.prototype.openFile = function(menu, nodeData) {
             console.log(err);
             menu.viewer.setState({loading: false});
             remote.dialog.showErrorBox('Conversion error', 'Could not convert .ndpi file. ' +
-                'Please check that vips is installed and in PATH');
+                'Check error logs for information.');
             return new ViewMode();
         });
         var matched;

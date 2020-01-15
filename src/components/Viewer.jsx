@@ -70,7 +70,7 @@ class Viewer extends React.Component {
     return (
             <div>
             <div id="Viewer" style={style}/>
-            { loading ? <ProgressBar value={this.state.loading_progress} /> : null }
+            { loading ? <ProgressBar intent="primary" value={this.state.loading_progress} /> : null }
             <Annotations 
               openseadragon={this.openseadragon}
               viewport={this.state.viewport}
