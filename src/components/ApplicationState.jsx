@@ -9,6 +9,7 @@ import {
   FormGroup,
 } from "@blueprintjs/core";
 
+const remote = window.require('electron').remote;
 const spawn = require('child_process').spawn;
 const path = require('path');
 const truth = () => true;
@@ -52,9 +53,15 @@ AbstractMode.prototype.openFile = function(menu, nodeData) {
         console.log(`opening ndpi file ${filename}`);
         var filebase = path.basename(filename, path.extname(filename));
         menu.viewer.setState({loading: true});
-        menu.viewer.setState({loading_progress: 1});
         console.log('converting to dzi format');
         var converter = spawn('vips', ['dzSave', '--vips-progress', filename, filebase]);
+        converter.on('error', function(err) {
+            console.log(err);
+            menu.viewer.setState({loading: false});
+            remote.dialog.showErrorBox('Conversion error', 'Could not convert .ndpi file. ' +
+                'Please check that vips is installed and in PATH');
+            return new ViewMode();
+        });
         var matched;
         converter.stdout.setEncoding('utf8');
         converter.stdout.on('data', (data) => {
