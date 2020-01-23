@@ -1,3 +1,4 @@
+import cv from 'opencv.js';
 
 export default class TileOverlay {
 //
@@ -12,13 +13,15 @@ export default class TileOverlay {
   ///  @param {Openseadragon.Tile} tile: image tile
   ///  @param {TypedArray} labels: maps pixels to superpixel number
   ///  @param {array} features: 26*nsuperpixels array of features
-  constructor(tile, labels, features) {
+  ///  @param {ImageData} src: the source image data for this tile
+  constructor(tile, labels, features, src) {
     this.id = tile.cacheKey;
     this.tile = tile;
+    this.src = src; 
     this.labels = new Int32Array(labels);
     this.nfeatures = 26;
     this.features = new Float64Array(features);
-    this.canvas = document.createElement("canvas");
+    this.canvas = document.createElement('canvas');
     this.canvas.style.zIndex = "2";
     this.context = this.canvas.getContext('2d');
     this.canvas.width = tile.sourceBounds.width;
@@ -31,12 +34,14 @@ export default class TileOverlay {
     this.predict_superpixels = new Set();
   }
 
+
   copy() {
-    let c = new TileOverlay(this.tile, this.labels, this.features);
+    let c = new TileOverlay(this.tile, this.labels, this.features, this.src);
     c.pixel_classification = new Int8Array(this.pixel_classification);
     c.positive_superpixels = new Set(this.positive_superpixels);
     c.negative_superpixels = new Set(this.negative_superpixels);
     c.predict_superpixels = new Set(this.predict_superpixels);
+    c.segmented = this.segmented;
     c.redraw();
     return c;
   }
@@ -130,22 +135,26 @@ export default class TileOverlay {
     return features;
   }
 
+
   /// draws current classification data to the canvas
   redraw() {
     // default for createImageData is transparent black
     const imageData = this.context.createImageData(this.canvas.width, this.canvas
       .height);
 
-    // Iterate through every pixel
     // pixel_classification is [1 = green, -1 = red, 0 = transparent]
     for (let i = 0; i < imageData.width * imageData.height; i++) {
       if (this.pixel_classification[i] > 0) {
         // green
+        imageData.data[4 * i + 0] = 0;
         imageData.data[4 * i + 1] = 255;
+        imageData.data[4 * i + 2] = 0;
         imageData.data[4 * i + 3] = 100;
       } else if (this.pixel_classification[i] < 0) {
-        // red
+        // red 
         imageData.data[4 * i + 0] = 255;
+        imageData.data[4 * i + 1] = 0;
+        imageData.data[4 * i + 2] = 0;
         imageData.data[4 * i + 3] = 100;
       }
     }

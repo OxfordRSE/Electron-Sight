@@ -1,6 +1,8 @@
 import React from 'react';
 import {
   Callout,
+  Label,
+  Checkbox,
   InputGroup,
   Button,
   ButtonGroup,
@@ -311,6 +313,23 @@ PredictMode.prototype.predictPopdown = function(menu) {
         Go...
       </Button>
       </ButtonGroup> 
+      <div>
+        <Label>Display:</Label>
+        <Checkbox checked={menu.props.predictShowCells} label="Post-processed cells" 
+                  onChange={(evt) => {
+                    const value = evt.target.checked;
+                    menu.viewer.predict.redrawOverlays(value, menu.props.predictShowSuperpixels);
+                    menu.props.updatePredictShowCells(value);
+                  }}
+        />
+        <Checkbox checked={menu.props.predictShowSuperpixels} label="Superpixel classification" 
+                  onChange={(evt) => {
+                    const value = evt.target.checked;
+                    menu.viewer.predict.redrawOverlays(menu.props.predictShowCells, value);
+                    menu.props.updatePredictShowSuperpixels(value);
+                  }}
+        />
+      </div>
       </div>
     );
 }

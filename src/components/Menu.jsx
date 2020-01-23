@@ -174,6 +174,7 @@ class Menu extends React.Component {
     );
 
     let predict = (
+      
       <Button 
             icon="circle"
             active={this.props.mode.predictButtonActive()}
@@ -191,6 +192,34 @@ class Menu extends React.Component {
                   onChange={this.changeHandler("contrast")}
                   value={this.state.contrast} />
     );
+    
+    let save = null;
+    if (this.viewer && this.viewer.classifier) {
+      save = (
+        <Button 
+              onClick={() => {
+                this.viewer.classifier.saveClassifierToJSON();
+                this.viewer.annotations.saveAnnotationToJSON();
+              }}
+        >
+          Save
+        </Button>
+      );
+    }
+    
+    let load = null;
+    if (this.viewer && this.viewer.classifier) {
+      load = (
+        <Button 
+              onClick={() => {
+                this.viewer.classifier.loadClassifierFromJSON();
+                this.viewer.annotations.loadAnnotationFromJSON();
+              }}
+        >
+          Load
+        </Button>
+      );
+    }
 
     return (
       <div>
@@ -207,6 +236,8 @@ class Menu extends React.Component {
         {this.state.brightness_active && brightness_popdown}
         {contrast}
         {this.state.contrast_active && contrast_popdown}
+        {save}
+        {load}
       </ButtonGroup>
     </Card>
     <Viewer 
