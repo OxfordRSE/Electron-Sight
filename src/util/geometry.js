@@ -57,7 +57,7 @@ function doIntersect(p1, q1, p2, q2) {
 } 
   
 // Returns true if the point p lies inside the polygon[] with n vertices 
-function isInside(polygon, n, p) { 
+export function isInside(polygon, n, p) {
     // There must be at least 3 vertices in polygon[] 
     if (n < 3)  return false; 
   
