@@ -193,16 +193,12 @@ export default class TileCellData {
         // Need to map point (in tile coords) to annotation (in % of image)
         let scale = this.tile.bounds.height / this.tile.sourceBounds.height;
 
-        // let shift_x = (this.tile.x) * this.tile.bounds.width;
-        // let shift_y = (this.tile.y) * this.tile.bounds.height;
         let shift_x = this.tile.x * this.tile.bounds.x / this.tile.x;
         let shift_y = this.tile.y * this.tile.bounds.y / this.tile.y;
 
-        // test if ellipse centroid is contained in the annotation polygon
-
         let point = new OpenSeadragon.Point(shift_x + rotatedRect.center.x * scale, shift_y + rotatedRect.center.y * scale);
 
-        // Only add ellipse to data if point is inside
+        // Only add ellipse to data if point is inside annotation polygon
         if (isInside(polygon.toJS(),polygon.size,point)) {
 
           // add ellipse to data
