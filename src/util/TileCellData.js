@@ -1,8 +1,11 @@
 import cv from 'opencv.js';
 const { List } = require("immutable");
+import { isInside } from './geometry.js';
+import OpenSeadragon from "openseadragon";
 
 export default class TileCellData {
-  constructor(superpixel_classification) {
+  constructor(superpixel_classification,annotation) {
+    this.annotation = annotation;
     this.id = superpixel_classification.tile.cacheKey;
     this.tile = superpixel_classification.tile;
     this.superpixel_classification = superpixel_classification;
@@ -25,7 +28,7 @@ export default class TileCellData {
 
 
   copy() {
-    let c = new TileCellData(this.superpixel_classification.copy());
+    let c = new TileCellData(this.superpixel_classification.copy(),this.annotation);
     c.centroids_x = this.centroids_x
     c.centroids_y = this.centroids_y
     c.widths = this.widths;
@@ -172,6 +175,10 @@ export default class TileCellData {
     //  console.log(`iteration max area is ${max_area}`);
     //}
     //console.log(`final max area is ${max_area}`);
+
+    // Get easy access to the polygon
+    let polygon = this.annotation.get('polygon');
+
     cv.findContours(mask, contours, hierarchy, cv.RETR_TREE, cv.CHAIN_APPROX_SIMPLE);
 
     for (let i = 0; i < contours.size(); ++i) {
@@ -182,11 +189,25 @@ export default class TileCellData {
       if (cell_area > 10) {
         // fit an ellipse
         const rotatedRect = cv.fitEllipse(contours.get(i));
-        // add ellipse to data
-        this.add_cell(rotatedRect.center.x, rotatedRect.center.y, rotatedRect.size.width, rotatedRect.size.height, rotatedRect.angle);
+
+        // Need to map point (in tile coords) to annotation (in % of image)
+        let scale = this.tile.bounds.height / this.tile.sourceBounds.height;
+
+        let shift_x = this.tile.x * this.tile.bounds.x / this.tile.x;
+        let shift_y = this.tile.y * this.tile.bounds.y / this.tile.y;
+
+        let point = new OpenSeadragon.Point(shift_x + rotatedRect.center.x * scale, shift_y + rotatedRect.center.y * scale);
+
+        // Only add ellipse to data if point is inside annotation polygon
+        if (isInside(polygon.toJS(),polygon.size,point)) {
+
+          // add ellipse to data
+          this.add_cell(rotatedRect.center.x, rotatedRect.center.y, rotatedRect.size.width, rotatedRect.size.height, rotatedRect.angle);
+        }
       }
     }
-  
+
+
     console.log(`finished segmenting, found ${this.centroids_x.size} cells`);
 
     mask.delete();

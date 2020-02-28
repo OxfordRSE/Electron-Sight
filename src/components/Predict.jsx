@@ -34,7 +34,7 @@ function predictAnnotation(openseadragon, classifier, annotation, saveTilePredic
   let result = Map();
   let process_and_store_tile = (tile, img_data) => { 
     // predict for tile
-    const tile_overlay = predictTile(tile, img_data, classifier);
+    const tile_overlay = predictTile(tile, img_data, classifier, annotation);
 
     // render and add overlay to openseadragon viewer
     if (show_superpixels) {
@@ -65,6 +65,7 @@ function predictAnnotation(openseadragon, classifier, annotation, saveTilePredic
   for (let x=min_tile.x; x<=max_tile.x; x++) {
     for (let y=min_tile.y; y<=max_tile.y; y++) {
       const tile = create_tile(x, y, level, tile_source, openseadragon.drawer.context);
+      // Shouldn't test if tile corners are in annotation; if an annotation intersects a tile but all corners are outside then we currently don't detect it
       if (inPolygon(polygon.toJS(), tile.bounds)) {
         load_and_process_tile(tiled_image, tile, process_and_store_tile);
       }
@@ -74,7 +75,7 @@ function predictAnnotation(openseadragon, classifier, annotation, saveTilePredic
 }
 
 // called when a new tile is loaded
-function predictTile(tile, img_data, classifier) {
+function predictTile(tile, img_data, classifier, annotation) {
   // SLIC the image data
   const superpixel_size = classifier.get('superpixel_size');
   const [
@@ -100,7 +101,7 @@ function predictTile(tile, img_data, classifier) {
   classifier.get('svm').predict(features).map((x, idx) => {
     tile_overlay.add_classification(idx, (x > 0 ? 1 : -1));
   });
-  return new TileCellData(tile_overlay);
+  return new TileCellData(tile_overlay,annotation);
 }
 
 
