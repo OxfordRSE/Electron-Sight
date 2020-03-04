@@ -46,6 +46,7 @@ class Viewer extends React.Component {
       this.onResize(data.eventSource);
     });
     this.openseadragon.addHandler('canvas-click', this.props.onClick);
+    this.openseadragon.addHandler('canvas-key', this.props.onKeyDown);
     this.openseadragon.addHandler('open', this.props.fileOpened);
   }
 

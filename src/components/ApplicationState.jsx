@@ -117,6 +117,7 @@ AbstractMode.prototype.contrastButtonDisabled = falsity;
 AbstractMode.prototype.predictButtonActive = falsity;
 AbstractMode.prototype.predictButtonDisabled = falsity;
 AbstractMode.prototype.predictPopdown = nothingness;
+AbstractMode.prototype.keyDown = nothingness;
 
 function DisabledMode() {
   if (!(this instanceof DisabledMode)) {
@@ -158,6 +159,14 @@ AnnotateMode.prototype.buildClick = function(menu) {
 AnnotateMode.prototype.viewerClick = function(menu, data) {
   menu.viewer.annotations.onClick(data);
   return this;
+}
+
+AnnotateMode.prototype.keyDown = function(menu, data) {
+  if(data.originalEvent.code == "Escape") { // Escape key
+      menu.viewer.annotations.clearAnnotation();
+      console.log("Escape the current mode!");
+      return new ViewMode();
+  }
 }
 
 AnnotateMode.prototype.annotateButtonActive = truth;
