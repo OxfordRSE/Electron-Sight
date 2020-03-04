@@ -43,6 +43,10 @@ class Annotations extends React.Component {
     });
   }
 
+  clearAnnotation() {
+      this.props.clearAnnotation();
+  }
+
   saveAnnotationToJSON() {
     const selected_name = this.props.annotations.getIn(['current', 'name']);
     let selected_annotation = this.props.annotations.getIn(['created', selected_name]);
