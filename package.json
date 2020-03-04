@@ -89,7 +89,7 @@
     "eslint-plugin-react": "7.16.0",
     "eslint-plugin-react-hooks": "1.7.0",
     "mocha": "^6.1.4",
-    "node-gyp": "^3.7.0",
+    "node-gyp": "^6.1.0",
     "sinon": "7.5.0",
     "underscore": "^1.9.1"
   }
