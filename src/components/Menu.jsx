@@ -13,6 +13,7 @@ import {
 
 import Viewer from './Viewer';
 import Analytics from '../containers/Analytics';
+import WindowPortal from '../components/WindowPortal';
 
 const electron = window.require('electron');
 const remote = electron.remote
@@ -218,7 +219,7 @@ class Menu extends React.Component {
         {analytics}
       </ButtonGroup>
     </Card>
-    {this.state.analytics_active && <Analytics/>}
+    {this.state.analytics_active && <WindowPortal> <Analytics/> </WindowPortal>}
     <Viewer 
       mode = {this.props.mode}
       onClick = {(data) => { this.props.mode.viewerClick(this, data); }}
