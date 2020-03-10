@@ -4,6 +4,7 @@ import {
   Divider,
 } from "@blueprintjs/core";
 import { VictoryBar } from 'victory';
+import WindowPortal from './WindowPortal';
 
 class Analytics extends React.Component {
   constructor(props) {
@@ -19,6 +20,7 @@ class Analytics extends React.Component {
       });
     });
     return (
+      <WindowPortal>
       <div id="Analytics">
       <H5>Data Analytics</H5>
       <Divider/>
@@ -33,6 +35,7 @@ class Analytics extends React.Component {
         </div>
      </div>
      </div>
+     </WindowPortal>
     );
   }
 }

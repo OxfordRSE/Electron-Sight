@@ -219,7 +219,7 @@ class Menu extends React.Component {
         {analytics}
       </ButtonGroup>
     </Card>
-    {this.state.analytics_active && <WindowPortal> <Analytics/> </WindowPortal>}
+    {this.state.analytics_active && <Analytics/>}
     <Viewer 
       mode = {this.props.mode}
       onClick = {(data) => { this.props.mode.viewerClick(this, data); }}
