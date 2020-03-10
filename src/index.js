@@ -46,6 +46,7 @@ const createWindow = async () => {
     show: false,
     webPreferences: {
       nodeIntegration: true,
+      nativeWindowOpen: true,
       preload: __dirname + '/preload.js'
     }
   });
