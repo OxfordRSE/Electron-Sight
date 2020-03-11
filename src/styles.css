@@ -68,23 +68,12 @@
 }
 
 #Analytics {
-  width: 60%;
-  height: 80%;
-  z-index: 3;
-  opacity: 0.9;
-  background-color: white;
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  transform: translate(-50%, -50%);
 }
-
 
 /* Create two equal columns that floats next to each other */
 .column {
   float: left;
   width: 50%;
-  padding: 10px;
 }
 
 /* Clear floats after the columns */
