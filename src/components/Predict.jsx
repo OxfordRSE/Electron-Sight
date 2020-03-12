@@ -124,7 +124,7 @@ class Predict extends React.Component {
     this.props.openseadragon.clearOverlays();
 
     // redraw everything and add to openseadragon overlays
-    this.props.results.map(annotation_result => {
+    this.props.results.map(annotation_results => {
       annotation_result.map((tile_overlay, id) => {
         if (show_superpixels) {
           tile_overlay.superpixel_classification.redraw();

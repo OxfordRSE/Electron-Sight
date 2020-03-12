@@ -29,7 +29,7 @@ class Analytics extends React.Component {
           return sum + tile_cell_data.centroids_x.size;
         }, 0);
         return {x: annotation_name, y: cell_count};
-      }));
+      })).map(x => x[1]);  // Array.from(ImmutableMap) gives a ImmutableMap with second item as the value
     if (number_of_cells_in_each_region.length == 0) {
       number_of_cells_in_each_region = [{x: "none", y:1}];
     }
