@@ -221,12 +221,14 @@ class Menu extends React.Component {
     </Card>
     {this.state.analytics_active && <Analytics/>}
     <Viewer 
-      mode = {this.props.mode}
-      onClick = {(data) => { this.props.mode.viewerClick(this, data); }}
-      fileOpened = {this.fileOpened.bind(this)}
-      brightness={this.state.brightness}
-      contrast={this.state.contrast}
-      ref={viewer => {this.viewer = viewer;}}
+        mode = {this.props.mode}
+        onClick = {(data) => { this.props.mode.viewerClick(this, data); }}
+        onKeyDown = {(data) => { this.props.mode.keyDown(this, data); }}
+        fileOpened = {this.fileOpened.bind(this)}
+        brightness={this.state.brightness}
+        contrast={this.state.contrast}
+        ref={viewer => {this.viewer = viewer;}}
+        tabindex = "0"
     />
     </div>
     );

@@ -1,6 +1,6 @@
 import chai from 'chai';
 import sinon from 'sinon';
-import DefaultMode from '../src/ApplicationState';
+import DefaultMode from '../src/components/ApplicationState';
 
 describe('DefaultMode', function() {
     it('Defaults to DisabledMode', function() {
@@ -33,7 +33,7 @@ describe('DisabledMode', function() {
         const sandbox = sinon.createSandbox();
         const openSpy = sandbox.spy();
         const menu = {
-            props: {
+            viewer: {
                 openseadragon: {
                     open: openSpy,
                 },

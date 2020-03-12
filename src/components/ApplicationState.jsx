@@ -11,10 +11,20 @@ import {
   FormGroup,
 } from "@blueprintjs/core";
 
+const fs = require('fs');
+const commandExistsSync = require('command-exists').sync;
+const remote = window.require('electron').remote;
+const spawn = require('child_process').spawn;
+const path = require('path');
 const truth = () => true;
 const falsity = () => false;
 const nothingness = () => null;
 
+function execute(command, callback) {
+    exec(command, (error, stdout, stderr) => {
+        callback(stdout);
+    });
+};
 
 function AbstractMode() {
   if (!(this instanceof AbstractMode)) {
@@ -38,18 +48,62 @@ AbstractMode.prototype.predict = function(menu) {
 
 AbstractMode.prototype.openFile = function(menu, nodeData) {
     const filename = nodeData.path;
+    const filebase = path.basename(filename, path.extname(filename));
     const extension = filename.split('.').pop();
+    const re = /.*?(\d+)\% complete/
     if (extension == 'dzi') {
         console.log(`opening dzi file ${filename}`);
         menu.viewer.openseadragon.open('file://' + nodeData.path)
+        return new ViewMode();
     } else if (extension == 'ndpi') {
         console.log(`opening ndpi file ${filename}`);
-
+        const dzi = filebase + '.dzi';
+        const dzi_full = 'file://' + path.dirname(filename) + '/' + dzi;
+        if(fs.existsSync(dzi)) {
+            console.log(`Using existing converted file at ${dzi}`);
+            menu.viewer.openseadragon.open(dzi_full);
+            return new ViewMode();
+        }
+        if(!commandExistsSync('vips')) {
+            remote.dialog.showErrorBox('VIPS not found', 'VIPS is needed to convert files other than DeepZoom.' +
+                ' See https://libvips.github.io/libvips for installation instructions.');
+            return new DisabledMode();
+        }
+        const notification = new window.Notification('Converting .ndpi to .dzi', {
+            title: 'Converting .ndpi', body: 'Converting file using VIPS. This may take a while.'});
+        menu.viewer.setState({loading: true});
+        console.log('converting to dzi format');
+        var converter = spawn('vips', ['dzSave', '--vips-progress', filename, filebase]);
+        converter.on('error', function(err) {
+            console.log(err);
+            menu.viewer.setState({loading: false});
+            remote.dialog.showErrorBox('Conversion error', 'Could not convert .ndpi file. ' +
+                'Check error logs for information.');
+            return new DisabledMode();
+        });
+        var matched;
+        converter.stdout.setEncoding('utf8');
+        converter.stdout.on('data', (data) => {
+            matched = data.match(re);
+            if(matched) {
+                menu.viewer.setState({loading_progress: parseInt(matched[1]) / 100});
+            };
+        });
+        converter.on('close', (code) => {
+            if (code !== 0) {
+                console.log('conversion failed');
+            } else {
+                console.log('conversion finished');
+                menu.viewer.setState({loading: false});
+                menu.viewer.openseadragon.open(dzi_full);
+                return new ViewMode();
+            };
+        });
     } else {
         console.log(`unknown extension ${extension} for file ${filename}`);
         return this;
     }
-  return new ViewMode();
+  return new DisabledMode();
 };
 
 AbstractMode.prototype.annotateButtonActive = falsity;
@@ -64,6 +118,7 @@ AbstractMode.prototype.analyticsButtonDisabled = falsity;
 AbstractMode.prototype.predictButtonActive = falsity;
 AbstractMode.prototype.predictButtonDisabled = falsity;
 AbstractMode.prototype.predictPopdown = nothingness;
+AbstractMode.prototype.keyDown = nothingness;
 
 function DisabledMode() {
   if (!(this instanceof DisabledMode)) {
@@ -106,6 +161,14 @@ AnnotateMode.prototype.buildClick = function(menu) {
 AnnotateMode.prototype.viewerClick = function(menu, data) {
   menu.viewer.annotations.onClick(data);
   return this;
+}
+
+AnnotateMode.prototype.keyDown = function(menu, data) {
+  if(data.originalEvent.code == "Escape") { // Escape key
+      menu.viewer.annotations.clearAnnotation();
+      console.log("Escape the current mode!");
+      return new ViewMode();
+  }
 }
 
 AnnotateMode.prototype.annotateButtonActive = truth;
