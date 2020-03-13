@@ -6,6 +6,10 @@ import {
 import { VictoryBar, VictoryChart, VictoryTheme } from 'victory';
 import WindowPortal from './WindowPortal';
 
+function determinantPointPair(p1, p2) {
+    return p1.x * p2.y - p1.y * p2.x;
+}
+
 class Analytics extends React.Component {
   constructor(props) {
     super(props)
