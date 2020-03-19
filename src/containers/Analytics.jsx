@@ -6,6 +6,7 @@ const mapStateToProps = (state, ownProps) => {
   console.log(state.predict)
   return {
     results: state.predict.get('results'),
+    annotations: state.annotations.get('created')
   }
 }
 
