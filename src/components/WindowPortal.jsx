@@ -43,13 +43,13 @@ class WindowPortal extends React.Component {
 
   componentDidMount() {
     // STEP 3: open a new browser window and store a reference to it
-    const externalWindow = window.open("about:blank", 'Plots', 
-                            'width=600,height=400,left=200,top=200');
+    const externalWindow = window.open("about:blank", 'Data Analytics', 
+      'width=600,height=450,left=200,top=200,frame=false');
     let containerElement = null;
     if (externalWindow) {
         containerElement = externalWindow.document.createElement('div');
         externalWindow.document.body.appendChild(containerElement);
-        externalWindow.document.title = 'Plots';
+        externalWindow.document.title = 'Data Analytics';
         copyStyles(window.document, externalWindow.document);
         externalWindow.addEventListener('beforeunload', () => {
             this.props.closeWindow();
