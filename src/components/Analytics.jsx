@@ -8,6 +8,8 @@ import {
   VictoryChart,
   VictoryTheme,
   VictoryAxis,
+  VictoryLabel,
+  VictoryTooltip,
 } from 'victory';
 
 function determinantPointPair(p1, p2) {
@@ -28,6 +30,9 @@ function spherical_contact_distances_tile(tile_cell_data) {
   let N = 100;
   let n = tile_cell_data.centroids_x.size;
   let distances = []
+  if (n <= 1) {
+    return distances;
+  }
 
   let min_x = Number.MAX_VALUE;
   let max_x = 0.0;
@@ -73,7 +78,7 @@ function spherical_contact_distances_tile(tile_cell_data) {
 function nearest_neighbour_distances_tile(tile_cell_data) {
   let n = tile_cell_data.centroids_x.size;
   let distances = []
-  if (n == 1) {
+  if (n <= 1) {
     return distances;
   }
   for (let i = 0; i < n; i++) {
@@ -99,11 +104,6 @@ function nearest_neighbour_distances_tile(tile_cell_data) {
   return distances;
 }
 
-function nearest_neighbour_distances(annotation_result) {
-  return annotation_result.reduce((sum, tile_cell_data, id) => {
-    return sum.concat(nearest_neighbour_distances_tile(tile_cell_data));
-  }, []);
-}
 
 // Function to give index of the median given two end points
 function median(l, r) { 
@@ -133,8 +133,8 @@ function histogram(data) {
   data.sort((a, b) => a - b);
   let n = data.length;
 
-  // if data empty return a zero histogram
-  if (n == 0) {
+  // if 1 or less datapoints return a zero histogram
+  if (n <= 1) {
     let bins = [0.0];
     let values = [0];
     return {bins, values};
@@ -142,18 +142,10 @@ function histogram(data) {
 
   let min = data[0];
   let max = data[n - 1];
-  console.log('min')
-  console.log(min)
-  console.log('max')
-  console.log(max)
   
   // The Freedman-Diaconis rule 
   let bin_width = 2 * IQR(data) * Math.pow(n, -1.0/3.0);
-  console.log('bin_width')
-  console.log(bin_width)
   let nBins = Math.floor((max - min) / bin_width) + 1;
-  console.log('nBins')
-  console.log(nBins)
   bin_width = (max - min + 0.5 * bin_width) / nBins;
   let bins = new Array(nBins);
   for (let i = 0; i < nBins; i++) {
@@ -211,20 +203,36 @@ class SphericalContactDistances extends React.Component {
           sc_distances.toArray().map((x, i) => {
             let name = x[0];
             let data = x[1];
-          return (
-            <VictoryBar
-              key={name}
-              barRatio={1.0}
-              interpolation="step"
-              style={{data: {
-                        fill: this.props.colors[name],
-                        fillOpacity: 0.4,
-                        }
-                      }}
-              data={data}
-            />
-          );
+            if (name == this.props.selected) {
+              return null;
+            }
+            return (
+              <VictoryBar
+                key={name}
+                barRatio={1.0}
+                interpolation="step"
+                style={{data: {
+                          fill: this.props.colors[name],
+                          fillOpacity: 0.2,
+                          }
+                        }}
+                data={data}
+              />
+            );
           })
+        }
+        {this.props.selected &&
+        <VictoryBar
+          key={this.props.selected}
+          barRatio={1.0}
+          interpolation="step"
+          style={{data: {
+                    fill: this.props.colors[this.props.selected],
+                    fillOpacity: 0.8,
+                    }
+                  }}
+          data={sc_distances.get(this.props.selected)}
+        />
         }
       </VictoryChart>
     );
@@ -235,7 +243,9 @@ class NearestNeighbourDistances extends React.Component {
   render() {
     let nn_distances =
       this.props.results.map((annotation_result, annotation_name) => {
-        let distances = nearest_neighbour_distances(annotation_result);
+        let distances = annotation_result.reduce((sum, tile_cell_data, id) => {
+          return sum.concat(nearest_neighbour_distances_tile(tile_cell_data));
+        }, []);
         const {bins, values} = histogram(distances);
         return bins.map((bin, i) => {
           return {x: bin, y: values[i]};
@@ -263,20 +273,36 @@ class NearestNeighbourDistances extends React.Component {
           nn_distances.toArray().map((x, i) => {
             let name = x[0];
             let data = x[1];
-          return (
-            <VictoryBar
-              key={name}
-              barRatio={1.0}
-              interpolation="step"
-              style={{data: {
-                        fill: this.props.colors[name],
-                        fillOpacity: 0.4,
-                        }
-                      }}
-              data={data}
-            />
-          );
+            if (name == this.props.selected) {
+              return null;
+            }
+            return (
+              <VictoryBar
+                key={name}
+                barRatio={1.0}
+                interpolation="step"
+                style={{data: {
+                          fill: this.props.colors[name],
+                          fillOpacity: 0.2,
+                          }
+                        }}
+                data={data}
+              />
+            );
           })
+        }
+        {this.props.selected &&
+        <VictoryBar
+          key={this.props.selected}
+          barRatio={1.0}
+          interpolation="step"
+          style={{data: {
+                    fill: this.props.colors[this.props.selected],
+                    fillOpacity: 0.8,
+                    }
+                  }}
+          data={nn_distances.get(this.props.selected)}
+        />
         }
       </VictoryChart>
     );
@@ -293,35 +319,69 @@ class CellCount extends React.Component {
         if (cell_count > max) {
           max = cell_count;
         }
-        return {x: annotation_name, y: cell_count, fill: this.props.colors[annotation_name]};
+        return {x: annotation_name, y: cell_count, 
+                fill: this.props.colors[annotation_name]};
       })).map(x => x[1]);  // Array.from(ImmutableMap) gives a ImmutableMap with second item as the value
     if (number_of_cells_in_each_region.length == 0) {
-      number_of_cells_in_each_region = [{x: "none", y: 1}];
+      number_of_cells_in_each_region = [{x: "none", y: 0}];
+      max = 1.0/1.1;
     }
 
+    let barWidth = this.props.width / (number_of_cells_in_each_region.length + 3);
     return (
       <VictoryChart
         theme={VictoryTheme.material}
         width={this.props.width}
         height={this.props.height}
-        domainPadding={this.props.width / number_of_cells_in_each_region.length}
-        maxDomain={max*1.1}
+        maxDomain={{y: max*1.1}}
+        domainPadding={{x: [barWidth/2, barWidth/2], y: [0, 30]}}
       >
         <VictoryAxis 
           style={this.props.axis_style}
         />
-        <VictoryAxis dependentAxis 
-          style={this.props.axis_style}
-          label="Cell Count" 
-        />
         <VictoryBar
-          barRatio={0.8}
+          //labelComponent={<VictoryTooltip/>}
+          barWidth={barWidth}
+          labels={({ datum }) => `${datum.y}`}
           style={{
             data: {
               fill: ({ datum }) => datum.fill,
+              fillOpacity: ({ datum }) => {
+                return datum.x == this.props.selected ? 1.0 : 0.5;
+              }
             }
           }}
           data={number_of_cells_in_each_region}
+          events={[
+            {
+              target: "data",
+              eventHandlers: {
+                onMouseOver: () => {
+                  return [{
+                    target: "data",
+                    mutation: (props) => {
+                      name = props.data[props.index].x;
+                      this.props.selectAnnotation(name);
+                    }
+                  }];
+                },
+                onMouseOut: () => {
+                  return [{
+                    target: "data",
+                    mutation: (props) => {
+                      this.props.selectAnnotation(null);
+                    }
+                  }];
+                }
+              }
+            }
+          ]}
+        />
+        <VictoryLabel 
+            text="Cell Count" 
+            x={this.props.width/2} 
+            y={30} 
+            textAnchor="middle"
         />
       </VictoryChart>
     );
@@ -339,35 +399,70 @@ class CellDensity extends React.Component {
         if (density > max) {
           max = density;
         }
-        return {x: annotation_name, y: density, fill: this.props.colors[annotation_name]};
+        return {x: annotation_name, y: density, 
+                fill: this.props.colors[annotation_name]};
       })).map(x => x[1]);  // Array.from(ImmutableMap) gives a ImmutableMap with second item as the value
     if (density_of_cells_in_each_region.length == 0) {
-      density_of_cells_in_each_region = [{x: "none", y: 1}];
+      density_of_cells_in_each_region = [{x: "none", y: 0}];
+      max = 1.0/1.1;
     }
+
+    let barWidth = this.props.width / (density_of_cells_in_each_region.length + 3);
     return (
       <VictoryChart
         width={this.props.width}
         height={this.props.height}
         theme={VictoryTheme.material}
-        domainPadding={this.props.width / density_of_cells_in_each_region.length}
-        maxDomain={max*1.1}
+        maxDomain={{y: max*1.1}}
+        domainPadding={{x: [barWidth/2, barWidth/2], y: [0, 30]}}
       >
         <VictoryAxis 
           style={this.props.axis_style}
         />
-        <VictoryAxis dependentAxis 
-          label="Cell Density" 
-          style={this.props.axis_style}
-        />
         <VictoryBar
-          barRatio={0.8}
+          //labelComponent={<VictoryTooltip/>}
+          barWidth={barWidth}
+          labels={({ datum }) => `${Math.round((datum.y + Number.EPSILON) * 100) / 100}`}
           style={{
             data: {
               fill: ({ datum }) => datum.fill,
+              fillOpacity: ({ datum }) => {
+                return datum.x == this.props.selected ? 1.0 : 0.5;
+              }
             }
           }}
           data={density_of_cells_in_each_region}
+          events={[
+            {
+              target: "data",
+              eventHandlers: {
+                onMouseOver: () => {
+                  return [{
+                    target: "data",
+                    mutation: (props) => {
+                      name = props.data[props.index].x;
+                      this.props.selectAnnotation(name);
+                    }
+                  }];
+                },
+                onMouseOut: () => {
+                  return [{
+                    target: "data",
+                    mutation: (props) => {
+                      this.props.selectAnnotation(null);
+                    }
+                  }];
+                }
+              }
+            }
+          ]}
 
+        />
+        <VictoryLabel 
+            text="Cell Density" 
+            x={this.props.width/2} 
+            y={30} 
+            textAnchor="middle"
         />
       </VictoryChart>
     );
@@ -381,14 +476,12 @@ class Analytics extends React.Component {
     this.state = {
       width: null,
       height: null,
+      selected_annotation: null,
     };
 
   }
 
   updateDimensions = () => {
-    console.log('update dimensions');
-    console.log(this.window_ref.offsetWidth);
-    console.log(this.window_ref.offsetHeight);
     this.setState({
       width: this.window_ref.offsetWidth,
       height: this.window_ref.offsetHeight,
@@ -404,10 +497,11 @@ class Analytics extends React.Component {
     window.removeEventListener("resize", this.updateDimensions.bind(this));
   }
 
+  selectAnnotation = (name) => {
+    this.setState({selected_annotation: name});
+  };
+
   render() {
-    //Distributions of distance between randomly chosen point and nearest cell (Spherical Contact Distance - SCD)
-    //Differences between these things in different annotated regions (e.g., annotating 2 distinct regions and quickly viewing the comparison)
-    //
     let axis_style = {axisLabel: {padding: 40}};
     let annotation_colors = ["#F44336", "#9C27B0", "#2196F3", "#4CAF50", "#795548", "#607D8B"]
     let i = 0;
@@ -423,11 +517,6 @@ class Analytics extends React.Component {
     let plot_width = window_width / 2;
     let plot_height = window_width / 3;
 
-    if (this.state.width) {
-      console.log('width');
-      console.log(this.state.width);
-    }
-
     return (
       <div className="analytics" ref={el => (this.window_ref = el)}>
         <div className="analytics-plot1">
@@ -438,6 +527,8 @@ class Analytics extends React.Component {
             colors={annotation_colors}
             width={plot_width}
             height={plot_height}
+            selected={this.state.selected_annotation}
+            selectAnnotation={this.selectAnnotation}
           />
         </div>
         <div className="analytics-plot2">
@@ -448,6 +539,8 @@ class Analytics extends React.Component {
             colors={annotation_colors}
             width={plot_width}
             height={plot_height}
+            selected={this.state.selected_annotation}
+            selectAnnotation={this.selectAnnotation}
           />
         </div>
         <div className="analytics-plot3">
@@ -458,6 +551,8 @@ class Analytics extends React.Component {
             axis_style={axis_style}
             width={plot_width}
             height={plot_height}
+            selected={this.state.selected_annotation}
+            selectAnnotation={this.selectAnnotation}
           />
         </div>
         <div className="analytics-plot4">
@@ -468,6 +563,8 @@ class Analytics extends React.Component {
             axis_style={axis_style}
             width={plot_width}
             height={plot_height}
+            selected={this.state.selected_annotation}
+            selectAnnotation={this.selectAnnotation}
           />
         </div>
       </div>

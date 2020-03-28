@@ -49,7 +49,7 @@ class WindowPortal extends React.Component {
     if (externalWindow) {
         containerElement = externalWindow.document.createElement('div');
         externalWindow.document.body.appendChild(containerElement);
-        externalWindow.document.title = 'Data Analytics';
+        externalWindow.document.title = 'Data Analytics - hover to highlight regions';
         copyStyles(window.document, externalWindow.document);
         externalWindow.addEventListener('beforeunload', () => {
             this.props.closeWindow();
