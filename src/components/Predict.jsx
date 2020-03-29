@@ -7,6 +7,14 @@ import TileOverlay from '../util/TileOverlay'
 import TileCellData from '../util/TileCellData'
 import { create_tile, load_and_process_tile } from '../util/openseadragon.js'
 import { inPolygon } from '../util/geometry.js'
+import { VictoryBar } from 'victory';
+import {
+  H5,
+  Card,
+  Elevation,
+} from "@blueprintjs/core";
+
+
 
 function predictAnnotation(openseadragon, classifier, annotation, saveTilePrediction, show_cells, show_superpixels) {
   const tile_source = openseadragon.world.getItemAt(0).source;
@@ -162,7 +170,9 @@ class Predict extends React.Component {
 
 
   render() {
-    return null;
+    return (
+      null 
+    );
   }
 }
 

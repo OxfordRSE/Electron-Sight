@@ -12,6 +12,7 @@ import {
 } from "@blueprintjs/core";
 
 import Viewer from './Viewer';
+import AnalyticsContainer from './AnalyticsContainer';
 
 const electron = window.require('electron');
 const remote = electron.remote
@@ -72,6 +73,7 @@ class Menu extends React.Component {
     this.state = {
       brightness_active: false,
       contrast_active: false,
+      analytics_active: false,
       brightness: 1,
       contrast: 1
     };
@@ -174,7 +176,6 @@ class Menu extends React.Component {
     );
 
     let predict = (
-      
       <Button 
             icon="circle"
             active={this.props.mode.predictButtonActive()}
@@ -192,34 +193,12 @@ class Menu extends React.Component {
                   onChange={this.changeHandler("contrast")}
                   value={this.state.contrast} />
     );
-    
-    let save = null;
-    if (this.viewer && this.viewer.classifier) {
-      save = (
-        <Button 
-              onClick={() => {
-                this.viewer.classifier.saveClassifierToJSON();
-                this.viewer.annotations.saveAnnotationToJSON();
-              }}
-        >
-          Save
-        </Button>
-      );
-    }
-    
-    let load = null;
-    if (this.viewer && this.viewer.classifier) {
-      load = (
-        <Button 
-              onClick={() => {
-                this.viewer.classifier.loadClassifierFromJSON();
-                this.viewer.annotations.loadAnnotationFromJSON();
-              }}
-        >
-          Load
-        </Button>
-      );
-    }
+
+    let analytics = (
+      <Button icon="analytics" active={this.state.analytics_active}
+              disabled = {this.props.mode.analyticsButtonDisabled()}
+              onClick={this.toggle("analytics")}>Analytics</Button>
+    );
 
     return (
       <div>
@@ -236,10 +215,10 @@ class Menu extends React.Component {
         {this.state.brightness_active && brightness_popdown}
         {contrast}
         {this.state.contrast_active && contrast_popdown}
-        {save}
-        {load}
+        {analytics}
       </ButtonGroup>
     </Card>
+    {this.state.analytics_active && <AnalyticsContainer/>}
     <Viewer 
         mode = {this.props.mode}
         onClick = {(data) => { this.props.mode.viewerClick(this, data); }}

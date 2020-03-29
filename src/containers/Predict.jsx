@@ -10,7 +10,7 @@ const mapStateToProps = (state, ownProps) => {
     annotations: state.annotations.get('created'),
     results: state.predict.get('results'),
     show_cells: state.predict.get('show_cells'),
-    show_superpixels: state.predict.get('show_superpixels')
+    show_superpixels: state.predict.get('show_superpixels'),
   }
 }
 

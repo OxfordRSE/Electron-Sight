@@ -7,25 +7,22 @@ class Scalebar extends React.Component {
     this.state = {
       zoom: 1,
       type: "microscopy",
-      openseadragon: null,
       pixelsPerMeter: 100000
     };
     this.update = this.update.bind(this);
     this.render = this.render.bind(this);
   }
-  onOpen(openseadragon) {
-    this.setState({
-      openseadragon: openseadragon
-    });
-    openseadragon.addHandler('open', this.update);
-    openseadragon.addHandler('animation', this.update);
+
+  addHandlers() {
+    this.props.openseadragon.addHandler('open', this.update);
+    this.props.openseadragon.addHandler('animation', this.update);
   }
 
   update() {
-      var viewport = this.state.openseadragon.viewport;
+      var viewport = this.props.openseadragon.viewport;
 
       // we only have one image, so world[0]
-      var tiledImage = this.state.openseadragon.world.getItemAt(0);
+      var tiledImage = this.props.openseadragon.world.getItemAt(0);
       var zoom = tiledImageViewportToImageZoom(tiledImage,
               viewport.getZoom(true));
       this.setState({
@@ -48,7 +45,7 @@ class Scalebar extends React.Component {
           width: +zoom.size + "px",
           position: "absolute",
           opacity: 0.5,
-          zIndex: 5
+          zIndex: 2
       }
       return (<div id="Scalebar" style={style}>{zoom.text}</div>)
   }

@@ -48,6 +48,9 @@ class Viewer extends React.Component {
     this.openseadragon.addHandler('canvas-click', this.props.onClick);
     this.openseadragon.addHandler('canvas-key', this.props.onKeyDown);
     this.openseadragon.addHandler('open', this.props.fileOpened);
+
+    this.openseadragon.addHandler('open', this.scalebar.update.bind(this.scalebar));
+    this.openseadragon.addHandler('animation', this.scalebar.update.bind(this.scalebar));
   }
 
   onResize(openseadragon) {
@@ -80,14 +83,6 @@ class Viewer extends React.Component {
                 this.annotations= annotations;
               }}
             />
-            <Predict
-              openseadragon={this.openseadragon}
-              viewport={this.state.viewport}
-              mode={this.props.mode}
-              ref={predict => {
-                this.predict = predict;
-              }}
-            />
             <Classifiers
               openseadragon={this.openseadragon}
               viewport={this.state.viewport}
@@ -96,7 +91,18 @@ class Viewer extends React.Component {
                 this.classifier = classifier;
               }}
             />
-            <Scalebar ref={scalebar => {this.scalebar = scalebar;}} />
+            <Predict
+              openseadragon={this.openseadragon}
+              viewport={this.state.viewport}
+              mode={this.props.mode}
+              ref={predict => {
+                this.predict = predict;
+              }}
+            />
+            <Scalebar 
+              openseadragon={this.openseadragon}
+              ref={scalebar => {this.scalebar = scalebar;}} 
+            />
             </div>
             );
   }

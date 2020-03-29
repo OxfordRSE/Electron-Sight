@@ -14,7 +14,9 @@ import {
   Elevation,
   Callout,
   Button,
+  ButtonGroup,
   Radio,
+  Divider,
   RadioGroup,
 } from "@blueprintjs/core";
 
@@ -317,8 +319,9 @@ class Classifiers extends React.Component {
       const name_and_score = `${name} (LOOCV: ${classifier.get('score')}%)`;
       return <Radio label={name_and_score} value={name} key={name} />;
     }).toList();
+
     return (
-      <Card id="Classifier" interactive={true} elevation={Elevation.Two}>
+      <Card id="Classifier" interactive={true} elevation={Elevation.TWO}>
         <H5>Classifiers</H5>
 		    <RadioGroup label=""
             onChange={(evt) => this.props.updateName(evt.currentTarget.value)}
@@ -326,6 +329,23 @@ class Classifiers extends React.Component {
         >
         {classifiers}
         </RadioGroup>
+        <Divider/>
+        <ButtonGroup fill={false} className="Buttons">
+          <Button 
+              onClick={() => {
+                this.saveClassifierToJSON();
+              }}
+          >
+          Save
+          </Button>
+          <Button 
+              onClick={() => {
+                this.loadClassifierFromJSON();
+              }}
+          >
+          Load 
+          </Button>
+       </ButtonGroup>
       </Card>
     );
   }

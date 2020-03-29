@@ -114,6 +114,7 @@ AbstractMode.prototype.classifierButtonDisabled = falsity;
 AbstractMode.prototype.classifierPopdown = nothingness;
 AbstractMode.prototype.brightnessButtonDisabled = falsity;
 AbstractMode.prototype.contrastButtonDisabled = falsity;
+AbstractMode.prototype.analyticsButtonDisabled = falsity;
 AbstractMode.prototype.predictButtonActive = falsity;
 AbstractMode.prototype.predictButtonDisabled = falsity;
 AbstractMode.prototype.predictPopdown = nothingness;
@@ -136,6 +137,7 @@ DisabledMode.prototype.annotateButtonDisabled = truth;
 DisabledMode.prototype.classifierButtonDisabled = truth;
 DisabledMode.prototype.brightnessButtonDisabled = truth;
 DisabledMode.prototype.contrastButtonDisabled = truth;
+DisabledMode.prototype.analyticsButtonDisabled = truth;
 DisabledMode.prototype.predictButtonDisabled = truth;
 
 function AnnotateMode() {
@@ -390,6 +392,12 @@ PredictMode.prototype.predictPopdown = function(menu) {
                     const value = evt.target.checked;
                     menu.viewer.predict.redrawOverlays(menu.props.predictShowCells, value);
                     menu.props.updatePredictShowSuperpixels(value);
+                  }}
+        />
+        <Checkbox checked={menu.props.predictShowPlots} label="Data Analytics" 
+                  onChange={(evt) => {
+                    const value = evt.target.checked;
+                    menu.props.updatePredictShowPlots(value);
                   }}
         />
       </div>
