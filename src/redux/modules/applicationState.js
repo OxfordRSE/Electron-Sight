@@ -36,6 +36,7 @@ export function openFile(menu, nodeData) {
 
 const initialState = {
     mode: DefaultMode(),
+    filename: null,
 };
 
 export default function reducer(state = initialState, action = {}) {
@@ -53,7 +54,11 @@ export default function reducer(state = initialState, action = {}) {
             break;
         case OPEN_FILE:
             nextMode = currentMode.openFile(action.menu, action.nodeData);
-            break;
+            return {
+                    ...state,
+                    mode: nextMode,
+                    filename: action.nodeData.path,
+                };
         default:
             break;
     }

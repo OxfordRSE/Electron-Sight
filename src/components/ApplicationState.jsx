@@ -177,7 +177,6 @@ AnnotateMode.prototype.annotationPopdown = function(menu) {
   const annotations = menu.viewer.annotations;
   const current_name = annotations.props.annotations.get('current').get('name');
   const set_current_name = annotations.props.updateName;
-  const save_annotation = annotations.props.saveAnnotation;
   return (
     <div className="MenuDropdown" >
     <Callout
@@ -196,7 +195,10 @@ AnnotateMode.prototype.annotationPopdown = function(menu) {
     </FormGroup>
     <ButtonGroup className="Buttons" fill={false}>
     <Button 
-        onClick={save_annotation}
+        onClick={() => {
+          annotations.props.saveAnnotation();
+          annotations.props.saveAnnotationsToStore(menu.props.filename);
+        }}
     >
       Save
     </Button>

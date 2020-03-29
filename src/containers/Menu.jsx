@@ -38,6 +38,7 @@ const mapStateToProps = (state, ownProps) => {
     predictShowSuperpixels: state.predict.get('show_superpixels'),
     predictShowPlots: state.predict.get('show_plots'),
     mode: state.applicationState.mode,
+    filename: state.applicationState.filename,
   }
 }
 

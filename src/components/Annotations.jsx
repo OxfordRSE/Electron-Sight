@@ -18,9 +18,6 @@ const remote = require('electron').remote;
 const app = remote.app;
 
 
-
-
-
 class Annotations extends React.Component {
   constructor(props) {
     super(props)
@@ -50,31 +47,7 @@ class Annotations extends React.Component {
       this.props.clearAnnotation();
   }
 
-  saveAnnotationToJSON() {
-    const selected_name = this.props.annotations.getIn(['current', 'name']);
-    let selected_annotation = this.props.annotations.getIn(['created', selected_name]);
-    console.log(`trying to save {name: ${selected_name}, annotation: ${selected_annotation}}`);
-    if (selected_annotation) {
-      console.log(`save current annotation in ${app.getPath('userData')}`);
-      this.store.set('annotation', selected_annotation);
-    }
-  }
-
-  loadAnnotationFromJSON() {
-    let selected_annotation = this.store.get('annotation');
-    if (selected_annotation) {
-      const name = selected_annotation.name;
-      const polygon = selected_annotation.polygon;
-    
-      console.log('load current annoation');
-      this.props.updateName(name);
-      polygon.map((point) => {
-        this.props.addPoint(new OpenSeadragon.Point(point.x, point.y));
-      });
-      this.props.saveAnnotation();
-    }
-  }
-
+   
   annotationToReact({name='', value={}, dashed=false, fill_color="green"}) {
     let path_str = '';
     const polygon = value.get('polygon');
