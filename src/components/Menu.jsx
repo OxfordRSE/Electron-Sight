@@ -52,8 +52,6 @@ class FileTree extends React.Component {
     return data;
   }
 
-
-
   render() {
     const {
       data
@@ -118,7 +116,10 @@ class Menu extends React.Component {
     const directory = fs.realpathSync('.');
     let file_tree = (
       <FileTree path={directory} 
-        open_file_callback = {(nodeData) => { this.props.openFile(this, nodeData); }}
+        open_file_callback = {(nodeData) => { 
+                                this.props.openFile(this, nodeData); 
+                                this.viewer.annotations.props.loadAnnotationsFromStore(nodeData.path);
+                              }}
         openseadragon={this.props.openseadragon}/>
     );
 
