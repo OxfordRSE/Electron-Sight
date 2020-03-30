@@ -321,7 +321,10 @@ BuildClassifierMode.prototype.classifierPopdown = function(menu) {
     <ButtonGroup fill={false} className="Buttons">
     <Button 
         disabled={menu.props.classifierName==''}
-        onClick={() => {menu.viewer.classifier.buildClassifier();}}
+        onClick={() => {
+          menu.viewer.classifier.buildClassifier();
+          menu.viewer.classifier.props.saveClassifiersToStore();
+        }}
     >Save</Button>
     <Button 
         disabled={!menu.props.classifiers.has(menu.props.classifierName)}

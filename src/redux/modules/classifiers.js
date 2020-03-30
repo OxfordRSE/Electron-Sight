@@ -1,8 +1,12 @@
-const { Map, List } = require("immutable");
+const { Map, List, fromJS, isKeyed } = require("immutable");
+import Store from 'electron-store'
+import { defaultClassifier } from './defaultClassifier'
 
 const SAVE = 'electron-sight/classifiers/SAVE'
 const ADD_POINT = 'electron-sight/classifiers/ADD_POINT'
 const LOAD = 'electron-sight/classifiers/CURRENT'
+const SAVE_TO_STORE = 'electron-sight/classifiers/SAVE_TO_STORE'
+const LOAD_FROM_STORE = 'electron-sight/classifiers/LOAD_FROM_STORE'
 const ADD_SELECTED_TILE = 'electron-sight/classifiers/ADD_SELECTED_TILE'
 const UPDATE_CLASSIFICATION = 'electron-sight/classifiers/UPDATE_CLASSIFICATION'
 const CLEAR_SELECTED_TILES = 'electron-sight/classifiers/CLEAR_SELECTED_TILES'
@@ -19,6 +23,14 @@ export function saveClassifier(svm, feature_min, feature_max, score) {
 
 export function loadClassifier(classifier) {
   return { type: LOAD, classifier };
+}
+
+export function saveClassifiersToStore() {
+  return { type: SAVE_TO_STORE };
+}
+
+export function loadClassifiersFromStore() {
+  return { type: LOAD_FROM_STORE };
 }
 
 export function addSelectedTile(tile_overlay) {
@@ -53,8 +65,26 @@ export function updateGamma(gamma) {
   return { type: UPDATE_GAMMA, name: 'gamma', value: gamma};
 }
 
+function loadInitialState() {
+  console.log(`loading classifiers`);
+  let store = new Store({name: 'sight'});
+  let classifiers = store.get(`classifiers`, Map());
+  classifiers = fromJS(classifiers, (key, value, path) => {
+    return isKeyed(value) ? value.toMap() : value.toList();
+  });
+  if (classifiers.size == 0) {
+    console.log(defaultClassifier);
+    classifiers = Map({
+      'default': 
+      fromJS(defaultClassifier)
+    });
+  }
+  return classifiers;
+
+}
+
 const initialState = Map({
-  created: Map(),
+  created: loadInitialState(),
   current: Map({
     name: '', 
     zoom: 0,
@@ -62,7 +92,8 @@ const initialState = Map({
     selected_tiles: Map(),
     cost: 0,
     gamma: 0,
-  })
+  }),
+  store: new Store({name: 'sight'})
 });
 
 export default function reducer(state = initialState, action = {}) {
@@ -85,6 +116,12 @@ export default function reducer(state = initialState, action = {}) {
                   .set('current', initialState.get('current').set('zoom', zoom));
     case LOAD:
       return state.set('current', action.classifier);
+    case SAVE_TO_STORE:
+      console.log(`saving classifiers`);
+      state.get('store').set(`classifiers`, state.get('created'));
+      return state;
+    case LOAD_FROM_STORE:
+      return state.set('created', loadInitialState());
     case ADD_SELECTED_TILE:
       return state.set('current', 
         state.get('current').set('selected_tiles', 

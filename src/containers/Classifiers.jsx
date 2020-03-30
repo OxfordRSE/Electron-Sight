@@ -4,6 +4,8 @@ import {
   loadClassifier, 
   updateName,
   updateClassification,
+  saveClassifiersToStore,
+  loadClassifiersFromStore,
   clearSelectedTiles,
   addSelectedTile
 } from '../redux/modules/classifiers.js'
@@ -18,6 +20,8 @@ const mapStateToProps = (state, ownProps) => {
 
 const mapDispatchToProps = (dispatch, ownProps) => {
   return {
+    saveClassifiersToStore: () => { dispatch(saveClassifiersToStore()); },
+    loadClassifiersFromStore: () => { dispatch(loadClassifiersFromStore()); },
     saveClassifier: (svm, min, max, score) => { 
       ownProps.openseadragon.clearOverlays();
       dispatch(saveClassifier(svm, min, max, score)) 
