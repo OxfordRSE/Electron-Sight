@@ -1,5 +1,6 @@
 const { Map, List, fromJS, isKeyed, remove } = require("immutable");
 import Store from 'electron-store'
+import SVM from 'libsvm-js/asm';
 import { defaultClassifier } from './defaultClassifier'
 
 const SAVE = 'electron-sight/classifiers/SAVE'
@@ -72,20 +73,19 @@ export function updateGamma(gamma) {
 
 function loadInitialState() {
   console.log(`loading classifiers`);
+
   let store = new Store({name: 'sight'});
-  let classifiers = store.get(`classifiers`, Map());
-  classifiers = fromJS(classifiers, (key, value, path) => {
-    return isKeyed(value) ? value.toMap() : value.toList();
+  let classifiers = fromJS(store.get(`classifiers`, Map()));
+  classifiers = classifiers.map((v, k) => {
+    let test = SVM.load(v.get('svm'));
+    return v.set('svm', SVM.load(v.get('svm')));
   });
   if (classifiers.size == 0) {
-    console.log(defaultClassifier);
     classifiers = Map({
-      'default': 
-      fromJS(defaultClassifier)
+      'default': fromJS(defaultClassifier, parser)
     });
   }
   return classifiers;
-
 }
 
 const initialState = Map({

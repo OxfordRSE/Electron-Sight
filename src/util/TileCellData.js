@@ -185,8 +185,9 @@ export default class TileCellData {
       if (hierarchy.intPtr(0, i)[2] >= 0) continue;
       //cv.drawContours(dst, contours, i, color, 1, cv.LINE_8, hierarchy, 100);
       const cell_area = cv.contourArea(contours.get(i));
+      const n_points = contours.get(i).rows;
 
-      if (cell_area > 10) {
+      if (cell_area > 10 && n_points > 4) {
         // fit an ellipse
         const rotatedRect = cv.fitEllipse(contours.get(i));
 
