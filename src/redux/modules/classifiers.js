@@ -76,15 +76,21 @@ function loadInitialState() {
 
   let store = new Store({name: 'sight'});
   let classifiers = fromJS(store.get(`classifiers`, Map()));
-  classifiers = classifiers.map((v, k) => {
-    let test = SVM.load(v.get('svm'));
-    return v.set('svm', SVM.load(v.get('svm')));
-  });
   if (classifiers.size == 0) {
     classifiers = Map({
-      'default': fromJS(defaultClassifier, parser)
+      'default': fromJS(defaultClassifier)
     });
   }
+  classifiers = classifiers.map((v, k) => {
+    //TODO: rest of code assumes min/max are JS arrays, probably should just use
+    //immutable List instead
+    const min_array = v.get('feature_min').toJS();
+    const max_array = v.get('feature_max').toJS();
+    return v.set('svm', SVM.load(v.get('svm')))
+            .set('feature_min', min_array)
+            .set('feature_max',max_array);
+  });
+  
   return classifiers;
 }
 
@@ -125,7 +131,10 @@ export default function reducer(state = initialState, action = {}) {
       return state.set('created', remove(state.get('created'), action.name));    
     case SAVE_TO_STORE:
       console.log(`saving classifiers`);
-      state.get('store').set(`classifiers`, state.get('created'));
+      const pruned_created = state.get('created').map((v, k) => {
+        return v.set('selected_tiles', Map()).set('svm', v.get('svm').serializeModel());
+      });
+      state.get('store').set(`classifiers`, pruned_created);
       return state;
     case LOAD_FROM_STORE:
       return state.set('created', loadInitialState());
