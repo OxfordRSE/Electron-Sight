@@ -86,7 +86,8 @@ function loadInitialState() {
     //immutable List instead
     const min_array = v.get('feature_min').toJS();
     const max_array = v.get('feature_max').toJS();
-    return v.set('svm', SVM.load(v.get('svm')))
+    const svm = SVM.load(v.get('svm'));
+    return v.set('svm', svm)
             .set('feature_min', min_array)
             .set('feature_max',max_array);
   });
