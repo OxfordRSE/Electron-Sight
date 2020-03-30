@@ -287,30 +287,11 @@ class Classifiers extends React.Component {
     this.props.loadClassifier(this.props.classifiers.getIn(['created', name]));
   }
 
-  saveClassifierToJSON() {
+  deleteSelectedClassifier() {
     const selected_name = this.props.classifiers.getIn(['current', 'name']);
-    let selected_classifier = this.props.classifiers.getIn(['created', selected_name]);
-    selected_classifier = selected_classifier.set('svm', selected_classifier.get('svm').serializeModel());
-    console.log(`trying to save {name: ${selected_name}, classifier: ${selected_classifier}}`);
-    if (selected_classifier) {
-      console.log(`save current classifier in ${app.getPath('userData')}`);
-      this.store.set('classifier', selected_classifier);
-    }
-  }
-
-  loadClassifierFromJSON() {
-    let selected_classifier = this.store.get('classifier');
-    if (selected_classifier) {
-      selected_classifier.svm = SVM.load(selected_classifier.svm);
-      const name = selected_classifier.name;
-      const min = selected_classifier.feature_min;
-      const max = selected_classifier.feature_max;
-      const score = selected_classifier.score;
-      const svm = selected_classifier.svm;
-    
-      console.log('load current classifier');
-      this.props.updateName(name);
-      this.props.saveClassifier(svm, min, max, score);
+    if (this.props.classifiers.get('created').has(selected_name)) {
+      this.props.deleteClassifier(selected_name);
+      this.props.saveClassifiersToStore();
     }
   }
 
@@ -333,17 +314,15 @@ class Classifiers extends React.Component {
         <ButtonGroup fill={false} className="Buttons">
           <Button 
               onClick={() => {
-                this.saveClassifierToJSON();
+                this.deleteSelectedClassifier();
               }}
+              disabled={
+                !this.props.classifiers.get('created').has(
+                  this.props.classifiers.getIn(['current', 'name'])
+                )
+              }
           >
-          Save
-          </Button>
-          <Button 
-              onClick={() => {
-                this.loadClassifierFromJSON();
-              }}
-          >
-          Load 
+          Delete Selected 
           </Button>
        </ButtonGroup>
       </Card>

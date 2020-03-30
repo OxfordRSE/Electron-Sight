@@ -1,10 +1,11 @@
-const { Map, List, fromJS, isKeyed } = require("immutable");
+const { Map, List, fromJS, isKeyed, remove } = require("immutable");
 import Store from 'electron-store'
 import { defaultClassifier } from './defaultClassifier'
 
 const SAVE = 'electron-sight/classifiers/SAVE'
 const ADD_POINT = 'electron-sight/classifiers/ADD_POINT'
 const LOAD = 'electron-sight/classifiers/CURRENT'
+const DELETE = 'electron-sight/classifiers/DELETE'
 const SAVE_TO_STORE = 'electron-sight/classifiers/SAVE_TO_STORE'
 const LOAD_FROM_STORE = 'electron-sight/classifiers/LOAD_FROM_STORE'
 const ADD_SELECTED_TILE = 'electron-sight/classifiers/ADD_SELECTED_TILE'
@@ -23,6 +24,10 @@ export function saveClassifier(svm, feature_min, feature_max, score) {
 
 export function loadClassifier(classifier) {
   return { type: LOAD, classifier };
+}
+
+export function deleteClassifier(name) {
+  return { type: DELETE, name};
 }
 
 export function saveClassifiersToStore() {
@@ -116,6 +121,8 @@ export default function reducer(state = initialState, action = {}) {
                   .set('current', initialState.get('current').set('zoom', zoom));
     case LOAD:
       return state.set('current', action.classifier);
+    case DELETE:
+      return state.set('created', remove(state.get('created'), action.name));    
     case SAVE_TO_STORE:
       console.log(`saving classifiers`);
       state.get('store').set(`classifiers`, state.get('created'));

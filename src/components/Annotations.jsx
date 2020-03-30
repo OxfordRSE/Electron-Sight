@@ -71,6 +71,14 @@ class Annotations extends React.Component {
     }
   }
 
+  deleteSelectedAnnotation() {
+    const selected_name = this.state.annotation_active;
+    if (this.props.annotations.get('created').has(selected_name)) {
+      this.props.deleteAnnotation(selected_name);
+      this.props.saveAnnotationsToStore(this.props.filename);
+    }
+  }
+
   render() {
     
     const polygon = this.props.annotations.get("current").get("polygon");
@@ -127,17 +135,15 @@ class Annotations extends React.Component {
         <ButtonGroup fill={false} className="Buttons">
           <Button 
               onClick={() => {
-                this.saveAnnotationToJSON();
+                this.deleteSelectedAnnotation();
               }}
+              disabled={
+                !this.props.annotations.get('created').has(
+                  this.state.annotation_active
+                )
+              }
           >
-          Save
-          </Button>
-          <Button 
-              onClick={() => {
-                this.loadAnnotationFromJSON();
-              }}
-          >
-          Load 
+          Delete Selected 
           </Button>
        </ButtonGroup>
 

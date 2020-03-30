@@ -1,10 +1,11 @@
-const { Map, List, fromJS, isKeyed } = require("immutable");
+const { Map, List, fromJS, isKeyed, remove } = require("immutable");
 import OpenSeadragon from 'openseadragon';
 import Store from 'electron-store'
 
 const SAVE = 'electron-sight/annotations/SAVE'
 const SAVE_TO_STORE = 'electron-sight/annotations/SAVE_TO_STORE'
 const LOAD_FROM_STORE = 'electron-sight/annotations/LOAD_FROM_STORE'
+const DELETE = 'electron-sight/classifiers/DELETE'
 const ADD_POINT = 'electron-sight/annotations/ADD_POINT'
 const CURRENT = 'electron-sight/annotations/CURRENT'
 const UPDATE_NAME = 'electron-sight/annotations/UPDATE_NAME'
@@ -17,6 +18,10 @@ export function saveAnnotation() {
 
 export function saveAnnotationsToStore(name) {
   return { type: SAVE_TO_STORE, name: name };
+}
+
+export function deleteAnnotation(name) {
+  return { type: DELETE, name};
 }
 
 export function loadAnnotationsFromStore(name) {
@@ -62,6 +67,8 @@ export default function reducer(state = initialState, action = {}) {
       console.log(`saving annotations for filename ${action.name}`);
       state.get('store').set(`${action.name}.annotations`, state.get('created'));
       return state;
+    case DELETE:
+      return state.set('created', remove(state.get('created'), action.name));    
     case LOAD_FROM_STORE:
       console.log(`loading annotations for filename ${action.name}`);
       let annotations = state.get('store').get(`${action.name}.annotations`, Map());
