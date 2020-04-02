@@ -45,7 +45,7 @@ class Classifiers extends React.Component {
     this.store = new Store({name: 'sight'});
   }
 
-  onClick(data) {
+  onMouseClick(data) {
     if (data.quick) {
       const viewer = this.props.openseadragon;
       const viewport = this.props.openseadragon.viewport;

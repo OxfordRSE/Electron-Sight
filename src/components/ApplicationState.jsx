@@ -33,6 +33,10 @@ function AbstractMode() {
   this.modeName = "Abstract";
 }
 
+AbstractMode.prototype.viewerMouseClick = function(menu, data) {
+  return this;
+}
+
 AbstractMode.prototype.viewerMouseDown = function(menu, data) {
   return this;
 }
@@ -200,7 +204,11 @@ AnnotateMode.prototype.annotationPopdown = function(menu) {
     <Callout
         intent="primary"
     >
-    <p>Click to create a polygon annotation</p>
+    <p>
+    Click or drag to create a polygon annotation.  Square handles can be dragged, or
+    shift-click to delete an individual handle. Click on a stroke to insert a handle.
+    Hit escape to delete current annotation.  
+    </p>
     </Callout>       
     <FormGroup
         label="Name"
@@ -258,8 +266,8 @@ BuildClassifierMode.prototype.buildClick = function(menu) {
   return new ViewMode();
 }
 
-BuildClassifierMode.prototype.viewerMouseDown = function(menu, data) {
-  menu.viewer.classifier.onClick(data);
+BuildClassifierMode.prototype.viewerMouseClick = function(menu, data) {
+  menu.viewer.classifier.onMouseClick(data);
   return this;
 }
 

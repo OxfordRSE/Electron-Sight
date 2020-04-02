@@ -30,10 +30,15 @@ class Annotations extends React.Component {
 
   componentDidMount() {
     paper.install(this);
-    this.paper.setup('paperCanvas');
+    this.paper.setup('AnnotationCanvas');
     this.paper.project.options.handleSize = 8;
     this.paper.project.options.hitTolerance = 8;
-  } 
+    this.paper.project.currentStyle = {
+      strokeColor: '#ff0000',
+      strokeWidth: 2,
+      strokeCap: 'round'
+    }; 
+  }
 
   onMouseDown(data) {
     let shift = data.originalEvent.shiftKey;
@@ -47,9 +52,6 @@ class Annotations extends React.Component {
         let path = this.paper.project.activeLayer.children[0];
         path.add(point);
         this.tmp_path = new this.paper.Path();
-        this.tmp_path.strokeColor = '#ff0000';
-        this.tmp_path.strokeWidth = 2;
-        this.tmp_path.strokeCap = 'round';
         this.selected_index = null;
       }
       return;
@@ -80,9 +82,6 @@ class Annotations extends React.Component {
             path.segments[index+1],
           ]);
         }
-        this.tmp_path.strokeColor = '#ff0000';
-        this.tmp_path.strokeWidth = 2;
-        this.tmp_path.strokeCap = 'round';
       }
     } else if (hitResult.type == 'stroke') {
       if (!shift) {
@@ -98,6 +97,10 @@ class Annotations extends React.Component {
   }
 
   onMouseDrag(data) {
+    let shift = data.originalEvent.shiftKey;
+    if (shift) {
+      return;
+    }
     const delta = data.delta;
     const point = data.position;
     if (this.selected_index === null) {
@@ -114,6 +117,10 @@ class Annotations extends React.Component {
   }
 
   onMouseUp(data) {
+    let shift = data.originalEvent.shiftKey;
+    if (shift) {
+      return;
+    }
     const point = data.position;
     const viewer = this.props.openseadragon;
     if (this.selected_index === null) {
@@ -188,19 +195,14 @@ class Annotations extends React.Component {
         return <Radio label={label} value={key} key={key} />;
     }).toList();
 
-    // get annotaion overlay 
+    // render created annotations
     const annotation_overlay = this.props.annotations.get("created").map((value, key) => {
       return this.annotationToReact({name: key, value: value});
     }).toList();
 
-    // get current annotaion overlay 
-    //const annotation_current = this.annotationToReact({
-    //  name: this.props.annotations.get('current').get('name'),
-    //  value: this.props.annotations.get('current'),
-    //  dashed: true,
-    //  fill_color: "red"
-    //});
 
+    // for the current annotation we will use paperjs for rendering so we can do hit
+    // detection (see mouse click handlers above)
     if (this.paper) {
       let path = null;
       if (this.paper.project.activeLayer.hasChildren()) {
@@ -209,9 +211,7 @@ class Annotations extends React.Component {
       } else {
         path = new this.paper.Path();
         path.selected = true;
-        path.strokeColor = '#ff0000';
         path.strokeWidth = 4;
-        path.strokeCap = 'round';
         path.dashArray = [10, 12];
       }
       const current_polygon = this.props.annotations.getIn(['current', 'polygon']);
@@ -223,11 +223,7 @@ class Annotations extends React.Component {
       pixel_points.map((v, k) => {
         path.lineTo(new this.paper.Point(v.x, v.y));
       });
-      //if (this..selected_index && this.state.selected_index < path.segments.length) {
-      //  if (path.segments) {
-      //    path.sements[this.state.selected_index].selected = true;
-      //  }
-      //}
+      const size = electron.remote.getCurrentWindow().getBounds();
 
       this.paper.view.draw();
     }
@@ -244,10 +240,10 @@ class Annotations extends React.Component {
     return (
       <div >
       <div id="AnnotationsOverlay">
-	    <canvas id="paperCanvas" resize></canvas>
-      <svg style={style} id="annotation">
+      <svg style={style} id="AnnotationSVG">
         {annotation_overlay}
       </svg>
+	    <canvas id="AnnotationCanvas" resize="true"></canvas>
       </div>
       <Card id="AnnotationsList" interactive={true} elevation={Elevation.TWO}>
         <H5>Annotations</H5>
