@@ -31,29 +31,25 @@ class Annotations extends React.Component {
   componentDidMount() {
     paper.install(this);
     this.paper.setup('paperCanvas');
-    this.paper.project.options.handleSize = 10;
-    this.paper.project.options.hitTolerance = 10;
+    this.paper.project.options.handleSize = 8;
+    this.paper.project.options.hitTolerance = 8;
   } 
 
   onMouseDown(data) {
-    console.log('annotate mouse down');
     let shift = data.originalEvent.shiftKey;
     let point = data.position;
     var hitResult = this.paper.project.hitTest(point, this.paper.hitOptions);
     if (!hitResult) {
-      console.log('no hit');
       if (!shift) {
         const viewer = this.props.openseadragon;
         const imagePoint = viewer.viewport.windowToViewportCoordinates(point);
         this.props.addPoint(imagePoint);
         let path = this.paper.project.activeLayer.children[0];
         path.add(point);
-        console.log('add point')
         this.tmp_path = new this.paper.Path();
         this.tmp_path.strokeColor = '#ff0000';
-        this.tmp_path.strokeWidth = 3;
+        this.tmp_path.strokeWidth = 2;
         this.tmp_path.strokeCap = 'round';
-
         this.selected_index = null;
       }
       return;
@@ -61,19 +57,37 @@ class Annotations extends React.Component {
 
     if (hitResult.type == 'segment') {
       const index = hitResult.segment.index;
-      console.log('hit segment');
       if (shift) {
         this.props.removePoint(index);
       } else {
         this.selected_index = index;
         hitResult.segment.selected = true;
-        console.log(`choose segment ${this.selected_index}`)
+        let path = this.paper.project.activeLayer.children[0];
+        if (index == 0) {
+          this.tmp_path = new this.paper.Path([
+            path.segments[index],
+            path.segments[index+1]
+          ]);
+        } else if (index == path.segments.length-1) {
+          this.tmp_path = new this.paper.Path([
+            path.segments[index-1],
+            path.segments[index]
+          ]);
+        } else {
+          this.tmp_path = new this.paper.Path([
+            path.segments[index-1],
+            path.segments[index],
+            path.segments[index+1],
+          ]);
+        }
+        this.tmp_path.strokeColor = '#ff0000';
+        this.tmp_path.strokeWidth = 2;
+        this.tmp_path.strokeCap = 'round';
       }
     } else if (hitResult.type == 'stroke') {
       if (!shift) {
         const index = hitResult.location.index;
         this.selected_index = index + 1;
-        console.log(`hit stroke, insert point at index ${index}`);
         let path = this.paper.project.activeLayer.children[0];
         path.insert(index + 1, point).selected = true;
         const viewer = this.props.openseadragon;
@@ -86,20 +100,21 @@ class Annotations extends React.Component {
   onMouseDrag(data) {
     const delta = data.delta;
     const point = data.position;
-    console.log(`annotate mouse drag position ${point}`);
     if (this.selected_index === null) {
-      console.log('new points');
       this.tmp_path.add(point);
-      this.paper.view.draw();
     } else {
-      console.log(`drag selected using delta = ${delta}`);
+      if (this.selected_index == 0) {
+        this.tmp_path.segments[0].point = point;
+      } else {
+        this.tmp_path.segments[1].point = point;
+      }
     }
     data.preventDefaultAction = true;
+    this.paper.view.draw();
   }
 
   onMouseUp(data) {
     const point = data.position;
-    console.log(`annotate mouse up position ${point}`);
     const viewer = this.props.openseadragon;
     if (this.selected_index === null) {
       this.tmp_path.simplify(10);
@@ -189,15 +204,13 @@ class Annotations extends React.Component {
     if (this.paper) {
       let path = null;
       if (this.paper.project.activeLayer.hasChildren()) {
-        console.log('test');
-        console.log(this.paper.project.activeLayer.children.length);
         path = this.paper.project.activeLayer.children[0];
         path.removeSegments();
       } else {
         path = new this.paper.Path();
         path.selected = true;
         path.strokeColor = '#ff0000';
-        path.strokeWidth = 5;
+        path.strokeWidth = 4;
         path.strokeCap = 'round';
         path.dashArray = [10, 12];
       }
@@ -228,7 +241,6 @@ class Annotations extends React.Component {
       height: '100%'
     };
 
-    console.log(`mode is ${this.props.mode.modeName}`);
     return (
       <div >
       <div id="AnnotationsOverlay">
