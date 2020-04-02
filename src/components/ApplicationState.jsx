@@ -33,7 +33,15 @@ function AbstractMode() {
   this.modeName = "Abstract";
 }
 
-AbstractMode.prototype.viewerClick = function(menu, data) {
+AbstractMode.prototype.viewerMouseDown = function(menu, data) {
+  return this;
+}
+
+AbstractMode.prototype.viewerMouseDrag = function(menu, data) {
+  return this;
+}
+
+AbstractMode.prototype.viewerMouseUp = function(menu, data) {
   return this;
 }
 
@@ -158,8 +166,18 @@ AnnotateMode.prototype.buildClick = function(menu) {
   return new BuildClassifierMode();
 }
 
-AnnotateMode.prototype.viewerClick = function(menu, data) {
-  menu.viewer.annotations.onClick(data);
+AnnotateMode.prototype.viewerMouseDown = function(menu, data) {
+  menu.viewer.annotations.onMouseDown(data);
+  return this;
+}
+
+AnnotateMode.prototype.viewerMouseDrag = function(menu, data) {
+  menu.viewer.annotations.onMouseDrag(data);
+  return this;
+}
+
+AnnotateMode.prototype.viewerMouseUp = function(menu, data) {
+  menu.viewer.annotations.onMouseUp(data);
   return this;
 }
 
@@ -240,7 +258,7 @@ BuildClassifierMode.prototype.buildClick = function(menu) {
   return new ViewMode();
 }
 
-BuildClassifierMode.prototype.viewerClick = function(menu, data) {
+BuildClassifierMode.prototype.viewerMouseDown = function(menu, data) {
   menu.viewer.classifier.onClick(data);
   return this;
 }

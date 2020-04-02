@@ -45,7 +45,9 @@ class Viewer extends React.Component {
     this.openseadragon.addHandler('animation', (data) => {
       this.onResize(data.eventSource);
     });
-    this.openseadragon.addHandler('canvas-click', this.props.onClick);
+    this.openseadragon.addHandler('canvas-press', this.props.mouseDown);
+    this.openseadragon.addHandler('canvas-drag', this.props.mouseDrag);
+    this.openseadragon.addHandler('canvas-drag-end', this.props.mouseUp);
     this.openseadragon.addHandler('canvas-key', this.props.onKeyDown);
     this.openseadragon.addHandler('open', this.props.fileOpened);
 

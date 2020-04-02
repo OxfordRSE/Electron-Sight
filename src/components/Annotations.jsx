@@ -1,6 +1,7 @@
 import React from 'react';
 const electron = window.require('electron');
 import OpenSeadragon from 'openseadragon';
+import paper from 'paper';
 import {
   H5,
   Card,
@@ -21,18 +22,98 @@ const app = remote.app;
 class Annotations extends React.Component {
   constructor(props) {
     super(props)
-    this.state = {}
     this.store = new Store({name: 'sight'});
+    this.tmp_path = null;
+    this.selected_index = null; 
+    this.state = {}
   }
 
-  onClick(data) {
-    if (data.quick) {
-      const point = data.position;
-      const viewer = this.props.openseadragon;
-      const imagePoint = viewer.viewport.windowToViewportCoordinates(point);
-      console.log(imagePoint);
-      this.props.addPoint(imagePoint);
+  componentDidMount() {
+    paper.install(this);
+    this.paper.setup('paperCanvas');
+    this.paper.project.options.handleSize = 10;
+    this.paper.project.options.hitTolerance = 10;
+  } 
+
+  onMouseDown(data) {
+    console.log('annotate mouse down');
+    let shift = data.originalEvent.shiftKey;
+    let point = data.position;
+    var hitResult = this.paper.project.hitTest(point, this.paper.hitOptions);
+    if (!hitResult) {
+      console.log('no hit');
+      if (!shift) {
+        const viewer = this.props.openseadragon;
+        const imagePoint = viewer.viewport.windowToViewportCoordinates(point);
+        this.props.addPoint(imagePoint);
+        let path = this.paper.project.activeLayer.children[0];
+        path.add(point);
+        console.log('add point')
+        this.tmp_path = new this.paper.Path();
+        this.tmp_path.strokeColor = '#ff0000';
+        this.tmp_path.strokeWidth = 3;
+        this.tmp_path.strokeCap = 'round';
+
+        this.selected_index = null;
+      }
+      return;
     }
+
+    if (hitResult.type == 'segment') {
+      const index = hitResult.segment.index;
+      console.log('hit segment');
+      if (shift) {
+        this.props.removePoint(index);
+      } else {
+        this.selected_index = index;
+        hitResult.segment.selected = true;
+        console.log(`choose segment ${this.selected_index}`)
+      }
+    } else if (hitResult.type == 'stroke') {
+      if (!shift) {
+        const index = hitResult.location.index;
+        this.selected_index = index + 1;
+        console.log(`hit stroke, insert point at index ${index}`);
+        let path = this.paper.project.activeLayer.children[0];
+        path.insert(index + 1, point).selected = true;
+        const viewer = this.props.openseadragon;
+        const imagePoint = viewer.viewport.windowToViewportCoordinates(point);
+        this.props.insertPoint(index + 1, imagePoint);
+      }
+    }
+  }
+
+  onMouseDrag(data) {
+    const delta = data.delta;
+    const point = data.position;
+    console.log(`annotate mouse drag position ${point}`);
+    if (this.selected_index === null) {
+      console.log('new points');
+      this.tmp_path.add(point);
+      this.paper.view.draw();
+    } else {
+      console.log(`drag selected using delta = ${delta}`);
+    }
+    data.preventDefaultAction = true;
+  }
+
+  onMouseUp(data) {
+    const point = data.position;
+    console.log(`annotate mouse up position ${point}`);
+    const viewer = this.props.openseadragon;
+    if (this.selected_index === null) {
+      this.tmp_path.simplify(10);
+      this.tmp_path.segments.map((s) => { 
+        const p = new OpenSeadragon.Point(s.point.x, s.point.y);
+        const imagePoint = viewer.viewport.windowToViewportCoordinates(p);
+        this.props.addPoint(imagePoint); 
+      });
+    } else {
+      const imagePoint = viewer.viewport.windowToViewportCoordinates(point);
+      this.props.updatePoint(this.selected_index, imagePoint); 
+    }
+    this.tmp_path.remove();
+    this.selected_index = null;
   }
 
   setAnnotation(evt) {
@@ -98,12 +179,45 @@ class Annotations extends React.Component {
     }).toList();
 
     // get current annotaion overlay 
-    const annotation_current = this.annotationToReact({
-      name: this.props.annotations.get('current').get('name'),
-      value: this.props.annotations.get('current'),
-      dashed: true,
-      fill_color: "red"
-    });
+    //const annotation_current = this.annotationToReact({
+    //  name: this.props.annotations.get('current').get('name'),
+    //  value: this.props.annotations.get('current'),
+    //  dashed: true,
+    //  fill_color: "red"
+    //});
+
+    if (this.paper) {
+      let path = null;
+      if (this.paper.project.activeLayer.hasChildren()) {
+        console.log('test');
+        console.log(this.paper.project.activeLayer.children.length);
+        path = this.paper.project.activeLayer.children[0];
+        path.removeSegments();
+      } else {
+        path = new this.paper.Path();
+        path.selected = true;
+        path.strokeColor = '#ff0000';
+        path.strokeWidth = 5;
+        path.strokeCap = 'round';
+        path.dashArray = [10, 12];
+      }
+      const current_polygon = this.props.annotations.getIn(['current', 'polygon']);
+      const pixel_points = current_polygon.map(p => this.props.openseadragon.viewport
+      .viewportToWindowCoordinates(p)).toJS();
+      if (pixel_points.size > 0) {
+        path.moveTo(new this.paper.Point(pixel_points[0].x, pixel_points[0].y));
+      }
+      pixel_points.map((v, k) => {
+        path.lineTo(new this.paper.Point(v.x, v.y));
+      });
+      //if (this..selected_index && this.state.selected_index < path.segments.length) {
+      //  if (path.segments) {
+      //    path.sements[this.state.selected_index].selected = true;
+      //  }
+      //}
+
+      this.paper.view.draw();
+    }
 
     const style = {
       position: 'absolute',
@@ -118,9 +232,9 @@ class Annotations extends React.Component {
     return (
       <div >
       <div id="AnnotationsOverlay">
+	    <canvas id="paperCanvas" resize></canvas>
       <svg style={style} id="annotation">
         {annotation_overlay}
-        {annotation_current}
       </svg>
       </div>
       <Card id="AnnotationsList" interactive={true} elevation={Elevation.TWO}>

@@ -222,7 +222,9 @@ class Menu extends React.Component {
     {this.state.analytics_active && <AnalyticsContainer/>}
     <Viewer 
         mode = {this.props.mode}
-        onClick = {(data) => { this.props.mode.viewerClick(this, data); }}
+        mouseDown = {(data) => { this.props.mode.viewerMouseDown(this, data); }}
+        mouseDrag = {(data) => { this.props.mode.viewerMouseDrag(this, data); }}
+        mouseUp = {(data) => { this.props.mode.viewerMouseUp(this, data); }}
         onKeyDown = {(data) => { this.props.mode.keyDown(this, data); }}
         fileOpened = {this.fileOpened.bind(this)}
         brightness={this.state.brightness}

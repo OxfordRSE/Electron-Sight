@@ -7,6 +7,9 @@ const SAVE_TO_STORE = 'electron-sight/annotations/SAVE_TO_STORE'
 const LOAD_FROM_STORE = 'electron-sight/annotations/LOAD_FROM_STORE'
 const DELETE = 'electron-sight/classifiers/DELETE'
 const ADD_POINT = 'electron-sight/annotations/ADD_POINT'
+const INSERT_POINT = 'electron-sight/annotations/INSERT_POINT'
+const REMOVE_POINT = 'electron-sight/annotations/REMOVE_POINT'
+const UPDATE_POINT = 'electron-sight/annotations/UPDATE_POINT'
 const CURRENT = 'electron-sight/annotations/CURRENT'
 const UPDATE_NAME = 'electron-sight/annotations/UPDATE_NAME'
 const CLEAR = 'electron-sight/annotations/CLEAR'
@@ -48,6 +51,18 @@ export function addPoint(position) {
   return { type: ADD_POINT, position };
 }
 
+export function insertPoint(index, position) {
+  return { type: INSERT_POINT, index, position };
+}
+
+export function updatePoint(index, position) {
+  return { type: UPDATE_POINT, index, position };
+}
+
+export function removePoint(index) {
+  return { type: REMOVE_POINT, index };
+}
+
 const initialState = Map({
   created: Map(),
   current: Map({name: '', polygon: List()}),
@@ -82,7 +97,27 @@ export default function reducer(state = initialState, action = {}) {
       return state.set('created', annotations);
     case ADD_POINT:
       return state.set('current', 
-        state.get('current').set('polygon', state.get('current').get('polygon').push(action.position))
+        state.get('current').set('polygon', 
+          state.get('current').get('polygon').push(action.position)
+        )
+      );
+    case INSERT_POINT:
+      return state.set('current', 
+        state.get('current').set('polygon', 
+          state.get('current').get('polygon').insert(action.index, action.position)
+        )
+      );
+    case UPDATE_POINT:
+      return state.set('current', 
+        state.get('current').set('polygon', 
+          state.get('current').get('polygon').set(action.index, action.position)
+        )
+      );
+    case REMOVE_POINT:
+      return state.set('current', 
+        state.get('current').set('polygon', 
+          state.get('current').get('polygon').remove(action.index)
+        )
       );
     case CLEAR:
       return state.set('current', state.get('current').set('polygon', List()));
